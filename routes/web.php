@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CashierController;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -96,8 +97,14 @@ Route::post('/logout', function (Request $request) {
     return redirect()->route('welcome');
 })->middleware('auth')->name('logout');
 
-Route::view('/cashier', 'cashier.index')
-    ->middleware(['auth', 'role:cashier'])
-    ->name('cashier.index');
+Route::middleware(['auth', 'role:cashier'])
+    ->prefix('cashier')
+    ->name('cashier.')
+    ->group(function (): void {
+        Route::get('/', [CashierController::class, 'index'])->name('index');
+        Route::post('/cart/add', [CashierController::class, 'addToCart'])->name('cart.add');
+        Route::post('/cart/{itemKey}/increment', [CashierController::class, 'incrementCartItem'])->name('cart.increment');
+        Route::post('/cart/{itemKey}/decrement', [CashierController::class, 'decrementCartItem'])->name('cart.decrement');
+    });
 
 require __DIR__ . '/admin.php';

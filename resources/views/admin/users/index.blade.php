@@ -1,110 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-    <div
-        class="anim-enter-up mx-auto w-full max-w-[1500px] overflow-hidden rounded-[32px] border border-white/60 bg-white/85 shadow-2xl shadow-[#bc7f54]/20">
-        <div class="grid min-h-[85vh] grid-cols-1 lg:grid-cols-12">
-            <aside class="anim-enter-left lg:col-span-3 xl:col-span-2 bg-[#2f241f] p-6 text-white">
-                <div class="flex items-center gap-3">
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f4a06b] text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M8.25 7.5h9a2.25 2.25 0 0 1 2.25 2.25V12a3 3 0 0 1-3 3H8.25m0-7.5v7.5m0-7.5H6A2.25 2.25 0 0 0 3.75 9.75V12A3 3 0 0 0 6.75 15h1.5m0 0V18m4.5-3v3m4.5-3v3" />
-                        </svg>
-                    </span>
-                    <div>
-                        <p class="text-lg font-black">Purr's Coffee</p>
-                        <p class="text-xs text-white/60">Admin Workspace</p>
-                    </div>
-                </div>
-
-                <nav class="mt-8 space-y-2">
-                    <a href="{{ route('admin.index') }}"
-                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-white/80 transition hover:bg-white/10 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="m2.25 12 8.954-8.955a1.125 1.125 0 0 1 1.59 0L21.75 12M4.5 9.75V19.5A2.25 2.25 0 0 0 6.75 21.75h3.75v-6h3v6h3.75a2.25 2.25 0 0 0 2.25-2.25V9.75" />
-                        </svg>
-                        Dashboard
-                    </a>
-                    <a href="#"
-                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-white/80 transition hover:bg-white/10 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M6.75 7.5h10.5m-10.5 4.5h10.5m-10.5 4.5h6.75M3.75 5.25A1.5 1.5 0 0 1 5.25 3.75h13.5a1.5 1.5 0 0 1 1.5 1.5v13.5a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V5.25Z" />
-                        </svg>
-                        Products
-                    </a>
-                    <a href="#"
-                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-white/80 transition hover:bg-white/10 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5h18m-18 6h18m-18 6h18" />
-                        </svg>
-                        Categories
-                    </a>
-                    <a href="#"
-                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-white/80 transition hover:bg-white/10 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M2.25 8.25h19.5M6.75 2.25v3m10.5-3v3m-12 16.5h13.5A2.25 2.25 0 0 0 21 19.5v-12A2.25 2.25 0 0 0 18.75 5.25H5.25A2.25 2.25 0 0 0 3 7.5v12a2.25 2.25 0 0 0 2.25 2.25Z" />
-                        </svg>
-                        Orders
-                    </a>
-                    <a href="#"
-                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-white/80 transition hover:bg-white/10 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3 3v18h18M7.5 14.25 10.5 11l3 2.25 4.5-6" />
-                        </svg>
-                        Reports
-                    </a>
-                    <a href="{{ route('admin.users.index') }}"
-                        class="flex items-center gap-3 rounded-xl bg-[#f4a06b] px-4 py-3 font-medium text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M18 18.75a3.75 3.75 0 1 0-7.5 0m7.5 0v.75h1.5a2.25 2.25 0 0 0 2.25-2.25v-.824a2.25 2.25 0 0 0-.663-1.588l-1.02-1.021a2.25 2.25 0 0 1-.659-1.591V8.25A6.75 6.75 0 0 0 6 8.25v4.976c0 .597-.237 1.169-.659 1.591l-1.02 1.02a2.25 2.25 0 0 0-.663 1.59v.824A2.25 2.25 0 0 0 5.908 20.5h1.5v-.75m10.592-1.5a6 6 0 0 0-12 0" />
-                        </svg>
-                        Users
-                    </a>
-                    <a href="#"
-                        class="flex items-center gap-3 rounded-xl px-4 py-3 text-white/80 transition hover:bg-white/10 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.278a1.125 1.125 0 0 0 .846.894l1.251.313c.534.133.878.657.813 1.203l-.153 1.288a1.125 1.125 0 0 0 .323.939l.925.926c.39.39.39 1.024 0 1.414l-.925.926a1.125 1.125 0 0 0-.323.938l.153 1.29c.065.545-.279 1.07-.813 1.202l-1.251.313a1.125 1.125 0 0 0-.846.894l-.213 1.278c-.09.542-.56.94-1.11.94h-2.592c-.55 0-1.02-.398-1.11-.94l-.213-1.278a1.125 1.125 0 0 0-.846-.894l-1.251-.313a1.125 1.125 0 0 1-.813-1.203l.153-1.288a1.125 1.125 0 0 0-.323-.939l-.925-.926a1 1 0 0 1 0-1.414l.925-.926a1.125 1.125 0 0 0 .323-.938l-.153-1.29a1.125 1.125 0 0 1 .813-1.202l1.251-.313a1.125 1.125 0 0 0 .846-.894l.213-1.278Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                        </svg>
-                        Settings
-                    </a>
-                </nav>
-
-                <div class="mt-8 rounded-2xl border border-white/15 bg-white/5 p-4">
-                    <p class="text-sm font-semibold text-white">{{ auth()->user()->name }}</p>
-                    <p class="mt-1 text-xs text-white/60">{{ auth()->user()->email }}</p>
-
-                    <form method="POST" action="{{ route('logout') }}" class="mt-4">
-                        @csrf
-                        <button type="submit"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor" stroke-width="1.9">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25-2.25V15m5.25-3H9.75m0 0 3-3m-3 3 3 3" />
-                            </svg>
-                            Log out
-                        </button>
-                    </form>
-                </div>
-            </aside>
-
-            <main class="anim-enter-right lg:col-span-9 xl:col-span-10 bg-[#f8f8f8] p-6 lg:p-8">
+    <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
+        <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
+            @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'users'])
+            <main class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
                 <div class="anim-enter-up anim-delay-100 mb-6 flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <p
@@ -117,10 +17,16 @@
                         </p>
                     </div>
 
-                    <a href="{{ route('admin.index') }}"
-                        class="anim-pop anim-delay-200 inline-flex items-center gap-2 rounded-xl border border-[#edd5c4] bg-white px-4 py-2 text-sm font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]">
-                        Back to dashboard
-                    </a>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('admin.index') }}"
+                            class="anim-pop anim-delay-200 inline-flex items-center gap-2 rounded-xl border border-[#edd5c4] bg-white px-4 py-2 text-sm font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]">
+                            Back to dashboard
+                        </a>
+                        <button type="button"
+                            class="js-open-add-user anim-pop inline-flex items-center gap-2 rounded-xl bg-[#f4a06b] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105">
+                            Add Member
+                        </button>
+                    </div>
                 </div>
 
                 @if ($errors->any())
@@ -130,39 +36,34 @@
                 @endif
 
                 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <section class="anim-enter-up anim-delay-200 rounded-3xl border border-[#f0e3da] bg-[#fffaf6] p-5 xl:col-span-1">
-                        <h2 class="text-xl font-bold text-[#2f241f]">Add Member</h2>
-                        <p class="mt-1 text-sm text-[#7a5c4e]">Create a new account and assign role.</p>
-
-                        <form method="POST" action="{{ route('admin.users.store') }}" class="mt-5 space-y-4 anim-enter-up anim-delay-300">
+                    <template id="add-user-template">
+                        <form id="swal-add-user-form" method="POST" action="{{ route('admin.users.store') }}"
+                            class="space-y-4 text-left">
                             @csrf
 
                             <div>
-                                <label for="name" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Full
-                                    Name</label>
-                                <input id="name" name="name" type="text" value="{{ old('name') }}" required
-                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20"
+                                <label for="swal-add-user-name"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Full Name</label>
+                                <input id="swal-add-user-name" name="name" type="text" value="{{ old('name') }}"
+                                    required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
                                     placeholder="Member name">
-                                @error('name')
-                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
 
                             <div>
-                                <label for="email"
+                                <label for="swal-add-user-email"
                                     class="mb-1 block text-sm font-semibold text-[#5f4b40]">Email</label>
-                                <input id="email" name="email" type="email" value="{{ old('email') }}" required
-                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20"
+                                <input id="swal-add-user-email" name="email" type="email"
+                                    value="{{ old('email') }}" required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
                                     placeholder="member@example.com">
-                                @error('email')
-                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
 
                             <div>
-                                <label for="role_id" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Role</label>
-                                <select id="role_id" name="role_id" required
-                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+                                <label for="swal-add-user-role"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Role</label>
+                                <select id="swal-add-user-role" name="role_id" required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
                                     <option value="">Select role</option>
                                     @foreach ($roles as $role)
                                         <option value="{{ $role->id }}" @selected((string) old('role_id') === (string) $role->id)>
@@ -170,27 +71,22 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('role_id')
-                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
 
                             <div>
-                                <label for="password"
+                                <label for="swal-add-user-password"
                                     class="mb-1 block text-sm font-semibold text-[#5f4b40]">Password</label>
-                                <input id="password" name="password" type="password" required
-                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20"
+                                <input id="swal-add-user-password" name="password" type="password" required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
                                     placeholder="Minimum 8 characters">
-                                @error('password')
-                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
 
                             <div>
-                                <label for="password_confirmation"
+                                <label for="swal-add-user-password-confirmation"
                                     class="mb-1 block text-sm font-semibold text-[#5f4b40]">Confirm Password</label>
-                                <input id="password_confirmation" name="password_confirmation" type="password" required
-                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20"
+                                <input id="swal-add-user-password-confirmation" name="password_confirmation"
+                                    type="password" required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
                                     placeholder="Re-enter password">
                             </div>
 
@@ -199,9 +95,10 @@
                                 Add Member
                             </button>
                         </form>
-                    </section>
+                    </template>
 
-                    <section class="anim-enter-up anim-delay-300 rounded-3xl border border-[#f0e3da] bg-white p-5 xl:col-span-2">
+                    <section
+                        class="anim-enter-up anim-delay-300 rounded-3xl border border-[#f0e3da] bg-white p-5 xl:col-span-3">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h2 class="text-xl font-bold text-[#2f241f]">Team Members</h2>
                             <form id="user-search-form" method="GET" action="{{ route('admin.users.index') }}"
@@ -310,6 +207,31 @@
             const searchForm = document.getElementById('user-search-form');
             const searchInput = document.getElementById('user-search-input');
             const suggestionsBox = document.getElementById('user-search-suggestions');
+            const addUserTrigger = document.querySelector('.js-open-add-user');
+            const addUserTemplate = document.getElementById('add-user-template');
+
+            if (addUserTrigger && addUserTemplate) {
+                addUserTrigger.addEventListener('click', function() {
+                    Swal.fire({
+                        title: 'Add member',
+                        html: addUserTemplate.innerHTML,
+                        showConfirmButton: false,
+                        showCloseButton: true,
+                        width: 680,
+                        didOpen: function() {
+                            const form = document.getElementById('swal-add-user-form');
+
+                            if (!form) return;
+
+                            form.addEventListener('submit', function(event) {
+                                if (!form.reportValidity()) {
+                                    event.preventDefault();
+                                }
+                            });
+                        },
+                    });
+                });
+            }
 
             if (alertData) {
                 Swal.fire({
@@ -357,35 +279,35 @@
                     Swal.fire({
                         title: 'Edit member',
                         html: `
-                            <div class="space-y-3 text-left">
+                            <div class="space-y-4 text-left">
                                 <div>
-                                    <label class="mb-1 block text-xs font-semibold text-slate-600">Full Name</label>
-                                    <input id="swal-name" class="swal2-input !m-0 !w-full !rounded-lg !border-slate-300 !px-3 !py-2 text-sm" value="${currentName}">
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Full Name</label>
+                                    <input id="swal-name" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentName}">
                                 </div>
                                 <div>
-                                    <label class="mb-1 block text-xs font-semibold text-slate-600">Email</label>
-                                    <input id="swal-email" type="email" class="swal2-input !m-0 !w-full !rounded-lg !border-slate-300 !px-3 !py-2 text-sm" value="${currentEmail}">
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Email</label>
+                                    <input id="swal-email" type="email" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentEmail}">
                                 </div>
                                 <div>
-                                    <label class="mb-1 block text-xs font-semibold text-slate-600">Role</label>
-                                    <select id="swal-role" class="swal2-input !m-0 !w-full !rounded-lg !border-slate-300 !px-3 !py-2 text-sm">
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Role</label>
+                                    <select id="swal-role" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
                                         ${roleSelectOptions}
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="mb-1 block text-xs font-semibold text-slate-600">New Password (Optional)</label>
-                                    <input id="swal-password" type="password" class="swal2-input !m-0 !w-full !rounded-lg !border-slate-300 !px-3 !py-2 text-sm" placeholder="Leave blank to keep current password">
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">New Password (Optional)</label>
+                                    <input id="swal-password" type="password" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" placeholder="Leave blank to keep current password">
                                 </div>
                                 <div>
-                                    <label class="mb-1 block text-xs font-semibold text-slate-600">Confirm Password</label>
-                                    <input id="swal-password-confirmation" type="password" class="swal2-input !m-0 !w-full !rounded-lg !border-slate-300 !px-3 !py-2 text-sm">
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Confirm Password</label>
+                                    <input id="swal-password-confirmation" type="password" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
                                 </div>
                             </div>
                         `,
                         showCancelButton: true,
                         confirmButtonText: 'Update',
                         cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#f4a06b',
+                        confirmButtonColor: '#2f241f',
                         preConfirm: function() {
                             const name = document.getElementById('swal-name').value
                                 .trim();
@@ -509,9 +431,11 @@
 
                         suggestionsBox.classList.remove('hidden');
 
-                        suggestionsBox.querySelectorAll('.js-suggestion-item').forEach(function(itemButton) {
+                        suggestionsBox.querySelectorAll('.js-suggestion-item').forEach(function(
+                            itemButton) {
                             itemButton.addEventListener('click', function() {
-                                searchInput.value = decodeURIComponent(itemButton.dataset.name ?? '');
+                                searchInput.value = decodeURIComponent(itemButton
+                                    .dataset.name ?? '');
                                 hideSuggestions();
                                 searchForm.submit();
                             });

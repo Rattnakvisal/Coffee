@@ -1,235 +1,358 @@
 ﻿@extends('layouts.app')
 
 @section('content')
-<div class="anim-enter-up mx-auto w-full max-w-[1500px] overflow-hidden rounded-[32px] border border-white/60 bg-white/85 shadow-2xl shadow-[#bc7f54]/20">
-    <div class="grid min-h-[85vh] grid-cols-1 lg:grid-cols-12">
-
-        <aside class="anim-enter-left lg:col-span-3 xl:col-span-2 border-r border-[#f0e3da] bg-[#fffaf6] p-6">
-            <div>
-                <div class="flex items-center gap-3">
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f4a06b] text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5h9a2.25 2.25 0 0 1 2.25 2.25V12a3 3 0 0 1-3 3H8.25m0-7.5v7.5m0-7.5H6A2.25 2.25 0 0 0 3.75 9.75V12A3 3 0 0 0 6.75 15h1.5m0 0V18m4.5-3v3m4.5-3v3" />
-                        </svg>
-                    </span>
-                    <div>
-                        <p class="text-lg font-black text-[#2f241f]">Purr's Coffee</p>
-                        <p class="text-xs text-[#8b6a59]">Cashier Workspace</p>
-                    </div>
-                </div>
-
-                <nav class="mt-8 space-y-2 text-[#4f3b31]">
-                    <a href="{{ route('cashier.index') }}" class="flex items-center gap-3 rounded-xl bg-[#fff1e8] px-4 py-3 font-semibold text-[#c56d39] ring-1 ring-[#f6d7c2]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955a1.125 1.125 0 0 1 1.59 0L21.75 12M4.5 9.75V19.5A2.25 2.25 0 0 0 6.75 21.75h3.75v-6h3v6h3.75a2.25 2.25 0 0 0 2.25-2.25V9.75" />
-                        </svg>
-                        Home page
-                    </a>
-                    <a href="#" class="flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-[#f8ede6]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+    @php
+        $products = collect($products ?? []);
+        $categories = collect($categories ?? []);
+        $search = (string) ($search ?? '');
+        $category = (string) ($category ?? '');
+    @endphp
+    <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
+        <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
+            <div data-cashier-overlay class="fixed inset-0 z-40 hidden bg-[#1f1713]/50 backdrop-blur-[1px] lg:hidden"></div>
+            @include('cashier.sidebar.sidebar', ['activeCashierMenu' => 'home'])
+            <main
+                class="anim-enter-up anim-delay-100 bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-6 lg:p-6 lg:pt-6 xl:col-span-7">
+                <div class="mb-4 flex items-center justify-between gap-2 lg:hidden">
+                    <button type="button" data-cashier-open-menu
+                        class="inline-flex items-center gap-2 rounded-xl border border-[#e9d8cc] bg-white px-3 py-2 text-sm font-semibold text-[#6d4e3f] shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="1.9">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5" />
                         </svg>
                         Menu
-                    </a>
-                    <a href="#" class="flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-[#f8ede6]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 6.75A2.25 2.25 0 0 1 5.25 4.5h13.5A2.25 2.25 0 0 1 21 6.75v10.5A2.25 2.25 0 0 1 18.75 19.5H5.25A2.25 2.25 0 0 1 3 17.25V6.75Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.75h9m-9 4.5h6" />
-                        </svg>
-                        My orders
-                    </a>
-                    <a href="#" class="flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-[#f8ede6]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2.25M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                        History
-                    </a>
-                </nav>
-
-                <div class="mt-8 space-y-2 border-t border-[#f0e3da] pt-6 text-[#4f3b31]">
-                    <a href="#" class="flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-[#f8ede6]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9A2.25 2.25 0 0 1 5.25 16.5v-9A2.25 2.25 0 0 1 7.5 5.25h9A2.25 2.25 0 0 1 18.75 7.5v9A2.25 2.25 0 0 1 16.5 18.75Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.75h9m-9 4.5h6" />
-                        </svg>
-                        Partners
-                    </a>
-                    <a href="#" class="flex items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-[#f8ede6]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.278a1.125 1.125 0 0 0 .846.894l1.251.313c.534.133.878.657.813 1.203l-.153 1.288a1.125 1.125 0 0 0 .323.939l.925.926c.39.39.39 1.024 0 1.414l-.925.926a1.125 1.125 0 0 0-.323.938l.153 1.29c.065.545-.279 1.07-.813 1.202l-1.251.313a1.125 1.125 0 0 0-.846.894l-.213 1.278c-.09.542-.56.94-1.11.94h-2.592c-.55 0-1.02-.398-1.11-.94l-.213-1.278a1.125 1.125 0 0 0-.846-.894l-1.251-.313a1.125 1.125 0 0 1-.813-1.203l.153-1.288a1.125 1.125 0 0 0-.323-.939l-.925-.926a1 1 0 0 1 0-1.414l.925-.926a1.125 1.125 0 0 0 .323-.938l-.153-1.29a1.125 1.125 0 0 1 .813-1.202l1.251-.313a1.125 1.125 0 0 0 .846-.894l.213-1.278Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                        </svg>
-                        Settings
-                    </a>
-                </div>
-            </div>
-
-            <div class="mt-8 rounded-2xl border border-[#f0d4c2] bg-white p-4">
-                <p class="text-sm font-semibold text-[#2f241f]">{{ auth()->user()->name }}</p>
-                <p class="mt-1 text-xs text-[#8b6a59]">{{ auth()->user()->email }}</p>
-
-                <form method="POST" action="{{ route('logout') }}" class="mt-4">
-                    @csrf
-                    <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-[#7a5c4e] transition hover:bg-[#f8ede6]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25-2.25V15m5.25-3H9.75m0 0 3-3m-3 3 3 3" />
-                        </svg>
-                        Log out
                     </button>
-                </form>
-            </div>
-        </aside>
-
-        <main class="anim-enter-up anim-delay-100 lg:col-span-6 xl:col-span-7 bg-[#f8f8f8] p-6">
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="relative min-w-[240px] flex-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35m1.35-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
-                    </svg>
-                    <input
-                        type="text"
-                        placeholder="Search menu..."
-                        class="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-4 outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/25"
-                    >
+                    <button type="button" data-cashier-open-cart
+                        class="inline-flex items-center gap-2 rounded-xl bg-[#f4a06b] px-3 py-2 text-sm font-semibold text-white shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="1.9">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3.75 6.75h16.5m-15 0 1.5 11.25A2.25 2.25 0 0 0 9 20.25h6a2.25 2.25 0 0 0 2.25-2.25l1.5-11.25M9.75 6.75v-1.5A2.25 2.25 0 0 1 12 3h0a2.25 2.25 0 0 1 2.25 2.25v1.5" />
+                        </svg>
+                        Cart
+                    </button>
                 </div>
-                <button class="inline-flex items-center gap-2 rounded-2xl bg-[#f4a06b] px-5 py-3 font-semibold text-white shadow-lg shadow-[#e8b28f] transition hover:brightness-105">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Filter
-                </button>
-            </div>
-
-            <div class="mt-6 flex flex-wrap gap-3">
-                <button class="rounded-full bg-[#f4a06b] px-5 py-2 text-sm font-semibold text-white shadow">Coffee</button>
-                <button class="rounded-full border border-gray-300 bg-white px-5 py-2 text-sm">Non Coffee</button>
-                <button class="rounded-full border border-gray-300 bg-white px-5 py-2 text-sm">Food</button>
-                <button class="rounded-full border border-gray-300 bg-white px-5 py-2 text-sm">Snack</button>
-                <button class="rounded-full border border-gray-300 bg-white px-5 py-2 text-sm">Dessert</button>
-            </div>
-
-            <div class="mt-8 flex items-end justify-between">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-[#b16231]">Cashier</p>
-                    <h2 class="mt-1 text-3xl font-black text-[#2f241f]">Coffee Menu</h2>
+                <div class="flex flex-wrap items-center gap-3">
+                    <form method="GET" action="{{ route('cashier.index') }}" class="relative min-w-[240px] flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m21 21-4.35-4.35m1.35-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
+                        </svg>
+                        <input type="text" name="search" value="{{ $search }}" placeholder="Search menu..."
+                            class="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-28 outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/25">
+                        <div class="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                            @if ($search !== '')
+                                <a href="{{ route('cashier.index') }}"
+                                    class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">Clear</a>
+                            @endif
+                            <button type="submit"
+                                class="rounded-lg bg-[#f4a06b] px-3 py-1.5 text-xs font-semibold text-white">Search</button>
+                        </div>
+                    </form>
                 </div>
-                <button class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-[#5c4438] transition hover:bg-[#fff8f2]">View all items</button>
-            </div>
 
-            <div class="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
-                @foreach ([
-                    ['name' => 'Cappuccino', 'price' => '4.98'],
-                    ['name' => 'Coffee Latte', 'price' => '5.98'],
-                    ['name' => 'Americano', 'price' => '5.98'],
-                    ['name' => 'V60', 'price' => '5.98'],
-                ] as $item)
-                    <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger" style="--stagger: {{ $loop->index + 2 }};">
-                        <div class="flex gap-4">
-                            <div class="flex h-28 w-24 items-center justify-center rounded-2xl bg-[#fff4ec] text-[#d97f46]">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5h9a2.25 2.25 0 0 1 2.25 2.25V12a3 3 0 0 1-3 3H8.25m0-7.5v7.5m0-7.5H6A2.25 2.25 0 0 0 3.75 9.75V12A3 3 0 0 0 6.75 15h1.5m0 0V18m4.5-3v3m4.5-3v3" />
-                                </svg>
-                            </div>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <a href="{{ route('cashier.index', array_filter(['search' => $search])) }}"
+                        @class([
+                            'rounded-full px-5 py-2 text-sm font-semibold shadow transition',
+                            'bg-[#f4a06b] text-white' => $category === '',
+                            'border border-gray-300 bg-white text-[#4f3b31]' => $category !== '',
+                        ])>
+                        All
+                    </a>
+                    @foreach ($categories as $categoryOption)
+                        <a href="{{ route('cashier.index', array_filter(['search' => $search, 'category' => $categoryOption->slug])) }}"
+                            @class([
+                                'rounded-full px-5 py-2 text-sm font-semibold shadow transition',
+                                'bg-[#f4a06b] text-white' => $category === $categoryOption->slug,
+                                'border border-gray-300 bg-white text-[#4f3b31]' =>
+                                    $category !== $categoryOption->slug,
+                            ])>
+                            {{ $categoryOption->name }}
+                        </a>
+                    @endforeach
+                </div>
 
-                            <div class="flex-1">
-                                <div class="flex items-start justify-between gap-2">
-                                    <h3 class="text-lg font-bold text-[#2f241f]">{{ $item['name'] }}</h3>
-                                    <span class="font-bold text-[#d97f46]">${{ $item['price'] }}</span>
-                                </div>
+                <div class="mt-8 flex items-end justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-[#b16231]">Cashier</p>
+                        <h2 class="mt-1 text-3xl font-black text-[#2f241f]">Coffee Menu</h2>
+                    </div>
+                    <a href="{{ route('cashier.index') }}"
+                        class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-[#5c4438] transition hover:bg-[#fff8f2]">
+                        View all items
+                    </a>
+                </div>
 
-                                <p class="mt-2 text-sm text-gray-500">Freshly brewed and perfect for quick customer orders.</p>
+                <div class="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+                    @forelse ($products as $item)
+                        <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger"
+                            style="--stagger: {{ $loop->index + 2 }};">
+                            <div class="flex gap-4">
+                                @if ($item->image_path)
+                                    <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}"
+                                        class="h-28 w-24 rounded-2xl object-cover">
+                                @else
+                                    <div
+                                        class="flex h-28 w-24 items-center justify-center rounded-2xl bg-[#fff4ec] text-[#d97f46]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M8.25 7.5h9a2.25 2.25 0 0 1 2.25 2.25V12a3 3 0 0 1-3 3H8.25m0-7.5v7.5m0-7.5H6A2.25 2.25 0 0 0 3.75 9.75V12A3 3 0 0 0 6.75 15h1.5m0 0V18m4.5-3v3m4.5-3v3" />
+                                        </svg>
+                                    </div>
+                                @endif
 
-                                <div class="mt-4 flex items-center gap-2 text-xs">
-                                    <span class="font-semibold uppercase tracking-[0.1em] text-gray-500">Size</span>
-                                    <button class="rounded-full bg-[#2f241f] px-3 py-1 text-white">Small</button>
-                                    <button class="rounded-full border border-gray-300 px-3 py-1">Large</button>
-                                </div>
-
-                                <div class="mt-4 flex items-center justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <button class="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-base">-</button>
-                                        <span class="text-sm font-medium">1</span>
-                                        <button class="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-base">+</button>
+                                <div class="flex-1">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <h3 class="text-lg font-bold text-[#2f241f]">{{ $item->name }}</h3>
+                                        <span
+                                            class="font-bold text-[#d97f46]">${{ number_format((float) $item->price, 2) }}</span>
                                     </div>
 
-                                    <button class="rounded-full bg-[#f4a06b] px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105">
-                                        Add to cart
-                                    </button>
+                                    <p class="mt-1 text-xs font-semibold uppercase tracking-[0.11em] text-[#b16231]">
+                                        {{ $item->category?->name ?? 'Uncategorized' }}
+                                    </p>
+                                    <p class="mt-2 text-sm text-gray-500">
+                                        {{ $item->description ?: 'Freshly brewed and perfect for quick customer orders.' }}
+                                    </p>
+
+                                    <form method="POST" action="{{ route('cashier.cart.add') }}"
+                                        class="js-product-cart-form mt-4 flex items-center justify-between gap-3">
+                                        @csrf
+                                        <input type="hidden" name="product_id" value="{{ $item->id }}">
+                                        <input type="hidden" name="qty" value="1" class="js-product-qty-input">
+                                        <div class="w-full space-y-3 rounded-2xl bg-[#fff9f4] p-3 ring-1 ring-[#f2dfd2]">
+                                            <div class="space-y-2">
+                                                <div class="flex items-center justify-between">
+                                                    <span
+                                                        class="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">Size</span>
+                                                    <span
+                                                        class="js-size-label rounded-full bg-[#fff1e8] px-2.5 py-1 text-[11px] font-semibold uppercase text-[#b16231]">Small</span>
+                                                </div>
+                                                <input type="hidden" name="size" value="small" class="js-size-input">
+                                                <div class="grid grid-cols-3 gap-2 text-xs">
+                                                    <button type="button" data-size="small"
+                                                        class="js-size-option coffee-size-chip is-active px-3 py-1.5 font-semibold"
+                                                        aria-pressed="true">
+                                                        Small
+                                                    </button>
+                                                    <button type="button" data-size="medium"
+                                                        class="js-size-option coffee-size-chip px-3 py-1.5 font-semibold"
+                                                        aria-pressed="false">
+                                                        Medium
+                                                    </button>
+                                                    <button type="button" data-size="large"
+                                                        class="js-size-option coffee-size-chip px-3 py-1.5 font-semibold"
+                                                        aria-pressed="false">
+                                                        Large
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <div class="flex items-center justify-between">
+                                                    <span
+                                                        class="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">Sugar</span>
+                                                    <span
+                                                        class="rounded-full bg-[#fff1e8] px-2.5 py-1 text-[11px] font-semibold text-[#b16231]">
+                                                        <span class="js-sugar-label">50</span>%
+                                                    </span>
+                                                </div>
+                                                <input type="range" name="sugar" min="0" max="100"
+                                                    step="5" value="50"
+                                                    class="js-sugar-range coffee-sugar-range h-2.5 w-full cursor-pointer appearance-none rounded-full bg-[#f6e2d4] accent-[#f4a06b]">
+                                                <div class="flex items-center justify-between text-[11px] text-gray-400">
+                                                    <span>0%</span>
+                                                    <span>100%</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <button type="button"
+                                                        class="js-product-qty-decrease flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-base">-</button>
+                                                    <span class="js-product-qty-label text-sm font-medium">1</span>
+                                                    <button type="button"
+                                                        class="js-product-qty-increase flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-base">+</button>
+                                                </div>
+
+                                                <button type="submit"
+                                                    class="rounded-full bg-[#f4a06b] px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105">
+                                                    Add to cart
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
-        </main>
-
-        <aside class="anim-enter-right lg:col-span-3 border-l border-[#f0e3da] bg-[#fffaf6] p-6">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <h3 class="text-lg font-bold text-[#2f241f]">Cart</h3>
-                    <p class="text-sm text-gray-400">Order #3243</p>
-                </div>
-                <div class="text-right">
-                    <p class="font-semibold text-[#2f241f]">Albert Flores</p>
-                    <p class="text-xs text-gray-400">purrcof@gmail.com</p>
-                </div>
-            </div>
-
-            <div class="mt-6 flex flex-wrap gap-2 text-sm">
-                <button class="rounded-full bg-[#2f241f] px-4 py-2 font-medium text-white">Delivery</button>
-                <button class="rounded-full border border-gray-300 bg-white px-4 py-2">Dine in</button>
-                <button class="rounded-full border border-gray-300 bg-white px-4 py-2">Take away</button>
-            </div>
-
-            <div class="mt-7 space-y-4">
-                @foreach ([
-                    ['name' => 'Cappuccino', 'price' => '14.94', 'qty' => 3],
-                    ['name' => 'Coffee Latte', 'price' => '5.98', 'qty' => 1],
-                ] as $cart)
-                    <div class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger" style="--stagger: {{ $loop->index + 3 }};">
-                        <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fff4ec] text-[#d97f46]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5h9a2.25 2.25 0 0 1 2.25 2.25V12a3 3 0 0 1-3 3H8.25m0-7.5v7.5m0-7.5H6A2.25 2.25 0 0 0 3.75 9.75V12A3 3 0 0 0 6.75 15h1.5m0 0V18m4.5-3v3m4.5-3v3" />
-                            </svg>
+                    @empty
+                        <div
+                            class="col-span-full rounded-2xl border border-dashed border-[#d8c5b8] bg-[#fffaf5] p-6 text-center text-[#7a5c4e]">
+                            No products found. Add products from Admin -> Products.
                         </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-[#2f241f]">{{ $cart['name'] }}</h4>
-                            <p class="text-xs text-gray-400">Small - 200g</p>
-                            <div class="mt-2 flex items-center justify-between">
-                                <span class="font-semibold text-[#2f241f]">${{ $cart['price'] }}</span>
-                                <div class="flex items-center gap-2">
-                                    <button class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-300">-</button>
-                                    <span class="text-sm">{{ $cart['qty'] }}</span>
-                                    <button class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-300">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="mt-7 space-y-3 border-t border-[#f0e3da] pt-6 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Items</span>
-                    <span>$20.92</span>
+                    @endforelse
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Discount</span>
-                    <span>-$3.00</span>
-                </div>
-                <div class="flex justify-between text-lg font-bold">
-                    <span>Total</span>
-                    <span class="text-[#d97f46]">$17.92</span>
-                </div>
-            </div>
-
-            <button class="anim-pop anim-delay-400 mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#f4a06b] py-4 font-semibold text-white shadow-lg shadow-[#e8b28f] transition hover:brightness-105">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5m-15 0 1.5 11.25A2.25 2.25 0 0 0 9 20.25h6a2.25 2.25 0 0 0 2.25-2.25l1.5-11.25M9.75 6.75v-1.5A2.25 2.25 0 0 1 12 3h0a2.25 2.25 0 0 1 2.25 2.25v1.5" />
-                </svg>
-                Place an order
-            </button>
-        </aside>
+            </main>
+            @include('cashier.sidebar.cart', ['activeCashierMenu' => 'cart'])
+        </div>
     </div>
-</div>
+
+    <script>
+        (function() {
+            const root = document.documentElement;
+            const overlay = document.querySelector('[data-cashier-overlay]');
+            const menu = document.querySelector('[data-cashier-menu]');
+            const cart = document.querySelector('[data-cashier-cart]');
+            const openMenuButton = document.querySelector('[data-cashier-open-menu]');
+            const openCartButton = document.querySelector('[data-cashier-open-cart]');
+            const closeButtons = document.querySelectorAll('[data-cashier-close]');
+            const productCartForms = document.querySelectorAll('.js-product-cart-form');
+
+            productCartForms.forEach(function(form) {
+                const qtyInput = form.querySelector('.js-product-qty-input');
+                const qtyLabel = form.querySelector('.js-product-qty-label');
+                const decreaseButton = form.querySelector('.js-product-qty-decrease');
+                const increaseButton = form.querySelector('.js-product-qty-increase');
+                const sizeInput = form.querySelector('.js-size-input');
+                const sizeLabel = form.querySelector('.js-size-label');
+                const sizeButtons = form.querySelectorAll('.js-size-option');
+                const sugarRange = form.querySelector('.js-sugar-range');
+                const sugarLabel = form.querySelector('.js-sugar-label');
+
+                if (!qtyInput || !qtyLabel || !decreaseButton || !increaseButton) return;
+
+                const syncQty = function(value) {
+                    const nextQty = Math.min(99, Math.max(1, Number(value) || 1));
+                    qtyInput.value = String(nextQty);
+                    qtyLabel.textContent = String(nextQty);
+                };
+
+                const syncSize = function(value) {
+                    if (!sizeInput || !sizeLabel || !sizeButtons.length) return;
+
+                    const normalized = ['small', 'medium', 'large'].includes(String(value)) ?
+                        String(value) :
+                        'small';
+
+                    sizeInput.value = normalized;
+                    sizeLabel.textContent = normalized.charAt(0).toUpperCase() + normalized.slice(1);
+
+                    sizeButtons.forEach(function(button) {
+                        const isActive = button.dataset.size === normalized;
+                        button.classList.toggle('is-active', isActive);
+                        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                    });
+                };
+
+                const syncSugar = function(value) {
+                    if (!sugarRange || !sugarLabel) return;
+
+                    const normalized = Math.min(100, Math.max(0, Number(value) || 0));
+                    sugarRange.value = String(normalized);
+                    sugarLabel.textContent = String(normalized);
+                    sugarRange.style.background =
+                        'linear-gradient(90deg, #f4a06b 0%, #f4a06b ' + normalized +
+                        '%, #f6e2d4 ' + normalized + '%, #f6e2d4 100%)';
+                };
+
+                decreaseButton.addEventListener('click', function() {
+                    syncQty((Number(qtyInput.value) || 1) - 1);
+                });
+
+                increaseButton.addEventListener('click', function() {
+                    syncQty((Number(qtyInput.value) || 1) + 1);
+                });
+
+                sizeButtons.forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        syncSize(button.dataset.size);
+                    });
+                });
+
+                if (sugarRange) {
+                    sugarRange.addEventListener('input', function() {
+                        syncSugar(sugarRange.value);
+                    });
+                }
+
+                if (sizeInput) {
+                    syncSize(sizeInput.value);
+                }
+
+                if (sugarRange) {
+                    syncSugar(sugarRange.value);
+                }
+            });
+
+            if (!overlay || !menu || !cart) return;
+
+            const closeAll = function() {
+                menu.classList.add('-translate-x-full');
+                cart.classList.add('translate-x-full');
+                overlay.classList.add('hidden');
+                root.classList.remove('overflow-hidden');
+            };
+
+            const openMenu = function() {
+                menu.classList.remove('-translate-x-full');
+                cart.classList.add('translate-x-full');
+                overlay.classList.remove('hidden');
+                root.classList.add('overflow-hidden');
+            };
+
+            const openCart = function() {
+                cart.classList.remove('translate-x-full');
+                menu.classList.add('-translate-x-full');
+                overlay.classList.remove('hidden');
+                root.classList.add('overflow-hidden');
+            };
+
+            if (openMenuButton) {
+                openMenuButton.addEventListener('click', openMenu);
+            }
+
+            if (openCartButton) {
+                openCartButton.addEventListener('click', openCart);
+            }
+
+            closeButtons.forEach(function(button) {
+                button.addEventListener('click', closeAll);
+            });
+
+            overlay.addEventListener('click', closeAll);
+
+            menu.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', closeAll);
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeAll();
+                }
+            });
+
+            const desktopMediaQuery = window.matchMedia('(min-width: 1024px)');
+            const handleDesktopChange = function(event) {
+                if (event.matches) {
+                    overlay.classList.add('hidden');
+                    root.classList.remove('overflow-hidden');
+                } else {
+                    closeAll();
+                }
+            };
+
+            handleDesktopChange(desktopMediaQuery);
+
+            if (desktopMediaQuery.addEventListener) {
+                desktopMediaQuery.addEventListener('change', handleDesktopChange);
+            } else if (desktopMediaQuery.addListener) {
+                desktopMediaQuery.addListener(handleDesktopChange);
+            }
+        })();
+    </script>
 @endsection

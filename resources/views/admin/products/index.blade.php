@@ -1,0 +1,441 @@
+@extends('layouts.app')
+
+@section('content')
+    @php
+        $categories = collect($categories ?? []);
+    @endphp
+    <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
+        <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
+            @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'products'])
+            <main class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
+                <div class="anim-enter-up anim-delay-100 mb-6 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p
+                            class="inline-flex items-center gap-2 rounded-full bg-[#ffe7d5] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#b16231]">
+                            <span class="h-2 w-2 rounded-full bg-[#f4a06b]"></span>
+                            Admin Panel
+                        </p>
+                        <h1 class="mt-3 text-3xl font-black text-[#2f241f]">Product Management</h1>
+                        <p class="mt-1 text-sm text-slate-500">Add products here and they appear in cashier menu.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('admin.index') }}"
+                            class="anim-pop inline-flex items-center gap-2 rounded-xl border border-[#edd5c4] bg-white px-4 py-2 text-sm font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]">
+                            Back to dashboard
+                        </a>
+                        <button type="button"
+                            class="js-open-add-product anim-pop inline-flex items-center gap-2 rounded-xl bg-[#f4a06b] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105">
+                            Add Product
+                        </button>
+                    </div>
+                </div>
+
+                @if ($errors->any())
+                    <div class="anim-pop mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        Please check the form and try again.
+                    </div>
+                @endif
+
+                <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+                    <template id="add-product-template">
+                        <form id="swal-add-product-form" method="POST" action="{{ route('admin.products.store') }}"
+                            enctype="multipart/form-data" class="space-y-4 text-left">
+                            @csrf
+
+                            <div>
+                                <label for="swal-add-product-name"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Product Name</label>
+                                <input id="swal-add-product-name" name="name" type="text" value="{{ old('name') }}"
+                                    required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                    placeholder="Cappuccino">
+                            </div>
+
+                            <div>
+                                <label for="swal-add-product-price"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Price (USD)</label>
+                                <input id="swal-add-product-price" name="price" type="number"
+                                    value="{{ old('price') }}" min="0" step="0.01" required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                    placeholder="4.99">
+                            </div>
+
+                            <div>
+                                <label for="swal-add-product-category"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Category</label>
+                                <select id="swal-add-product-category" name="category_id" required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                    <option value="">Select category</option>
+                                    @foreach ($categories as $categoryOption)
+                                        <option value="{{ $categoryOption->id }}" @selected((string) old('category_id') === (string) $categoryOption->id)>
+                                            {{ $categoryOption->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="swal-add-product-description"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Description</label>
+                                <textarea id="swal-add-product-description" name="description" rows="4"
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                    placeholder="Freshly brewed and perfect for customer orders.">{{ old('description') }}</textarea>
+                            </div>
+
+                            <div>
+                                <label for="swal-add-product-image"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Product Image</label>
+                                <input id="swal-add-product-image" name="image" type="file" accept="image/*"
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                            </div>
+
+                            <label class="inline-flex items-center gap-2 text-sm text-[#5f4b40]">
+                                <input type="checkbox" name="is_active" value="1" @checked(old('is_active', '1') === '1')
+                                    class="h-4 w-4 rounded border-[#d8c3b4] text-[#f4a06b]">
+                                Active in cashier
+                            </label>
+
+                            <button type="submit"
+                                class="inline-flex w-full items-center justify-center rounded-xl bg-[#2f241f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#201813]">
+                                Add Product
+                            </button>
+                        </form>
+                    </template>
+
+                    <section
+                        class="anim-enter-up anim-delay-300 rounded-3xl border border-[#f0e3da] bg-white p-5 xl:col-span-3">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h2 class="text-xl font-bold text-[#2f241f]">Products</h2>
+                            <form method="GET" action="{{ route('admin.products.index') }}"
+                                class="relative w-full max-w-sm">
+                                <input type="text" name="search" value="{{ $search }}"
+                                    placeholder="Search products..."
+                                    class="w-full rounded-xl border border-[#e9d8cc] bg-[#fffaf6] px-4 py-2.5 pr-28 text-sm outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+                                <div class="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                                    @if ($search !== '')
+                                        <a href="{{ route('admin.products.index') }}"
+                                            class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">Clear</a>
+                                    @endif
+                                    <button type="submit"
+                                        class="rounded-lg bg-[#f4a06b] px-3 py-1.5 text-xs font-semibold text-white">Search</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="mt-5 overflow-x-auto">
+                            <table class="w-full min-w-[640px] text-left text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-[#7b5e50]">
+                                        <th class="pb-3 font-semibold">Image</th>
+                                        <th class="pb-3 font-semibold">Name</th>
+                                        <th class="pb-3 font-semibold">Category</th>
+                                        <th class="pb-3 font-semibold">Price</th>
+                                        <th class="pb-3 font-semibold">Status</th>
+                                        <th class="pb-3 font-semibold">Created</th>
+                                        <th class="pb-3 text-right font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($products as $product)
+                                        <tr class="border-b border-slate-100 anim-pop anim-stagger"
+                                            style="--stagger: {{ $loop->index + 1 }};">
+                                            <td class="py-3.5">
+                                                @if ($product->image_path)
+                                                    <img src="{{ asset('storage/' . $product->image_path) }}"
+                                                        alt="{{ $product->name }}"
+                                                        class="h-14 w-14 rounded-xl object-cover ring-1 ring-black/5">
+                                                @else
+                                                    <span
+                                                        class="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fff4ec] text-[#d97f46]">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                            stroke-width="1.9">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M8.25 7.5h9a2.25 2.25 0 0 1 2.25 2.25V12a3 3 0 0 1-3 3H8.25m0-7.5v7.5m0-7.5H6A2.25 2.25 0 0 0 3.75 9.75V12A3 3 0 0 0 6.75 15h1.5m0 0V18m4.5-3v3m4.5-3v3" />
+                                                        </svg>
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5">
+                                                <p class="font-semibold text-[#2f241f]">{{ $product->name }}</p>
+                                                <p class="mt-0.5 text-xs text-slate-500">
+                                                    {{ $product->description ?: 'No description' }}
+                                                </p>
+                                            </td>
+                                            <td class="py-3.5 text-slate-600">
+                                                {{ $product->category?->name ?? 'N/A' }}
+                                            </td>
+                                            <td class="py-3.5 font-semibold text-[#2f241f]">
+                                                ${{ number_format((float) $product->price, 2) }}
+                                            </td>
+                                            <td class="py-3.5">
+                                                @if ($product->is_active)
+                                                    <span
+                                                        class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                                                        Active
+                                                    </span>
+                                                @else
+                                                    <span
+                                                        class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                                        Inactive
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3.5 text-slate-500">
+                                                {{ optional($product->created_at)->format('M d, Y') }}
+                                            </td>
+                                            <td class="py-3.5 text-right">
+                                                <button type="button"
+                                                    class="js-edit-product-trigger rounded-lg border border-[#edd5c4] bg-white px-3 py-1.5 text-xs font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]"
+                                                    data-update-url="{{ route('admin.products.update', $product) }}"
+                                                    data-name="{{ $product->name }}"
+                                                    data-price="{{ (float) $product->price }}"
+                                                    data-category-id="{{ $product->category_id }}"
+                                                    data-description="{{ $product->description }}"
+                                                    data-active="{{ $product->is_active ? '1' : '0' }}"
+                                                    data-image-url="{{ $product->image_path ? asset('storage/' . $product->image_path) : '' }}">
+                                                    Edit
+                                                </button>
+                                                <form method="POST"
+                                                    action="{{ route('admin.products.destroy', $product) }}"
+                                                    class="js-delete-product-form inline-block">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr class="anim-enter-up">
+                                            <td colspan="7" class="py-8 text-center text-slate-500">No products found.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-5">
+                            {{ $products->links() }}
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertData = @json(session('alert'));
+            const csrfToken = @json(csrf_token());
+            const addProductTrigger = document.querySelector('.js-open-add-product');
+            const addProductTemplate = document.getElementById('add-product-template');
+            const categoryOptions = @json(
+                $categories->map(fn($category) => [
+                            'id' => (string) $category->id,
+                            'name' => (string) $category->name,
+                        ])->values());
+
+            if (addProductTrigger && addProductTemplate) {
+                addProductTrigger.addEventListener('click', function() {
+                    Swal.fire({
+                        title: 'Add product',
+                        html: addProductTemplate.innerHTML,
+                        showConfirmButton: false,
+                        showCloseButton: true,
+                        width: 720,
+                        didOpen: function() {
+                            const form = document.getElementById('swal-add-product-form');
+
+                            if (!form) return;
+
+                            form.addEventListener('submit', function(event) {
+                                if (!form.reportValidity()) {
+                                    event.preventDefault();
+                                }
+                            });
+                        },
+                    });
+                });
+            }
+
+            if (alertData) {
+                Swal.fire({
+                    icon: alertData.icon ?? 'success',
+                    title: alertData.title ?? 'Done',
+                    text: alertData.text ?? '',
+                    confirmButtonColor: '#f4a06b',
+                });
+            }
+
+            document.querySelectorAll('.js-delete-product-form').forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+
+                    Swal.fire({
+                        title: 'Delete this product?',
+                        text: 'This action cannot be undone.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, delete',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#e11d48',
+                        cancelButtonColor: '#64748b',
+                    }).then(function(result) {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            document.querySelectorAll('.js-edit-product-trigger').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const updateUrl = button.dataset.updateUrl;
+                    const currentName = button.dataset.name ?? '';
+                    const currentPrice = button.dataset.price ?? '';
+                    const currentCategoryId = button.dataset.categoryId ?? '';
+                    const currentDescription = button.dataset.description ?? '';
+                    const currentActive = button.dataset.active === '1';
+                    const currentImageUrl = button.dataset.imageUrl ?? '';
+
+                    const categorySelectOptions = categoryOptions.map(function(category) {
+                        const selected = category.id === currentCategoryId ? 'selected' : '';
+                        return '<option value="' + category.id + '" ' + selected + '>' + category
+                            .name + '</option>';
+                    }).join('');
+
+                    Swal.fire({
+                        title: 'Edit product',
+                        html: `
+                            <div class="space-y-4 text-left">
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Name</label>
+                                    <input id="swal-product-name" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentName}">
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Price</label>
+                                    <input id="swal-product-price" type="number" min="0" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentPrice}">
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Category</label>
+                                    <select id="swal-product-category" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                        <option value="">Select category</option>
+                                        ${categorySelectOptions}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Description</label>
+                                    <textarea id="swal-product-description" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">${currentDescription}</textarea>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">New Image (Optional)</label>
+                                    ${currentImageUrl ? `<img src="${currentImageUrl}" alt="Current image" class="mb-2 h-16 w-16 rounded-lg object-cover ring-1 ring-black/10">` : ''}
+                                    <input id="swal-product-image" type="file" accept="image/*" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                </div>
+                                <label class="inline-flex items-center gap-2 text-sm text-[#5f4b40]">
+                                    <input id="swal-product-active" type="checkbox" class="h-4 w-4" ${currentActive ? 'checked' : ''}>
+                                    Active
+                                </label>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Update',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#2f241f',
+                        preConfirm: function() {
+                            const name = document.getElementById('swal-product-name').value.trim();
+                            const price = document.getElementById('swal-product-price').value.trim();
+                            const categoryId = document.getElementById('swal-product-category').value;
+                            const description = document.getElementById('swal-product-description').value.trim();
+                            const isActive = document.getElementById('swal-product-active').checked;
+                            const imageInput = document.getElementById('swal-product-image');
+                            const imageFile = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+
+                            if (!name || !price || !categoryId) {
+                                Swal.showValidationMessage('Name, price, and category are required.');
+                                return false;
+                            }
+
+                            const numericPrice = Number(price);
+                            if (Number.isNaN(numericPrice) || numericPrice < 0) {
+                                Swal.showValidationMessage('Price must be a valid non-negative number.');
+                                return false;
+                            }
+
+                            if (imageFile && imageFile.size > 2 * 1024 * 1024) {
+                                Swal.showValidationMessage('Image must be at most 2MB.');
+                                return false;
+                            }
+
+                            return {
+                                name: name,
+                                price: numericPrice.toFixed(2),
+                                category_id: categoryId,
+                                description: description,
+                                is_active: isActive ? '1' : '0',
+                                image: imageFile,
+                            };
+                        },
+                    }).then(function(result) {
+                        if (!result.isConfirmed || !result.value) {
+                            return;
+                        }
+
+                        const formData = new FormData();
+
+                        const fields = {
+                            _token: csrfToken,
+                            _method: 'PUT',
+                            name: result.value.name,
+                            price: result.value.price,
+                            category_id: result.value.category_id,
+                            description: result.value.description,
+                            is_active: result.value.is_active,
+                        };
+
+                        Object.keys(fields).forEach(function(key) {
+                            formData.append(key, fields[key] ?? '');
+                        });
+
+                        if (result.value.image) {
+                            formData.append('image', result.value.image);
+                        }
+
+                        fetch(updateUrl, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        }).then(function(response) {
+                            if (response.ok || response.redirected) {
+                                window.location.reload();
+                                return;
+                            }
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Update failed',
+                                text: 'Please check your input and try again.',
+                                confirmButtonColor: '#f4a06b',
+                            });
+                        }).catch(function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Network error',
+                                text: 'Could not update product right now.',
+                                confirmButtonColor: '#f4a06b',
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    </script>
+@endsection

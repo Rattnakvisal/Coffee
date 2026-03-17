@@ -106,6 +106,56 @@
     animation-delay: 600ms;
 }
 
+.coffee-size-chip {
+    border-radius: 9999px;
+    border: 1px solid #e6d8ce;
+    background: #ffffff;
+    color: #7a5c4e;
+    transition: all 160ms ease;
+}
+
+.coffee-size-chip:hover {
+    background: #fff3ea;
+}
+
+.coffee-size-chip.is-active {
+    border-color: #2f241f;
+    background: #2f241f;
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(47, 36, 31, 0.18);
+    transform: translateY(-1px);
+}
+
+.coffee-sugar-range {
+    background: linear-gradient(90deg, #f4a06b 0%, #f4a06b 50%, #f6e2d4 50%, #f6e2d4 100%);
+}
+
+.coffee-sugar-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 18px;
+    width: 18px;
+    border-radius: 9999px;
+    border: 2px solid #ffffff;
+    background: #f4a06b;
+    box-shadow: 0 4px 10px rgba(181, 98, 49, 0.35);
+}
+
+.coffee-sugar-range::-moz-range-thumb {
+    height: 18px;
+    width: 18px;
+    border: 2px solid #ffffff;
+    border-radius: 9999px;
+    background: #f4a06b;
+    box-shadow: 0 4px 10px rgba(181, 98, 49, 0.35);
+}
+
+.coffee-sugar-range::-moz-range-track {
+    height: 10px;
+    border-radius: 9999px;
+    background: transparent;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .anim-enter-up,
     .anim-enter-left,
