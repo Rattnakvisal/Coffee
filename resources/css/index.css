@@ -63,11 +63,13 @@
 }
 
 .anim-enter-left {
-    animation: coffee-slide-from-left 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation: coffee-slide-from-left 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)
+        both;
 }
 
 .anim-enter-right {
-    animation: coffee-slide-from-right 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation: coffee-slide-from-right 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)
+        both;
 }
 
 .anim-pop {
@@ -127,7 +129,13 @@
 }
 
 .coffee-sugar-range {
-    background: linear-gradient(90deg, #f4a06b 0%, #f4a06b 50%, #f6e2d4 50%, #f6e2d4 100%);
+    background: linear-gradient(
+        90deg,
+        #f4a06b 0%,
+        #f4a06b 50%,
+        #f6e2d4 50%,
+        #f6e2d4 100%
+    );
 }
 
 .coffee-sugar-range::-webkit-slider-thumb {
@@ -154,6 +162,87 @@
     height: 10px;
     border-radius: 9999px;
     background: transparent;
+}
+
+@keyframes coffee-loader-steam {
+    0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.7);
+    }
+    30% {
+        opacity: 0.9;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-14px) scale(1.25);
+    }
+}
+
+@keyframes coffee-loader-cup {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+.coffee-loader {
+    width: 72px;
+}
+
+.coffee-loader-steam {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    height: 20px;
+    margin-bottom: 4px;
+}
+
+.coffee-loader-steam span {
+    display: block;
+    width: 6px;
+    height: 14px;
+    border-radius: 9999px;
+    background: rgba(213, 132, 79, 0.55);
+    animation: coffee-loader-steam 1s ease-in-out infinite;
+}
+
+.coffee-loader-steam span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.coffee-loader-steam span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.coffee-loader-cup {
+    width: 64px;
+    height: 34px;
+    border: 3px solid #d5844f;
+    border-radius: 0 0 16px 16px;
+    border-top: 0;
+    position: relative;
+    margin: 0 auto;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 243, 234, 0.9),
+        rgba(255, 231, 213, 0.9)
+    );
+    animation: coffee-loader-cup 1s ease-in-out infinite;
+}
+
+.coffee-loader-cup::after {
+    content: "";
+    position: absolute;
+    right: -12px;
+    top: 7px;
+    width: 12px;
+    height: 12px;
+    border: 3px solid #d5844f;
+    border-left: 0;
+    border-radius: 0 10px 10px 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

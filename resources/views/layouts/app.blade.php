@@ -13,9 +13,13 @@
         $slotContent = trim((string) ($slot ?? ''));
         $hasContent = $slotContent !== '' || View::hasSection('content');
         $roles = collect($roles ?? []);
+        $isWorkspacePage = request()->is('admin*') || request()->is('cashier*');
+        $pageWrapperClass = $isWorkspacePage
+            ? 'min-h-screen w-full p-0'
+            : 'min-h-screen p-6 lg:p-10';
     @endphp
 
-    <div class="min-h-screen p-6 lg:p-10">
+    <div class="{{ $pageWrapperClass }}">
         @if ($hasContent)
             {{ $slot ?? '' }}
             @yield('content')

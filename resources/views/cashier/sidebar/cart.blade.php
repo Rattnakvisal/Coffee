@@ -47,13 +47,15 @@
                         <span
                             class="font-semibold text-[#2f241f]">${{ number_format((float) $item['line_total'], 2) }}</span>
                         <div class="flex items-center gap-2">
-                            <form method="POST" action="{{ route('cashier.cart.decrement', $item['item_key']) }}">
+                            <form method="POST" action="{{ route('cashier.cart.decrement', $item['item_key']) }}"
+                                class="js-cart-item-form">
                                 @csrf
                                 <button type="submit"
                                     class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-300">-</button>
                             </form>
                             <span class="text-sm">{{ $item['qty'] }}</span>
-                            <form method="POST" action="{{ route('cashier.cart.increment', $item['item_key']) }}">
+                            <form method="POST" action="{{ route('cashier.cart.increment', $item['item_key']) }}"
+                                class="js-cart-item-form">
                                 @csrf
                                 <button type="submit"
                                     class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-300">+</button>
@@ -85,7 +87,7 @@
         </div>
     </div>
 
-    <button
+    <button type="button" data-place-order
         class="anim-pop anim-delay-400 mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#f4a06b] py-4 font-semibold text-white shadow-lg shadow-[#e8b28f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
         @disabled($cartItems->isEmpty())>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"

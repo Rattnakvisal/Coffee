@@ -181,7 +181,7 @@
                                                 </div>
 
                                                 <button type="submit"
-                                                    class="rounded-full bg-[#f4a06b] px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105">
+                                                    class="js-add-to-cart-btn rounded-full bg-[#f4a06b] px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:opacity-70">
                                                     Add to cart
                                                 </button>
                                             </div>
@@ -201,17 +201,103 @@
             @include('cashier.sidebar.cart', ['activeCashierMenu' => 'cart'])
         </div>
     </div>
+    <div id="coffee-add-loading"
+        class="fixed inset-0 z-[80] hidden items-center justify-center bg-[#2f241f]/35 backdrop-blur-sm">
+        <div class="coffee-loader-card rounded-3xl bg-white/95 px-8 py-7 text-center shadow-2xl shadow-[#6a432b]/25">
+            <div class="coffee-loader mx-auto">
+                <div class="coffee-loader-steam">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="coffee-loader-cup"></div>
+            </div>
+            <p class="mt-4 text-sm font-semibold tracking-wide text-[#7a5c4e]">Brewing your coffee...</p>
+        </div>
+    </div>
 
     <script>
         (function() {
             const root = document.documentElement;
             const overlay = document.querySelector('[data-cashier-overlay]');
             const menu = document.querySelector('[data-cashier-menu]');
-            const cart = document.querySelector('[data-cashier-cart]');
+            let cart = document.querySelector('[data-cashier-cart]');
             const openMenuButton = document.querySelector('[data-cashier-open-menu]');
             const openCartButton = document.querySelector('[data-cashier-open-cart]');
-            const closeButtons = document.querySelectorAll('[data-cashier-close]');
             const productCartForms = document.querySelectorAll('.js-product-cart-form');
+            const loadingOverlay = document.getElementById('coffee-add-loading');
+            const loadingText = loadingOverlay ? loadingOverlay.querySelector('p') : null;
+            const desktopMediaQuery = window.matchMedia('(min-width: 1024px)');
+
+            const showLoading = function(text) {
+                if (!loadingOverlay) return;
+                if (loadingText && text) {
+                    loadingText.textContent = text;
+                }
+
+                loadingOverlay.classList.remove('hidden');
+                loadingOverlay.classList.add('flex');
+            };
+
+            const hideLoading = function() {
+                if (!loadingOverlay) return;
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+            };
+
+            const replaceCartHtml = function(html) {
+                if (!cart || !html) return;
+
+                const wasOpen = !cart.classList.contains('translate-x-full');
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = html.trim();
+
+                const nextCart = wrapper.firstElementChild;
+                if (!nextCart) return;
+
+                if (wasOpen || desktopMediaQuery.matches) {
+                    nextCart.classList.remove('translate-x-full');
+                }
+
+                cart.replaceWith(nextCart);
+                cart = nextCart;
+            };
+
+            const submitCartFormAjax = async function(form, submitButton) {
+                if (!form || form.dataset.submitting === '1') return;
+
+                form.dataset.submitting = '1';
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: new FormData(form),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+
+                    const payload = await response.json();
+                    if (payload && payload.ok && payload.cart_html) {
+                        replaceCartHtml(payload.cart_html);
+                    }
+                } catch (error) {
+                    form.submit();
+                } finally {
+                    form.dataset.submitting = '0';
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+                }
+            };
 
             productCartForms.forEach(function(form) {
                 const qtyInput = form.querySelector('.js-product-qty-input');
@@ -287,6 +373,23 @@
                 if (sugarRange) {
                     syncSugar(sugarRange.value);
                 }
+
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+
+                    const addButton = form.querySelector('.js-add-to-cart-btn');
+                    const originalText = addButton ? addButton.textContent : null;
+
+                    if (addButton) {
+                        addButton.textContent = 'Adding...';
+                    }
+
+                    submitCartFormAjax(form, addButton).finally(function() {
+                        if (addButton && originalText) {
+                            addButton.textContent = originalText;
+                        }
+                    });
+                });
             });
 
             if (!overlay || !menu || !cart) return;
@@ -320,8 +423,35 @@
                 openCartButton.addEventListener('click', openCart);
             }
 
-            closeButtons.forEach(function(button) {
-                button.addEventListener('click', closeAll);
+            document.addEventListener('submit', function(event) {
+                const targetForm = event.target.closest('.js-cart-item-form');
+                if (!targetForm) return;
+
+                event.preventDefault();
+                const submitButton = targetForm.querySelector('button[type="submit"]');
+                submitCartFormAjax(targetForm, submitButton);
+            });
+
+            document.addEventListener('click', function(event) {
+                const closeTrigger = event.target.closest('[data-cashier-close]');
+                if (closeTrigger) {
+                    closeAll();
+                    return;
+                }
+
+                const placeOrderButton = event.target.closest('[data-place-order]');
+                if (!placeOrderButton || placeOrderButton.disabled) return;
+
+                const originalText = placeOrderButton.textContent;
+                placeOrderButton.disabled = true;
+                placeOrderButton.textContent = 'Placing order...';
+                showLoading('Preparing your order...');
+
+                window.setTimeout(function() {
+                    hideLoading();
+                    placeOrderButton.textContent = originalText;
+                    placeOrderButton.disabled = false;
+                }, 1000);
             });
 
             overlay.addEventListener('click', closeAll);
@@ -336,7 +466,6 @@
                 }
             });
 
-            const desktopMediaQuery = window.matchMedia('(min-width: 1024px)');
             const handleDesktopChange = function(event) {
                 if (event.matches) {
                     overlay.classList.add('hidden');

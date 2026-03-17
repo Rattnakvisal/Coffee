@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -61,7 +62,7 @@ class CashierController extends Controller
         ]);
     }
 
-    public function addToCart(Request $request): RedirectResponse
+    public function addToCart(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
@@ -88,15 +89,15 @@ class CashierController extends Controller
 
         $request->session()->put(self::CART_SESSION_KEY, $cart);
 
-        return back();
+        return $this->respondCartMutation($request);
     }
 
-    public function incrementCartItem(Request $request, string $itemKey): RedirectResponse
+    public function incrementCartItem(Request $request, string $itemKey): RedirectResponse|JsonResponse
     {
         $cart = $this->getCart($request);
 
         if (! isset($cart[$itemKey])) {
-            return back();
+            return $this->respondCartMutation($request);
         }
 
         $currentQty = (int) ($cart[$itemKey]['qty'] ?? 0);
@@ -104,15 +105,15 @@ class CashierController extends Controller
 
         $request->session()->put(self::CART_SESSION_KEY, $cart);
 
-        return back();
+        return $this->respondCartMutation($request);
     }
 
-    public function decrementCartItem(Request $request, string $itemKey): RedirectResponse
+    public function decrementCartItem(Request $request, string $itemKey): RedirectResponse|JsonResponse
     {
         $cart = $this->getCart($request);
 
         if (! isset($cart[$itemKey])) {
-            return back();
+            return $this->respondCartMutation($request);
         }
 
         $currentQty = (int) ($cart[$itemKey]['qty'] ?? 0);
@@ -124,6 +125,25 @@ class CashierController extends Controller
         }
 
         $request->session()->put(self::CART_SESSION_KEY, $cart);
+
+        return $this->respondCartMutation($request);
+    }
+
+    private function respondCartMutation(Request $request): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson() || $request->ajax()) {
+            $cartState = $this->buildCartState($request);
+
+            return response()->json([
+                'ok' => true,
+                'cart_html' => view('cashier.sidebar.cart', [
+                    'cartItems' => $cartState['items'],
+                    'cartSubtotal' => $cartState['subtotal'],
+                    'cartDiscount' => $cartState['discount'],
+                    'cartTotal' => $cartState['total'],
+                ])->render(),
+            ]);
+        }
 
         return back();
     }
