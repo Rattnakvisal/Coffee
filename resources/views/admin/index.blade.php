@@ -9,10 +9,10 @@
         ->take(2)
         ->implode('');
 @endphp
-<div class="mx-auto w-full max-w-[1500px] overflow-hidden rounded-[32px] border border-white/60 bg-white/85 shadow-2xl shadow-[#bc7f54]/20">
+<div class="anim-enter-up mx-auto w-full max-w-[1500px] overflow-hidden rounded-[32px] border border-white/60 bg-white/85 shadow-2xl shadow-[#bc7f54]/20">
     <div class="grid min-h-[85vh] grid-cols-1 lg:grid-cols-12">
 
-        <aside class="lg:col-span-3 xl:col-span-2 bg-[#2f241f] p-6 text-white">
+        <aside class="anim-enter-left lg:col-span-3 xl:col-span-2 bg-[#2f241f] p-6 text-white">
             <div class="flex items-center gap-3">
                 <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f4a06b] text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
@@ -87,7 +87,7 @@
             </div>
         </aside>
 
-        <main class="lg:col-span-9 xl:col-span-10 bg-[#f8f8f8] p-6 lg:p-8">
+        <main class="anim-enter-right lg:col-span-9 xl:col-span-10 bg-[#f8f8f8] p-6 lg:p-8">
             <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <form action="#" method="GET" class="relative w-full max-w-xl">
                     <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -194,7 +194,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="anim-enter-up anim-delay-100 flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <p class="inline-flex items-center gap-2 rounded-full bg-[#ffe7d5] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#b16231]">
                         <span class="h-2 w-2 rounded-full bg-[#f4a06b]"></span>
@@ -204,7 +204,7 @@
                     <p class="mt-1 text-sm text-gray-500">Track sales, orders, and inventory performance in real time.</p>
                 </div>
 
-                <button class="inline-flex items-center gap-2 rounded-xl bg-[#f4a06b] px-5 py-3 font-semibold text-white shadow-lg shadow-[#e9b08d] transition hover:brightness-105">
+                <button class="anim-pop anim-delay-200 inline-flex items-center gap-2 rounded-xl bg-[#f4a06b] px-5 py-3 font-semibold text-white shadow-lg shadow-[#e9b08d] transition hover:brightness-105">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
@@ -213,7 +213,7 @@
             </div>
 
             <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                <div class="anim-pop anim-delay-200 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-gray-500">Total Sales</p>
                         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1e5] text-[#d97f46]">
@@ -226,7 +226,7 @@
                     <p class="mt-2 text-xs font-medium text-emerald-600">+8.2% from last week</p>
                 </div>
 
-                <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                <div class="anim-pop anim-delay-300 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-gray-500">Orders Today</p>
                         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1e5] text-[#d97f46]">
@@ -239,7 +239,7 @@
                     <p class="mt-2 text-xs font-medium text-emerald-600">+11 new since morning</p>
                 </div>
 
-                <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                <div class="anim-pop anim-delay-400 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-gray-500">Products</p>
                         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1e5] text-[#d97f46]">
@@ -252,7 +252,7 @@
                     <p class="mt-2 text-xs font-medium text-slate-500">6 low-stock items</p>
                 </div>
 
-                <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                <div class="anim-pop anim-delay-500 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-gray-500">Cashiers</p>
                         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1e5] text-[#d97f46]">
@@ -267,7 +267,7 @@
             </div>
 
             <div class="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                <div class="xl:col-span-2 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                <div class="anim-enter-up anim-delay-300 xl:col-span-2 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
                     <div class="mb-4 flex items-center justify-between">
                         <h3 class="text-xl font-bold text-[#2f241f]">Recent Orders</h3>
                         <button class="text-sm font-medium text-[#d97f46] hover:underline">View all</button>
@@ -307,7 +307,7 @@
                     </div>
                 </div>
 
-                <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                <div class="anim-enter-up anim-delay-400 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
                     <h3 class="text-xl font-bold text-[#2f241f]">Top Products</h3>
 
                     <div class="mt-5 space-y-5 text-sm">

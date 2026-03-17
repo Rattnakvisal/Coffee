@@ -2,9 +2,9 @@
 
 @section('content')
     <div
-        class="mx-auto w-full max-w-[1500px] overflow-hidden rounded-[32px] border border-white/60 bg-white/85 shadow-2xl shadow-[#bc7f54]/20">
+        class="anim-enter-up mx-auto w-full max-w-[1500px] overflow-hidden rounded-[32px] border border-white/60 bg-white/85 shadow-2xl shadow-[#bc7f54]/20">
         <div class="grid min-h-[85vh] grid-cols-1 lg:grid-cols-12">
-            <aside class="lg:col-span-3 xl:col-span-2 bg-[#2f241f] p-6 text-white">
+            <aside class="anim-enter-left lg:col-span-3 xl:col-span-2 bg-[#2f241f] p-6 text-white">
                 <div class="flex items-center gap-3">
                     <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f4a06b] text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -104,8 +104,8 @@
                 </div>
             </aside>
 
-            <main class="lg:col-span-9 xl:col-span-10 bg-[#f8f8f8] p-6 lg:p-8">
-                <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <main class="anim-enter-right lg:col-span-9 xl:col-span-10 bg-[#f8f8f8] p-6 lg:p-8">
+                <div class="anim-enter-up anim-delay-100 mb-6 flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <p
                             class="inline-flex items-center gap-2 rounded-full bg-[#ffe7d5] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#b16231]">
@@ -118,23 +118,23 @@
                     </div>
 
                     <a href="{{ route('admin.index') }}"
-                        class="inline-flex items-center gap-2 rounded-xl border border-[#edd5c4] bg-white px-4 py-2 text-sm font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]">
+                        class="anim-pop anim-delay-200 inline-flex items-center gap-2 rounded-xl border border-[#edd5c4] bg-white px-4 py-2 text-sm font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]">
                         Back to dashboard
                     </a>
                 </div>
 
                 @if ($errors->any())
-                    <div class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <div class="anim-pop mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                         Please check the form and try again.
                     </div>
                 @endif
 
                 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <section class="rounded-3xl border border-[#f0e3da] bg-[#fffaf6] p-5 xl:col-span-1">
+                    <section class="anim-enter-up anim-delay-200 rounded-3xl border border-[#f0e3da] bg-[#fffaf6] p-5 xl:col-span-1">
                         <h2 class="text-xl font-bold text-[#2f241f]">Add Member</h2>
                         <p class="mt-1 text-sm text-[#7a5c4e]">Create a new account and assign role.</p>
 
-                        <form method="POST" action="{{ route('admin.users.store') }}" class="mt-5 space-y-4">
+                        <form method="POST" action="{{ route('admin.users.store') }}" class="mt-5 space-y-4 anim-enter-up anim-delay-300">
                             @csrf
 
                             <div>
@@ -201,7 +201,7 @@
                         </form>
                     </section>
 
-                    <section class="rounded-3xl border border-[#f0e3da] bg-white p-5 xl:col-span-2">
+                    <section class="anim-enter-up anim-delay-300 rounded-3xl border border-[#f0e3da] bg-white p-5 xl:col-span-2">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h2 class="text-xl font-bold text-[#2f241f]">Team Members</h2>
                             <form id="user-search-form" method="GET" action="{{ route('admin.users.index') }}"
@@ -236,7 +236,8 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($users as $member)
-                                        <tr class="border-b border-slate-100">
+                                        <tr class="border-b border-slate-100 anim-pop anim-stagger"
+                                            style="--stagger: {{ $loop->index + 1 }};">
                                             <td class="py-3.5 font-semibold text-[#2f241f]">{{ $member->name }}</td>
                                             <td class="py-3.5 text-slate-600">{{ $member->email }}</td>
                                             <td class="py-3.5">
@@ -277,7 +278,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr>
+                                        <tr class="anim-enter-up">
                                             <td colspan="5" class="py-8 text-center text-slate-500">No members found.
                                             </td>
                                         </tr>

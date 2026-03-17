@@ -21,74 +21,72 @@ Route::get('/', function () use ($activeRoles) {
     ]);
 })->name('welcome');
 
-Route::middleware('guest')->group(function () use ($activeRoles): void {
-    Route::get('/login', function () use ($activeRoles) {
-        $roles = $activeRoles();
+Route::get('/login', function () use ($activeRoles) {
+    $roles = $activeRoles();
 
-        $defaultRole = $roles
-            ->firstWhere('slug', 'admin')
-            ?? $roles->firstWhere('slug', 'cashier')
-            ?? $roles->first();
+    $defaultRole = $roles
+        ->firstWhere('slug', 'admin')
+        ?? $roles->firstWhere('slug', 'cashier')
+        ?? $roles->first();
 
-        abort_unless($defaultRole, 404, 'No active roles found.');
+    abort_unless($defaultRole, 404, 'No active roles found.');
 
-        return redirect()->route('login.form', ['role' => $defaultRole->slug]);
-    })->name('login');
+    return redirect()->route('login.form', ['role' => $defaultRole->slug]);
+})->name('login');
 
-    Route::get('/login/{role}', function (string $role) use ($activeRoles) {
-        $selectedRole = $activeRoles()->firstWhere('slug', $role);
+Route::get('/login/{role}', function (string $role) use ($activeRoles) {
+    $selectedRole = $activeRoles()->firstWhere('slug', $role);
 
-        abort_unless($selectedRole, 404);
+    abort_unless($selectedRole, 404);
 
-        return view('auth.login', [
-            'selectedRole' => $selectedRole,
-            'roles' => $activeRoles(),
-        ]);
-    })->name('login.form');
+    return view('auth.login', [
+        'selectedRole' => $selectedRole,
+        'roles' => $activeRoles(),
+    ]);
+})->name('login.form');
 
-    Route::post('/login/{role}', function (Request $request, string $role) use ($activeRoles) {
-        $selectedRole = $activeRoles()->firstWhere('slug', $role);
+Route::post('/login/{role}', function (Request $request, string $role) use ($activeRoles) {
+    $selectedRole = $activeRoles()->firstWhere('slug', $role);
 
-        abort_unless($selectedRole, 404);
+    abort_unless($selectedRole, 404);
 
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+    $credentials = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required', 'string'],
+    ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return back()
-                ->withErrors([
-                    'email' => 'Invalid email or password.',
-                ])
-                ->onlyInput('email');
-        }
+    if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        return back()
+            ->withErrors([
+                'email' => 'Invalid email or password.',
+            ])
+            ->onlyInput('email');
+    }
 
-        $request->session()->regenerate();
+    $request->session()->regenerate();
 
-        $user = $request->user()->load('role');
+    $user = $request->user()->load('role');
 
-        if (! $user->hasRole($selectedRole->slug)) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+    if (! $user->hasRole($selectedRole->slug)) {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-            return back()
-                ->withErrors([
-                    'email' => 'This account is not allowed to sign in as ' . strtolower($selectedRole->name) . '.',
-                ])
-                ->onlyInput('email');
-        }
+        return back()
+            ->withErrors([
+                'email' => 'This account is not allowed to sign in as ' . strtolower($selectedRole->name) . '.',
+            ])
+            ->onlyInput('email');
+    }
 
-        $dashboardRoute = match ($selectedRole->slug) {
-            'admin' => 'admin.index',
-            'cashier' => 'cashier.index',
-            default => 'welcome',
-        };
+    $dashboardRoute = match ($selectedRole->slug) {
+        'admin' => 'admin.index',
+        'cashier' => 'cashier.index',
+        default => 'welcome',
+    };
 
-        return redirect()->intended(route($dashboardRoute));
-    })->name('login.submit');
-});
+    return redirect()->intended(route($dashboardRoute));
+})->name('login.submit');
 
 Route::post('/logout', function (Request $request) {
     Auth::logout();

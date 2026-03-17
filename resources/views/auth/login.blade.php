@@ -19,29 +19,30 @@
 @endphp
 
 <main class="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center justify-center">
-    <section class="relative w-full overflow-hidden rounded-[36px] border border-white/70 bg-white/80 shadow-2xl shadow-[#c98a5f]/20 backdrop-blur">
-        <div class="pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-[#ffd9bf]/70 blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-16 right-20 h-56 w-56 rounded-full bg-[#f3c6a7]/70 blur-3xl"></div>
+    <section class="anim-enter-up relative w-full overflow-hidden rounded-[36px] border border-white/70 bg-white/80 shadow-2xl shadow-[#c98a5f]/20 backdrop-blur">
+        <div class="anim-float pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-[#ffd9bf]/70 blur-3xl"></div>
+        <div class="anim-float pointer-events-none absolute -bottom-16 right-20 h-56 w-56 rounded-full bg-[#f3c6a7]/70 blur-3xl" style="animation-delay: 0.4s;"></div>
 
         <div class="relative flex flex-col lg:flex-row">
-            <div class="w-full p-6 sm:p-10 lg:w-[60%]">
+            <div class="anim-enter-left w-full p-6 sm:p-10 lg:w-[60%]">
                 <div class="mx-auto w-full max-w-2xl">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <a href="{{ route('welcome') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-[#8b5f45] hover:text-[#2f241f]">
+                    <a href="{{ route('welcome') }}" class="anim-pop inline-flex items-center gap-2 text-sm font-semibold text-[#8b5f45] hover:text-[#2f241f]">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                         </svg>
                         Back
                     </a>
 
-                    <div class="inline-flex flex-wrap rounded-full bg-[#f6ece4] p-1 text-sm font-semibold">
+                    <div class="anim-enter-up anim-delay-100 inline-flex flex-wrap rounded-full bg-[#f6ece4] p-1 text-sm font-semibold">
                         @foreach ($roles as $roleOption)
                             @php
                                 $isCurrent = $selectedRole && $selectedRole->id === $roleOption->id;
                             @endphp
                             <a
                                 href="{{ route('login.form', ['role' => $roleOption->slug]) }}"
-                                class="{{ $isCurrent ? 'bg-white text-[#2f241f] shadow-sm' : 'text-[#7a5c4e] hover:text-[#2f241f]' }} rounded-full px-4 py-1.5 transition"
+                                class="{{ $isCurrent ? 'bg-white text-[#2f241f] shadow-sm' : 'text-[#7a5c4e] hover:text-[#2f241f]' }} rounded-full px-4 py-1.5 transition anim-pop anim-stagger"
+                                style="--stagger: {{ $loop->index + 1 }};"
                             >
                                 {{ str($roleOption->name)->headline() }}
                             </a>
@@ -49,18 +50,18 @@
                     </div>
                 </div>
 
-                <div class="mt-7">
+                <div class="anim-enter-up anim-delay-200 mt-7">
                     <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[#b16231]">{{ $roleLabel }} Access</p>
                     <h2 class="mt-2 text-3xl font-black text-[#2f241f]">Sign in to continue</h2>
                 </div>
 
                 @if ($errors->any())
-                    <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <div class="anim-pop mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                         Please check your login details and try again.
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login.submit', ['role' => $selectedRole->slug]) }}" class="mt-6 space-y-4">
+                <form method="POST" action="{{ route('login.submit', ['role' => $selectedRole->slug]) }}" class="anim-enter-up anim-delay-300 mt-6 space-y-4">
                     @csrf
 
                     <div>
@@ -139,8 +140,8 @@
                 </div>
             </div>
 
-            <aside class="w-full bg-white/50 p-6 sm:p-10 lg:w-[40%]">
-                <div class="mx-auto h-full max-w-sm rounded-3xl p-7 text-white shadow-xl" style="background: {{ $roleGradient }};">
+            <aside class="anim-enter-right w-full bg-white/50 p-6 sm:p-10 lg:w-[40%]">
+                <div class="anim-float mx-auto h-full max-w-sm rounded-3xl p-7 text-white shadow-xl" style="background: {{ $roleGradient }};">
                     <p class="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.11em]">
                         Role profile
                     </p>

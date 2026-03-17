@@ -1,10 +1,10 @@
 ﻿@extends('layouts.app')
 
 @section('content')
-<div class="mx-auto w-full max-w-[1500px] overflow-hidden rounded-[32px] border border-white/60 bg-white/85 shadow-2xl shadow-[#bc7f54]/20">
+<div class="anim-enter-up mx-auto w-full max-w-[1500px] overflow-hidden rounded-[32px] border border-white/60 bg-white/85 shadow-2xl shadow-[#bc7f54]/20">
     <div class="grid min-h-[85vh] grid-cols-1 lg:grid-cols-12">
 
-        <aside class="lg:col-span-3 xl:col-span-2 border-r border-[#f0e3da] bg-[#fffaf6] p-6">
+        <aside class="anim-enter-left lg:col-span-3 xl:col-span-2 border-r border-[#f0e3da] bg-[#fffaf6] p-6">
             <div>
                 <div class="flex items-center gap-3">
                     <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f4a06b] text-white">
@@ -80,7 +80,7 @@
             </div>
         </aside>
 
-        <main class="lg:col-span-6 xl:col-span-7 bg-[#f8f8f8] p-6">
+        <main class="anim-enter-up anim-delay-100 lg:col-span-6 xl:col-span-7 bg-[#f8f8f8] p-6">
             <div class="flex flex-wrap items-center gap-3">
                 <div class="relative min-w-[240px] flex-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
@@ -123,7 +123,7 @@
                     ['name' => 'Americano', 'price' => '5.98'],
                     ['name' => 'V60', 'price' => '5.98'],
                 ] as $item)
-                    <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+                    <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger" style="--stagger: {{ $loop->index + 2 }};">
                         <div class="flex gap-4">
                             <div class="flex h-28 w-24 items-center justify-center rounded-2xl bg-[#fff4ec] text-[#d97f46]">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
@@ -163,7 +163,7 @@
             </div>
         </main>
 
-        <aside class="lg:col-span-3 border-l border-[#f0e3da] bg-[#fffaf6] p-6">
+        <aside class="anim-enter-right lg:col-span-3 border-l border-[#f0e3da] bg-[#fffaf6] p-6">
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <h3 class="text-lg font-bold text-[#2f241f]">Cart</h3>
@@ -186,7 +186,7 @@
                     ['name' => 'Cappuccino', 'price' => '14.94', 'qty' => 3],
                     ['name' => 'Coffee Latte', 'price' => '5.98', 'qty' => 1],
                 ] as $cart)
-                    <div class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+                    <div class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger" style="--stagger: {{ $loop->index + 3 }};">
                         <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fff4ec] text-[#d97f46]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5h9a2.25 2.25 0 0 1 2.25 2.25V12a3 3 0 0 1-3 3H8.25m0-7.5v7.5m0-7.5H6A2.25 2.25 0 0 0 3.75 9.75V12A3 3 0 0 0 6.75 15h1.5m0 0V18m4.5-3v3m4.5-3v3" />
@@ -223,7 +223,7 @@
                 </div>
             </div>
 
-            <button class="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#f4a06b] py-4 font-semibold text-white shadow-lg shadow-[#e8b28f] transition hover:brightness-105">
+            <button class="anim-pop anim-delay-400 mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#f4a06b] py-4 font-semibold text-white shadow-lg shadow-[#e8b28f] transition hover:brightness-105">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5m-15 0 1.5 11.25A2.25 2.25 0 0 0 9 20.25h6a2.25 2.25 0 0 0 2.25-2.25l1.5-11.25M9.75 6.75v-1.5A2.25 2.25 0 0 1 12 3h0a2.25 2.25 0 0 1 2.25 2.25v1.5" />
                 </svg>
