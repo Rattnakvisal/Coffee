@@ -13,6 +13,7 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function (): void {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::get('/search', [DashboardController::class, 'search'])->name('search');
+        Route::get('/reports', [DashboardController::class, 'reports'])->name('reports');
 
         Route::prefix('users')
             ->name('users.')

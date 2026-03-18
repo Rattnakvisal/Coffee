@@ -44,37 +44,7 @@
                     </svg>
                     Home page
                 </a>
-
-                <a href="#" @class([
-                    'flex items-center gap-3 rounded-xl px-4 py-3 transition',
-                    'bg-[#fff1e8] font-semibold text-[#c56d39] ring-1 ring-[#f6d7c2]' =>
-                        $activeCashierMenu === 'menu',
-                    'hover:bg-[#f8ede6]' => $activeCashierMenu !== 'menu',
-                ])>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="1.9">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
-                    </svg>
-                    Menu
-                </a>
-
-                <a href="#" @class([
-                    'flex items-center gap-3 rounded-xl px-4 py-3 transition',
-                    'bg-[#fff1e8] font-semibold text-[#c56d39] ring-1 ring-[#f6d7c2]' =>
-                        $activeCashierMenu === 'orders',
-                    'hover:bg-[#f8ede6]' => $activeCashierMenu !== 'orders',
-                ])>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="1.9">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M3 6.75A2.25 2.25 0 0 1 5.25 4.5h13.5A2.25 2.25 0 0 1 21 6.75v10.5A2.25 2.25 0 0 1 18.75 19.5H5.25A2.25 2.25 0 0 1 3 17.25V6.75Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 9.75h9m-9 4.5h6" />
-                    </svg>
-                    My orders
-                </a>
-
-                <a href="#" @class([
+                <a href="{{ route('cashier.history') }}" @class([
                     'flex items-center gap-3 rounded-xl px-4 py-3 transition',
                     'bg-[#fff1e8] font-semibold text-[#c56d39] ring-1 ring-[#f6d7c2]' =>
                         $activeCashierMenu === 'history',

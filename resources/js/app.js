@@ -1,13 +1,13 @@
-import './bootstrap';
+import "./bootstrap";
 
 (() => {
-    const sidebarScroll = document.querySelector('[data-sidebar-scroll]');
+    const sidebarScroll = document.querySelector("[data-sidebar-scroll]");
 
     if (!sidebarScroll) {
         return;
     }
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         return;
     }
 
@@ -15,7 +15,10 @@ import './bootstrap';
     let animationFrameId = null;
 
     const clampTarget = () => {
-        const maxScrollTop = Math.max(0, sidebarScroll.scrollHeight - sidebarScroll.clientHeight);
+        const maxScrollTop = Math.max(
+            0,
+            sidebarScroll.scrollHeight - sidebarScroll.clientHeight,
+        );
         targetScrollTop = Math.min(Math.max(0, targetScrollTop), maxScrollTop);
     };
 
@@ -33,20 +36,22 @@ import './bootstrap';
     };
 
     sidebarScroll.addEventListener(
-        'wheel',
+        "wheel",
         (event) => {
             if (window.innerWidth < 1024) {
                 return;
             }
 
-            const canScroll = sidebarScroll.scrollHeight > sidebarScroll.clientHeight;
+            const canScroll =
+                sidebarScroll.scrollHeight > sidebarScroll.clientHeight;
             if (!canScroll) {
                 return;
             }
 
             const atTop = sidebarScroll.scrollTop <= 0;
             const atBottom =
-                sidebarScroll.scrollTop + sidebarScroll.clientHeight >= sidebarScroll.scrollHeight - 1;
+                sidebarScroll.scrollTop + sidebarScroll.clientHeight >=
+                sidebarScroll.scrollHeight - 1;
 
             if ((event.deltaY < 0 && atTop) || (event.deltaY > 0 && atBottom)) {
                 return;
@@ -64,7 +69,7 @@ import './bootstrap';
     );
 
     sidebarScroll.addEventListener(
-        'scroll',
+        "scroll",
         () => {
             if (!animationFrameId) {
                 targetScrollTop = sidebarScroll.scrollTop;
@@ -72,4 +77,18 @@ import './bootstrap';
         },
         { passive: true },
     );
+})();
+
+(() => {
+    if (document.getElementById("dashboard-search-input")) {
+        import("./admin_index");
+    }
+
+    if (document.getElementById("adminReportsTrendChart")) {
+        import("./admin_reports");
+    }
+
+    if (document.querySelector("[data-cashier-menu]")) {
+        import("./cashier_index");
+    }
 })();
