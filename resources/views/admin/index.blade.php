@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
     @php
@@ -9,11 +9,12 @@
             ->take(2)
             ->implode('');
     @endphp
+
     <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
             @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'dashboard'])
-            <main
-                class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
+
+            <main class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
                 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
                     <form action="#" method="GET" class="relative w-full max-w-xl">
                         <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -27,102 +28,12 @@
                             class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
                     </form>
 
-                    <div class="flex items-center gap-3">
-                        <div class="relative" data-dropdown>
-                            <button type="button" data-dropdown-trigger aria-expanded="false"
-                                class="relative inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#5d4438] transition hover:border-[#f4a06b] hover:text-[#d97f46]">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor" stroke-width="1.9">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.08 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                                </svg>
-                                <span
-                                    class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f4a06b] px-1 text-xs font-bold text-white">3</span>
-                            </button>
-
-                            <div data-dropdown-menu
-                                class="absolute right-0 z-20 mt-3 hidden w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
-                                <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                                    <p class="text-sm font-semibold text-[#2f241f]">Notifications</p>
-                                    <button type="button" class="text-xs font-semibold text-[#d97f46] hover:underline">Mark
-                                        all read</button>
-                                </div>
-
-                                <div class="max-h-80 overflow-y-auto">
-                                    @foreach ([['title' => 'Low stock alert', 'description' => 'Arabica Beans left 6 packs', 'time' => '5m ago'], ['title' => 'New order paid', 'description' => 'Order #1045 by Evelyn - $22.40', 'time' => '16m ago'], ['title' => 'Shift check-in', 'description' => 'Cashier Maria checked in', 'time' => '1h ago']] as $notification)
-                                        <div class="border-b border-slate-100 px-4 py-3 last:border-b-0">
-                                            <p class="text-sm font-semibold text-[#2f241f]">{{ $notification['title'] }}</p>
-                                            <p class="mt-1 text-xs text-slate-500">{{ $notification['description'] }}</p>
-                                            <p class="mt-2 text-[11px] font-medium uppercase tracking-wide text-[#b07a57]">
-                                                {{ $notification['time'] }}</p>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="relative" data-dropdown>
-                            <button type="button" data-dropdown-trigger aria-expanded="false"
-                                class="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition hover:border-[#f4a06b]">
-                                <span
-                                    class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#2f241f] text-sm font-bold text-white">{{ $initials }}</span>
-                                <span class="hidden min-w-0 sm:block">
-                                    <span
-                                        class="block truncate text-sm font-semibold text-[#2f241f]">{{ $currentUser->name }}</span>
-                                    <span
-                                        class="block truncate text-xs text-slate-500">{{ str($currentUser->role?->name ?? 'Admin')->headline() }}</span>
-                                </span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                                </svg>
-                            </button>
-
-                            <div data-dropdown-menu
-                                class="absolute right-0 z-20 mt-3 hidden w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
-                                <div class="border-b border-slate-100 px-4 py-3">
-                                    <p class="text-sm font-semibold text-[#2f241f]">{{ $currentUser->name }}</p>
-                                    <p class="mt-0.5 text-xs text-slate-500">{{ $currentUser->email }}</p>
-                                </div>
-
-                                <div class="space-y-1 p-2 text-sm">
-                                    <a href="#"
-                                        class="flex items-center gap-2 rounded-lg px-3 py-2 text-[#503a2f] transition hover:bg-[#fff3ea]">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275" />
-                                        </svg>
-                                        My profile
-                                    </a>
-                                    <a href="#"
-                                        class="flex items-center gap-2 rounded-lg px-3 py-2 text-[#503a2f] transition hover:bg-[#fff3ea]">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.278a1.125 1.125 0 0 0 .846.894l1.251.313c.534.133.878.657.813 1.203l-.153 1.288a1.125 1.125 0 0 0 .323.939l.925.926c.39.39.39 1.024 0 1.414l-.925.926a1.125 1.125 0 0 0-.323.938l.153 1.29c.065.545-.279 1.07-.813 1.202l-1.251.313a1.125 1.125 0 0 0-.846.894l-.213 1.278c-.09.542-.56.94-1.11.94h-2.592c-.55 0-1.02-.398-1.11-.94l-.213-1.278a1.125 1.125 0 0 0-.846-.894l-1.251-.313a1.125 1.125 0 0 1-.813-1.203l.153-1.288a1.125 1.125 0 0 0-.323-.939l-.925-.926a1 1 0 0 1 0-1.414l.925-.926a1.125 1.125 0 0 0 .323-.938l-.153-1.29a1.125 1.125 0 0 1 .813-1.202l1.251-.313a1.125 1.125 0 0 0 .846-.894l.213-1.278Z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                        </svg>
-                                        Account settings
-                                    </a>
-                                </div>
-
-                                <div class="border-t border-slate-100 p-2">
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit"
-                                            class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#9a4b35] transition hover:bg-[#fff3ea]">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25-2.25V15m5.25-3H9.75m0 0 3-3m-3 3 3 3" />
-                                            </svg>
-                                            Log out
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
+                    <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                        <span
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#2f241f] text-sm font-bold text-white">{{ $initials }}</span>
+                        <div>
+                            <p class="text-sm font-semibold text-[#2f241f]">{{ $currentUser->name }}</p>
+                            <p class="text-xs text-slate-500">{{ str($currentUser->role?->name ?? 'Admin')->headline() }}</p>
                         </div>
                     </div>
                 </div>
@@ -135,8 +46,7 @@
                             Admin
                         </p>
                         <h2 class="mt-3 text-3xl font-black text-[#2f241f]">Dashboard Overview</h2>
-                        <p class="mt-1 text-sm text-gray-500">Track sales, orders, and inventory performance in real time.
-                        </p>
+                        <p class="mt-1 text-sm text-gray-500">Dynamic data with animated counters and charts.</p>
                     </div>
 
                     <a href="{{ route('admin.products.index') }}"
@@ -151,212 +61,412 @@
 
                 <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <div class="anim-pop anim-delay-200 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm text-gray-500">Total Sales</p>
-                            <span
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1e5] text-[#d97f46]">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M12 6v12m3-9H9.75a1.5 1.5 0 0 0 0 3h4.5a1.5 1.5 0 0 1 0 3H9m3 3v-1.5m0-12V6" />
-                                </svg>
-                            </span>
-                        </div>
-                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]">$2,450</h3>
-                        <p class="mt-2 text-xs font-medium text-emerald-600">+8.2% from last week</p>
+                        <p class="text-sm text-gray-500">Inventory Value</p>
+                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $stats['inventoryValue'] }}"
+                            data-counter-type="currency" data-counter-decimals="2">$0.00</h3>
+                        <p
+                            class="mt-2 text-xs font-medium {{ $stats['inventoryGrowth']['isPositive'] ? 'text-emerald-600' : 'text-rose-600' }}">
+                            {{ $stats['inventoryGrowth']['text'] }}
+                        </p>
                     </div>
 
                     <div class="anim-pop anim-delay-300 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm text-gray-500">Orders Today</p>
-                            <span
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1e5] text-[#d97f46]">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M8.25 7.5h7.5m-7.5 4.5h7.5m-7.5 4.5h4.5M6 3.75h12A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75Z" />
-                                </svg>
-                            </span>
-                        </div>
-                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]">128</h3>
-                        <p class="mt-2 text-xs font-medium text-emerald-600">+11 new since morning</p>
+                        <p class="text-sm text-gray-500">Products Today</p>
+                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $stats['productsToday'] }}"
+                            data-counter-type="number">0</h3>
+                        <p
+                            class="mt-2 text-xs font-medium {{ $stats['productsGrowth']['isPositive'] ? 'text-emerald-600' : 'text-rose-600' }}">
+                            {{ $stats['productsGrowth']['text'] }}
+                        </p>
                     </div>
 
                     <div class="anim-pop anim-delay-400 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm text-gray-500">Products</p>
-                            <span
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1e5] text-[#d97f46]">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M21 7.5 12 3 3 7.5m18 0V16.5L12 21m9-13.5L12 12m0 9-9-4.5V7.5m9 4.5L3 7.5" />
-                                </svg>
-                            </span>
-                        </div>
-                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]">42</h3>
-                        <p class="mt-2 text-xs font-medium text-slate-500">6 low-stock items</p>
+                        <p class="text-sm text-gray-500">Active Products</p>
+                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                            data-counter-value="{{ $stats['activeProductsCount'] }}" data-counter-type="number">0</h3>
+                        <p class="mt-2 text-xs font-medium text-slate-500">
+                            {{ number_format($stats['categoriesCount']) }} active categories
+                        </p>
                     </div>
 
                     <div class="anim-pop anim-delay-500 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                        <div class="flex items-center justify-between">
-                            <p class="text-sm text-gray-500">Cashiers</p>
-                            <span
-                                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1e5] text-[#d97f46]">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M18 18.75a3.75 3.75 0 1 0-7.5 0m7.5 0v.75h1.5a2.25 2.25 0 0 0 2.25-2.25v-.824a2.25 2.25 0 0 0-.663-1.588l-1.02-1.021a2.25 2.25 0 0 1-.659-1.591V8.25A6.75 6.75 0 0 0 6 8.25v4.976c0 .597-.237 1.169-.659 1.591l-1.02 1.02a2.25 2.25 0 0 0-.663 1.59v.824A2.25 2.25 0 0 0 5.908 20.5h1.5v-.75m10.592-1.5a6 6 0 0 0-12 0" />
-                                </svg>
-                            </span>
-                        </div>
-                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]">6</h3>
-                        <p class="mt-2 text-xs font-medium text-slate-500">All staff clocked in</p>
+                        <p class="text-sm text-gray-500">Cashier Accounts</p>
+                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $stats['cashiersCount'] }}"
+                            data-counter-type="number">0</h3>
+                        <p
+                            class="mt-2 text-xs font-medium {{ $stats['usersGrowth']['isPositive'] ? 'text-emerald-600' : 'text-rose-600' }}">
+                            {{ $stats['usersGrowth']['text'] }} ({{ number_format($stats['adminsCount']) }} admins)
+                        </p>
                     </div>
                 </div>
 
                 <div class="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <div
+                    <section
+                        class="anim-enter-up anim-delay-200 xl:col-span-2 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                        <div class="mb-4 flex items-center justify-between">
+                            <h3 class="text-xl font-bold text-[#2f241f]">Weekly Activity</h3>
+                            <span class="rounded-full bg-[#fff2e7] px-3 py-1 text-xs font-semibold text-[#be6f3c]">Last 7
+                                days</span>
+                        </div>
+                        <div class="dashboard-chart-wrap">
+                            <canvas id="weeklyOverviewChart"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="anim-enter-up anim-delay-300 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                        <h3 class="mb-4 text-xl font-bold text-[#2f241f]">Category Mix</h3>
+                        <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
+                            <canvas id="categoryMixChart"></canvas>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+                    <section
+                        class="anim-enter-up anim-delay-300 xl:col-span-2 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                        <h3 class="mb-4 text-xl font-bold text-[#2f241f]">Monthly Product Growth</h3>
+                        <div class="dashboard-chart-wrap">
+                            <canvas id="monthlyProductsChart"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="anim-enter-up anim-delay-400 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                        <h3 class="mb-4 text-xl font-bold text-[#2f241f]">Team Roles</h3>
+                        <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
+                            <canvas id="roleDistributionChart"></canvas>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
+                    <section
                         class="anim-enter-up anim-delay-300 xl:col-span-2 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
                         <div class="mb-4 flex items-center justify-between">
-                            <h3 class="text-xl font-bold text-[#2f241f]">Recent Orders</h3>
-                            <button class="text-sm font-medium text-[#d97f46] hover:underline">View all</button>
+                            <h3 class="text-xl font-bold text-[#2f241f]">Recent Products</h3>
+                            <a href="{{ route('admin.products.index') }}"
+                                class="text-sm font-medium text-[#d97f46] hover:underline">View all</a>
                         </div>
 
                         <div class="overflow-x-auto">
-                            <table class="w-full min-w-[520px] text-left">
+                            <table class="w-full min-w-[620px] text-left">
                                 <thead>
                                     <tr class="border-b border-slate-200 text-sm text-gray-500">
-                                        <th class="pb-3 font-medium">Order ID</th>
-                                        <th class="pb-3 font-medium">Customer</th>
-                                        <th class="pb-3 font-medium">Amount</th>
+                                        <th class="pb-3 font-medium">Product</th>
+                                        <th class="pb-3 font-medium">Category</th>
+                                        <th class="pb-3 font-medium">Price</th>
                                         <th class="pb-3 font-medium">Status</th>
+                                        <th class="pb-3 font-medium">Added</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-sm">
-                                    <tr class="border-b border-slate-100">
-                                        <td class="py-4 font-semibold">#1001</td>
-                                        <td>John Doe</td>
-                                        <td>$12.50</td>
-                                        <td><span
-                                                class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Paid</span>
-                                        </td>
-                                    </tr>
-                                    <tr class="border-b border-slate-100">
-                                        <td class="py-4 font-semibold">#1002</td>
-                                        <td>Sophia</td>
-                                        <td>$8.90</td>
-                                        <td><span
-                                                class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">Pending</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-4 font-semibold">#1003</td>
-                                        <td>Michael</td>
-                                        <td>$15.75</td>
-                                        <td><span
-                                                class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Paid</span>
-                                        </td>
-                                    </tr>
+                                    @forelse ($recentProducts as $product)
+                                        <tr class="border-b border-slate-100 last:border-b-0">
+                                            <td class="py-4 font-semibold text-[#2f241f]">{{ $product->name }}</td>
+                                            <td class="text-slate-500">{{ $product->category?->name ?? 'Uncategorized' }}</td>
+                                            <td class="font-semibold">${{ number_format((float) $product->price, 2) }}</td>
+                                            <td>
+                                                <span
+                                                    class="rounded-full px-3 py-1 text-xs font-semibold {{ $product->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600' }}">
+                                                    {{ $product->is_active ? 'Active' : 'Inactive' }}
+                                                </span>
+                                            </td>
+                                            <td class="text-slate-500">{{ $product->created_at?->diffForHumans() ?? '-' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="py-10 text-center text-sm text-slate-500">
+                                                No products yet. Add your first product to populate the dashboard.
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="anim-enter-up anim-delay-400 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-                        <h3 class="text-xl font-bold text-[#2f241f]">Top Products</h3>
-
+                    <section class="anim-enter-up anim-delay-400 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                        <h3 class="text-xl font-bold text-[#2f241f]">Top Products (By Price)</h3>
                         <div class="mt-5 space-y-5 text-sm">
-                            <div>
-                                <div class="mb-2 flex items-center justify-between">
-                                    <span>Cappuccino</span>
-                                    <span class="font-semibold">120 sold</span>
+                            @forelse ($topProducts as $product)
+                                @php
+                                    $progress = $topProductsMaxPrice > 0 ? ((float) $product->price / $topProductsMaxPrice) * 100 : 0;
+                                @endphp
+                                <div>
+                                    <div class="mb-2 flex items-center justify-between gap-3">
+                                        <span class="truncate pr-2">{{ $product->name }}</span>
+                                        <span class="font-semibold">${{ number_format((float) $product->price, 2) }}</span>
+                                    </div>
+                                    <div class="h-2 rounded-full bg-slate-100">
+                                        <div class="dashboard-progress-bar h-2 rounded-full bg-[#f4a06b]"
+                                            style="--progress-width: {{ round($progress, 2) }}%;"></div>
+                                    </div>
                                 </div>
-                                <div class="h-2 rounded-full bg-slate-100">
-                                    <div class="h-2 w-[88%] rounded-full bg-[#f4a06b]"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="mb-2 flex items-center justify-between">
-                                    <span>Latte</span>
-                                    <span class="font-semibold">98 sold</span>
-                                </div>
-                                <div class="h-2 rounded-full bg-slate-100">
-                                    <div class="h-2 w-[74%] rounded-full bg-[#f4a06b]"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="mb-2 flex items-center justify-between">
-                                    <span>Americano</span>
-                                    <span class="font-semibold">76 sold</span>
-                                </div>
-                                <div class="h-2 rounded-full bg-slate-100">
-                                    <div class="h-2 w-[62%] rounded-full bg-[#f4a06b]"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="mb-2 flex items-center justify-between">
-                                    <span>Mocha</span>
-                                    <span class="font-semibold">65 sold</span>
-                                </div>
-                                <div class="h-2 rounded-full bg-slate-100">
-                                    <div class="h-2 w-[52%] rounded-full bg-[#f4a06b]"></div>
-                                </div>
-                            </div>
+                            @empty
+                                <p class="text-sm text-slate-500">No product data available yet.</p>
+                            @endforelse
                         </div>
-                    </div>
+                    </section>
                 </div>
             </main>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <script>
         (function() {
-            const dropdownRoots = document.querySelectorAll('[data-dropdown]');
+            const chartPayload = @json($charts);
+            const progressBars = document.querySelectorAll('.dashboard-progress-bar');
+            const counterEls = document.querySelectorAll('[data-counter-value]');
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            const closeAllDropdowns = function() {
-                dropdownRoots.forEach(function(root) {
-                    const trigger = root.querySelector('[data-dropdown-trigger]');
-                    const menu = root.querySelector('[data-dropdown-menu]');
+            const formatCounter = function(element, value) {
+                const type = element.getAttribute('data-counter-type');
+                const decimals = Number(element.getAttribute('data-counter-decimals') || 0);
 
-                    if (!trigger || !menu) return;
-
-                    trigger.setAttribute('aria-expanded', 'false');
-                    menu.classList.add('hidden');
-                });
-            };
-
-            document.addEventListener('click', function(event) {
-                const trigger = event.target.closest('[data-dropdown-trigger]');
-
-                if (trigger) {
-                    const root = trigger.closest('[data-dropdown]');
-                    const menu = root ? root.querySelector('[data-dropdown-menu]') : null;
-
-                    if (!root || !menu) return;
-
-                    const isHidden = menu.classList.contains('hidden');
-
-                    closeAllDropdowns();
-
-                    if (isHidden) {
-                        menu.classList.remove('hidden');
-                        trigger.setAttribute('aria-expanded', 'true');
-                    }
-
+                if (type === 'currency') {
+                    element.textContent = '$' + value.toLocaleString(undefined, {
+                        minimumFractionDigits: decimals,
+                        maximumFractionDigits: decimals,
+                    });
                     return;
                 }
 
-                if (!event.target.closest('[data-dropdown]')) {
-                    closeAllDropdowns();
-                }
-            });
+                element.textContent = Math.round(value).toLocaleString();
+            };
 
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') {
-                    closeAllDropdowns();
+            const animateCounters = function() {
+                counterEls.forEach(function(element) {
+                    const target = Number(element.getAttribute('data-counter-value') || 0);
+
+                    if (prefersReducedMotion) {
+                        formatCounter(element, target);
+                        return;
+                    }
+
+                    const observer = new IntersectionObserver(function(entries) {
+                        entries.forEach(function(entry) {
+                            if (!entry.isIntersecting) {
+                                return;
+                            }
+
+                            const startedAt = performance.now();
+                            const duration = 950;
+
+                            const frame = function(now) {
+                                const progress = Math.min((now - startedAt) / duration, 1);
+                                const eased = 1 - Math.pow(1 - progress, 3);
+                                formatCounter(element, target * eased);
+
+                                if (progress < 1) {
+                                    window.requestAnimationFrame(frame);
+                                }
+                            };
+
+                            window.requestAnimationFrame(frame);
+                            observer.unobserve(entry.target);
+                        });
+                    }, {
+                        threshold: 0.3
+                    });
+
+                    observer.observe(element);
+                });
+            };
+
+            const animateProgressBars = function() {
+                progressBars.forEach(function(bar, index) {
+                    const delay = prefersReducedMotion ? 0 : index * 120;
+                    window.setTimeout(function() {
+                        bar.classList.add('is-visible');
+                    }, delay);
+                });
+            };
+
+            const createCharts = function() {
+                if (typeof window.Chart === 'undefined') {
+                    return;
                 }
-            });
+
+                window.Chart.defaults.font.family = "'Instrument Sans', 'Segoe UI', sans-serif";
+                window.Chart.defaults.color = '#6b7280';
+
+                const weeklyCtx = document.getElementById('weeklyOverviewChart');
+                const monthlyCtx = document.getElementById('monthlyProductsChart');
+                const categoryCtx = document.getElementById('categoryMixChart');
+                const roleCtx = document.getElementById('roleDistributionChart');
+
+                if (weeklyCtx) {
+                    const gradient = weeklyCtx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+                    gradient.addColorStop(0, 'rgba(244, 160, 107, 0.35)');
+                    gradient.addColorStop(1, 'rgba(244, 160, 107, 0.02)');
+
+                    new window.Chart(weeklyCtx, {
+                        type: 'line',
+                        data: {
+                            labels: chartPayload.weekLabels,
+                            datasets: [{
+                                    label: 'Products Added',
+                                    data: chartPayload.weeklyProducts,
+                                    borderColor: '#d97f46',
+                                    backgroundColor: gradient,
+                                    fill: true,
+                                    borderWidth: 2.5,
+                                    tension: 0.36,
+                                    pointRadius: 3,
+                                    yAxisID: 'y'
+                                },
+                                {
+                                    label: 'Inventory Added ($)',
+                                    data: chartPayload.weeklyInventory,
+                                    borderColor: '#2f241f',
+                                    borderWidth: 2,
+                                    tension: 0.32,
+                                    pointRadius: 2.5,
+                                    yAxisID: 'y1'
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                },
+                                y1: {
+                                    beginAtZero: true,
+                                    position: 'right',
+                                    grid: {
+                                        drawOnChartArea: false
+                                    }
+                                }
+                            },
+                        },
+                    });
+                }
+
+                if (monthlyCtx) {
+                    new window.Chart(monthlyCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: chartPayload.monthLabels,
+                            datasets: [{
+                                label: 'Products',
+                                data: chartPayload.monthlyProducts,
+                                backgroundColor: '#f4a06b',
+                                borderRadius: 10,
+                                borderSkipped: false,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                },
+                            },
+                        },
+                    });
+                }
+
+                if (categoryCtx) {
+                    new window.Chart(categoryCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: chartPayload.categoryLabels,
+                            datasets: [{
+                                data: chartPayload.categoryCounts,
+                                backgroundColor: ['#f4a06b', '#d97f46', '#8f5f3e', '#4e3428', '#f5c9a8', '#fbdabf'],
+                                borderWidth: 0,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '66%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                },
+                            },
+                        },
+                    });
+                }
+
+                if (roleCtx) {
+                    new window.Chart(roleCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: chartPayload.roleLabels,
+                            datasets: [{
+                                label: 'Users',
+                                data: chartPayload.roleCounts,
+                                backgroundColor: ['#2f241f', '#f4a06b', '#d97f46', '#b76b3f'],
+                                borderRadius: 10,
+                                borderSkipped: false,
+                            }],
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                            },
+                        },
+                    });
+                }
+            };
+
+            animateCounters();
+            animateProgressBars();
+            createCharts();
         })();
     </script>
 @endsection

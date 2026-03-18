@@ -20,6 +20,21 @@ class CashierController extends Controller
         $category = trim((string) $request->query('category', ''));
 
         $categories = Category::query()->active()->orderBy('name')->get();
+        $searchSuggestions = Product::query()
+            ->active()
+            ->orderBy('name')
+            ->limit(250)
+            ->pluck('name')
+            ->map(fn(mixed $name): string => trim((string) $name))
+            ->merge(
+                $categories
+                    ->pluck('name')
+                    ->map(fn(mixed $name): string => trim((string) $name)),
+            )
+            ->filter(fn(string $value): bool => $value !== '')
+            ->unique(fn(string $value): string => mb_strtolower($value))
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
 
         $products = Product::query()
             ->active()
@@ -55,6 +70,7 @@ class CashierController extends Controller
             'categories' => $categories,
             'category' => $category,
             'search' => $search,
+            'searchSuggestions' => $searchSuggestions,
             'cartItems' => $cartState['items'],
             'cartSubtotal' => $cartState['subtotal'],
             'cartDiscount' => $cartState['discount'],
@@ -290,7 +306,7 @@ class CashierController extends Controller
             ->values();
 
         $validCart = $items
-            ->mapWithKeys(fn (array $item): array => [
+            ->mapWithKeys(fn(array $item): array => [
                 $item['item_key'] => [
                     'product_id' => $item['product_id'],
                     'size' => $item['size'],

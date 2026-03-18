@@ -4,6 +4,7 @@
     @php
         $products = collect($products ?? []);
         $categories = collect($categories ?? []);
+        $searchSuggestions = collect($searchSuggestions ?? []);
         $search = (string) ($search ?? '');
         $category = (string) ($category ?? '');
     @endphp
@@ -34,7 +35,8 @@
                     </button>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <form method="GET" action="{{ route('cashier.index') }}" class="relative min-w-[240px] flex-1">
+                    <form method="GET" action="{{ route('cashier.index') }}" class="relative min-w-[240px] flex-1"
+                        data-cashier-search-form>
                         <svg xmlns="http://www.w3.org/2000/svg"
                             class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
@@ -42,6 +44,7 @@
                                 d="m21 21-4.35-4.35m1.35-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
                         </svg>
                         <input type="text" name="search" value="{{ $search }}" placeholder="Search menu..."
+                            autocomplete="off" data-cashier-search-input
                             class="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-28 outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/25">
                         <div class="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
                             @if ($search !== '')
@@ -50,6 +53,13 @@
                             @endif
                             <button type="submit"
                                 class="rounded-lg bg-[#f4a06b] px-3 py-1.5 text-xs font-semibold text-white">Search</button>
+                        </div>
+                        <div data-cashier-search-dropdown class="coffee-search-dropdown hidden">
+                            <ul data-cashier-search-results role="listbox" class="max-h-72 overflow-y-auto py-1"></ul>
+                            <p data-cashier-search-empty
+                                class="hidden px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#9f7a63]">
+                                No matching menu found
+                            </p>
                         </div>
                     </form>
                 </div>
@@ -225,6 +235,12 @@
             const openMenuButton = document.querySelector('[data-cashier-open-menu]');
             const openCartButton = document.querySelector('[data-cashier-open-cart]');
             const productCartForms = document.querySelectorAll('.js-product-cart-form');
+            const searchForm = document.querySelector('[data-cashier-search-form]');
+            const searchInput = searchForm ? searchForm.querySelector('[data-cashier-search-input]') : null;
+            const searchDropdown = searchForm ? searchForm.querySelector('[data-cashier-search-dropdown]') : null;
+            const searchResults = searchForm ? searchForm.querySelector('[data-cashier-search-results]') : null;
+            const searchEmpty = searchForm ? searchForm.querySelector('[data-cashier-search-empty]') : null;
+            const searchSuggestions = @json($searchSuggestions->values()->all());
             const loadingOverlay = document.getElementById('coffee-add-loading');
             const loadingText = loadingOverlay ? loadingOverlay.querySelector('p') : null;
             const desktopMediaQuery = window.matchMedia('(min-width: 1024px)');
@@ -298,6 +314,166 @@
                     }
                 }
             };
+
+            if (searchForm && searchInput && searchDropdown && searchResults && searchEmpty && Array.isArray(
+                    searchSuggestions)) {
+                const suggestionPool = searchSuggestions
+                    .map(function(value) {
+                        return String(value || '').trim();
+                    })
+                    .filter(function(value) {
+                        return value !== '';
+                    });
+
+                let filteredSuggestions = [];
+                let activeSuggestionIndex = -1;
+
+                const closeSearchDropdown = function() {
+                    searchDropdown.classList.add('hidden');
+                    searchResults.innerHTML = '';
+                    searchEmpty.classList.add('hidden');
+                    filteredSuggestions = [];
+                    activeSuggestionIndex = -1;
+                };
+
+                const openSearchDropdown = function() {
+                    searchDropdown.classList.remove('hidden');
+                };
+
+                const setActiveSuggestion = function(nextIndex) {
+                    const optionButtons = searchResults.querySelectorAll('[data-suggestion-index]');
+                    optionButtons.forEach(function(button, index) {
+                        const isActive = index === nextIndex;
+                        button.classList.toggle('is-active', isActive);
+                        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+
+                        if (isActive) {
+                            button.scrollIntoView({
+                                block: 'nearest'
+                            });
+                        }
+                    });
+                };
+
+                const selectSuggestion = function(value) {
+                    searchInput.value = value;
+                    closeSearchDropdown();
+                    searchInput.focus();
+                };
+
+                const renderSearchSuggestions = function(queryValue) {
+                    const query = String(queryValue || '').trim().toLowerCase();
+                    const maxItems = 8;
+
+                    filteredSuggestions = suggestionPool
+                        .filter(function(suggestion) {
+                            if (query === '') {
+                                return true;
+                            }
+
+                            return suggestion.toLowerCase().includes(query);
+                        })
+                        .slice(0, maxItems);
+
+                    searchResults.innerHTML = '';
+                    activeSuggestionIndex = -1;
+
+                    if (!filteredSuggestions.length) {
+                        if (query === '') {
+                            closeSearchDropdown();
+                            return;
+                        }
+
+                        searchEmpty.classList.remove('hidden');
+                        openSearchDropdown();
+                        return;
+                    }
+
+                    searchEmpty.classList.add('hidden');
+                    const fragment = document.createDocumentFragment();
+
+                    filteredSuggestions.forEach(function(suggestion, index) {
+                        const item = document.createElement('li');
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'coffee-search-option';
+                        button.textContent = suggestion;
+                        button.dataset.suggestionIndex = String(index);
+                        button.dataset.suggestionValue = suggestion;
+                        button.setAttribute('role', 'option');
+                        button.setAttribute('aria-selected', 'false');
+                        item.appendChild(button);
+                        fragment.appendChild(item);
+                    });
+
+                    searchResults.appendChild(fragment);
+                    openSearchDropdown();
+                };
+
+                searchInput.addEventListener('focus', function() {
+                    renderSearchSuggestions(searchInput.value);
+                });
+
+                searchInput.addEventListener('input', function() {
+                    renderSearchSuggestions(searchInput.value);
+                });
+
+                searchInput.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape') {
+                        closeSearchDropdown();
+                        return;
+                    }
+
+                    if (!filteredSuggestions.length) {
+                        return;
+                    }
+
+                    if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        activeSuggestionIndex = (activeSuggestionIndex + 1) % filteredSuggestions.length;
+                        setActiveSuggestion(activeSuggestionIndex);
+                        return;
+                    }
+
+                    if (event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        activeSuggestionIndex = activeSuggestionIndex <= 0 ?
+                            filteredSuggestions.length - 1 :
+                            activeSuggestionIndex - 1;
+                        setActiveSuggestion(activeSuggestionIndex);
+                        return;
+                    }
+
+                    if (event.key === 'Enter' && activeSuggestionIndex >= 0) {
+                        event.preventDefault();
+                        selectSuggestion(filteredSuggestions[activeSuggestionIndex]);
+                    }
+                });
+
+                searchResults.addEventListener('mousedown', function(event) {
+                    const targetButton = event.target.closest('[data-suggestion-value]');
+                    if (!targetButton) return;
+                    event.preventDefault();
+                });
+
+                searchResults.addEventListener('click', function(event) {
+                    const targetButton = event.target.closest('[data-suggestion-value]');
+                    if (!targetButton) return;
+                    selectSuggestion(targetButton.dataset.suggestionValue || '');
+                });
+
+                searchForm.addEventListener('submit', function() {
+                    closeSearchDropdown();
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (searchForm.contains(event.target)) {
+                        return;
+                    }
+
+                    closeSearchDropdown();
+                });
+            }
 
             productCartForms.forEach(function(form) {
                 const qtyInput = form.querySelector('.js-product-qty-input');
