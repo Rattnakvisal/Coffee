@@ -261,6 +261,66 @@
                 loadingOverlay.classList.remove('flex');
             };
 
+            const setPlaceOrderFeedback = function(form, message, isError) {
+                if (!form) return;
+
+                const feedback = form.querySelector('[data-place-order-feedback]');
+                if (!feedback) return;
+
+                if (!message) {
+                    feedback.classList.add('hidden');
+                    feedback.textContent = '';
+                    feedback.classList.remove('text-emerald-700', 'text-red-600');
+                    return;
+                }
+
+                feedback.textContent = message;
+                feedback.classList.remove('hidden');
+                feedback.classList.toggle('text-emerald-700', !isError);
+                feedback.classList.toggle('text-red-600', !!isError);
+            };
+
+            const initPlaceOrderForm = function(scope) {
+                const rootElement = scope && scope.querySelector ? scope : document;
+                const placeOrderForm = rootElement.querySelector('.js-place-order-form');
+                if (!placeOrderForm) return;
+
+                const paymentMethodField = placeOrderForm.querySelector('[data-payment-method]');
+                const amountReceivedField = placeOrderForm.querySelector('[data-amount-received]');
+                const paymentHint = placeOrderForm.querySelector('[data-payment-hint]');
+                const orderTotal = Math.max(0, Number(placeOrderForm.dataset.orderTotal) || 0);
+
+                if (!paymentMethodField || !amountReceivedField) return;
+
+                const syncPaymentInputs = function() {
+                    const paymentMethod = paymentMethodField.value;
+                    const totalString = orderTotal.toFixed(2);
+                    const isCashPayment = paymentMethod === 'cash';
+
+                    amountReceivedField.readOnly = !isCashPayment;
+                    amountReceivedField.min = totalString;
+
+                    if (!isCashPayment) {
+                        amountReceivedField.value = totalString;
+                    } else if ((Number(amountReceivedField.value) || 0) < orderTotal) {
+                        amountReceivedField.value = totalString;
+                    }
+
+                    if (paymentHint) {
+                        paymentHint.textContent = isCashPayment ?
+                            'For cash payment, received amount should be >= total.' :
+                            'For card or QR payment, amount is set to exact total.';
+                    }
+                };
+
+                if (placeOrderForm.dataset.paymentBound !== '1') {
+                    paymentMethodField.addEventListener('change', syncPaymentInputs);
+                    placeOrderForm.dataset.paymentBound = '1';
+                }
+
+                syncPaymentInputs();
+            };
+
             const replaceCartHtml = function(html) {
                 if (!cart || !html) return;
 
@@ -277,6 +337,7 @@
 
                 cart.replaceWith(nextCart);
                 cart = nextCart;
+                initPlaceOrderForm(nextCart);
             };
 
             const submitCartFormAjax = async function(form, submitButton) {
@@ -297,16 +358,27 @@
                         body: new FormData(form),
                     });
 
+                    const payload = await response.json();
+
                     if (!response.ok) {
-                        throw new Error('Request failed');
+                        const failure = new Error(payload && payload.message ? payload.message : 'Request failed');
+                        failure.payload = payload;
+                        failure.status = response.status;
+                        throw failure;
                     }
 
-                    const payload = await response.json();
                     if (payload && payload.ok && payload.cart_html) {
                         replaceCartHtml(payload.cart_html);
                     }
+
+                    return payload;
                 } catch (error) {
+                    if (error && error.status === 422 && error.payload) {
+                        return error.payload;
+                    }
+
                     form.submit();
+                    return null;
                 } finally {
                     form.dataset.submitting = '0';
                     if (submitButton) {
@@ -314,6 +386,8 @@
                     }
                 }
             };
+
+            initPlaceOrderForm(document);
 
             if (searchForm && searchInput && searchDropdown && searchResults && searchEmpty && Array.isArray(
                     searchSuggestions)) {
@@ -601,33 +675,65 @@
 
             document.addEventListener('submit', function(event) {
                 const targetForm = event.target.closest('.js-cart-item-form');
-                if (!targetForm) return;
+                if (targetForm) {
+                    event.preventDefault();
+                    const submitButton = targetForm.querySelector('button[type="submit"]');
+                    submitCartFormAjax(targetForm, submitButton);
+                    return;
+                }
 
+                const placeOrderForm = event.target.closest('.js-place-order-form');
+                if (!placeOrderForm) return;
                 event.preventDefault();
-                const submitButton = targetForm.querySelector('button[type="submit"]');
-                submitCartFormAjax(targetForm, submitButton);
+
+                const placeOrderButton = placeOrderForm.querySelector('[data-place-order]');
+                const originalLabel = placeOrderButton ? placeOrderButton.textContent : '';
+
+                setPlaceOrderFeedback(placeOrderForm, '', false);
+
+                if (placeOrderButton) {
+                    placeOrderButton.textContent = 'Placing order...';
+                }
+
+                showLoading('Processing payment...');
+
+                submitCartFormAjax(placeOrderForm, placeOrderButton).then(function(payload) {
+                    if (!payload || !payload.ok) {
+                        hideLoading();
+                        setPlaceOrderFeedback(
+                            placeOrderForm,
+                            payload && payload.message ? payload.message : 'Unable to place order.',
+                            true,
+                        );
+                        return;
+                    }
+
+                    const orderNumber = payload.order_number ? String(payload.order_number) : '';
+                    const changeAmount = Number(payload.change_amount || 0);
+                    const successMessage = orderNumber !== '' ?
+                        'Order ' + orderNumber + ' placed successfully.' :
+                        'Order placed successfully.';
+                    const loadingMessage = changeAmount > 0 ?
+                        successMessage + ' Change: $' + changeAmount.toFixed(2) :
+                        successMessage;
+
+                    showLoading(loadingMessage);
+
+                    window.setTimeout(function() {
+                        hideLoading();
+                    }, 700);
+                }).finally(function() {
+                    if (placeOrderButton) {
+                        placeOrderButton.textContent = originalLabel || 'Place an order';
+                    }
+                });
             });
 
             document.addEventListener('click', function(event) {
                 const closeTrigger = event.target.closest('[data-cashier-close]');
                 if (closeTrigger) {
                     closeAll();
-                    return;
                 }
-
-                const placeOrderButton = event.target.closest('[data-place-order]');
-                if (!placeOrderButton || placeOrderButton.disabled) return;
-
-                const originalText = placeOrderButton.textContent;
-                placeOrderButton.disabled = true;
-                placeOrderButton.textContent = 'Placing order...';
-                showLoading('Preparing your order...');
-
-                window.setTimeout(function() {
-                    hideLoading();
-                    placeOrderButton.textContent = originalText;
-                    placeOrderButton.disabled = false;
-                }, 1000);
             });
 
             overlay.addEventListener('click', closeAll);

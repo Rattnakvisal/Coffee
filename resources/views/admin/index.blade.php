@@ -3,11 +3,14 @@
 @section('content')
     @php
         $currentUser = auth()->user();
-        $initials = collect(explode(' ', $currentUser->name))
+        $displayName = trim((string) ($currentUser->first_name ?? '') . ' ' . (string) ($currentUser->last_name ?? ''));
+        $displayName = $displayName !== '' ? $displayName : (string) $currentUser->name;
+        $initials = collect(explode(' ', $displayName))
             ->filter()
             ->map(fn(string $namePart): string => strtoupper(substr($namePart, 0, 1)))
             ->take(2)
             ->implode('');
+        $avatarUrl = $currentUser->avatar_path ? asset('storage/' . $currentUser->avatar_path) : null;
     @endphp
 
     <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
@@ -16,7 +19,8 @@
 
             <main class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
                 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-                    <form action="#" method="GET" class="relative w-full max-w-xl">
+                    <form action="{{ route('admin.search') }}" method="GET" data-dashboard-search-form
+                        class="relative w-full max-w-xl">
                         <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor" stroke-width="1.9">
@@ -24,19 +28,63 @@
                                     d="m21 21-4.35-4.35m1.35-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
                             </svg>
                         </span>
-                        <input type="text" name="q" placeholder="Search products, orders, reports..."
+                        <input id="dashboard-search-input" type="text" name="q" value="{{ $searchQuery ?? '' }}"
+                            autocomplete="off"
+                            placeholder="Search products, categories, users, settings..."
                             class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+
+                        <div id="dashboard-search-dropdown"
+                            class="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-40 hidden overflow-hidden rounded-2xl border border-[#eadfd7] bg-white shadow-xl">
+                            <div id="dashboard-search-option-list" class="max-h-72 overflow-y-auto p-1.5">
+                                @foreach ($searchSuggestions ?? [] as $suggestion)
+                                    <button type="button" data-search-option
+                                        data-value="{{ $suggestion['value'] }}"
+                                        data-search-text="{{ strtolower($suggestion['label'] . ' ' . $suggestion['type'] . ' ' . ($suggestion['meta'] ?? '')) }}"
+                                        class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-[#fff3ea]">
+                                        <span class="min-w-0">
+                                            <span class="block truncate text-sm font-semibold text-[#2f241f]">
+                                                {{ $suggestion['label'] }}
+                                            </span>
+                                            @if (! empty($suggestion['meta']))
+                                                <span class="block truncate text-xs text-slate-500">
+                                                    {{ $suggestion['meta'] }}
+                                                </span>
+                                            @endif
+                                        </span>
+                                        <span
+                                            class="rounded-full border border-[#f1ddce] bg-[#fff7f1] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#b16231]">
+                                            {{ $suggestion['type'] }}
+                                        </span>
+                                    </button>
+                                @endforeach
+                            </div>
+                            <p id="dashboard-search-empty"
+                                class="hidden border-t border-[#f3e7dd] px-4 py-3 text-sm text-slate-500">
+                                No matching items
+                            </p>
+                        </div>
                     </form>
 
                     <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
-                        <span
-                            class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#2f241f] text-sm font-bold text-white">{{ $initials }}</span>
+                        @if ($avatarUrl)
+                            <img src="{{ $avatarUrl }}" alt="Profile avatar"
+                                class="h-10 w-10 rounded-xl object-cover ring-1 ring-[#ecd9cc]">
+                        @else
+                            <span
+                                class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#2f241f] text-sm font-bold text-white">{{ $initials }}</span>
+                        @endif
                         <div>
-                            <p class="text-sm font-semibold text-[#2f241f]">{{ $currentUser->name }}</p>
+                            <p class="text-sm font-semibold text-[#2f241f]">{{ $displayName }}</p>
                             <p class="text-xs text-slate-500">{{ str($currentUser->role?->name ?? 'Admin')->headline() }}</p>
                         </div>
                     </div>
                 </div>
+
+                @if (! empty($searchFeedback))
+                    <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
+                        {{ $searchFeedback }}
+                    </div>
+                @endif
 
                 <div class="anim-enter-up anim-delay-100 flex flex-wrap items-center justify-between gap-4">
                     <div>
@@ -218,6 +266,12 @@
             const progressBars = document.querySelectorAll('.dashboard-progress-bar');
             const counterEls = document.querySelectorAll('[data-counter-value]');
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const searchForm = document.querySelector('[data-dashboard-search-form]');
+            const searchInput = document.getElementById('dashboard-search-input');
+            const searchDropdown = document.getElementById('dashboard-search-dropdown');
+            const searchOptionList = document.getElementById('dashboard-search-option-list');
+            const searchOptions = Array.from(document.querySelectorAll('[data-search-option]'));
+            const searchEmpty = document.getElementById('dashboard-search-empty');
 
             const formatCounter = function(element, value) {
                 const type = element.getAttribute('data-counter-type');
@@ -463,6 +517,80 @@
                     });
                 }
             };
+
+            const closeSearchDropdown = function() {
+                if (searchDropdown) {
+                    searchDropdown.classList.add('hidden');
+                }
+            };
+
+            const openSearchDropdown = function() {
+                if (searchDropdown) {
+                    searchDropdown.classList.remove('hidden');
+                }
+            };
+
+            const filterSearchOptions = function() {
+                if (!searchOptionList) return;
+
+                const keyword = (searchInput?.value || '').trim().toLowerCase();
+                let visibleCount = 0;
+
+                searchOptions.forEach(function(option) {
+                    const haystack = option.getAttribute('data-search-text') || '';
+                    const isVisible = keyword === '' || haystack.includes(keyword);
+                    option.classList.toggle('hidden', !isVisible);
+
+                    if (isVisible) {
+                        visibleCount += 1;
+                    }
+                });
+
+                if (searchEmpty) {
+                    searchEmpty.classList.toggle('hidden', visibleCount > 0);
+                }
+            };
+
+            if (searchInput && searchDropdown) {
+                searchInput.addEventListener('focus', function() {
+                    filterSearchOptions();
+                    openSearchDropdown();
+                });
+
+                searchInput.addEventListener('input', function() {
+                    filterSearchOptions();
+                    openSearchDropdown();
+                });
+            }
+
+            searchOptions.forEach(function(option) {
+                option.addEventListener('click', function() {
+                    const selectedValue = option.getAttribute('data-value') || '';
+                    if (searchInput) {
+                        searchInput.value = selectedValue;
+                    }
+                    if (searchForm) {
+                        searchForm.submit();
+                    }
+                });
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!searchForm || !searchDropdown) return;
+
+                const target = event.target;
+                if (target instanceof Node && searchForm.contains(target)) {
+                    return;
+                }
+
+                closeSearchDropdown();
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeSearchDropdown();
+                }
+            });
 
             animateCounters();
             animateProgressBars();

@@ -4,15 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CashierController extends Controller
 {
     private const CART_SESSION_KEY = 'cashier_cart';
+    private const PAYMENT_METHODS = ['cash', 'card', 'qr'];
 
     public function index(Request $request): View
     {
@@ -145,6 +150,156 @@ class CashierController extends Controller
         return $this->respondCartMutation($request);
     }
 
+    public function placeOrder(Request $request): RedirectResponse|JsonResponse
+    {
+        $validated = $request->validate([
+            'payment_method' => ['required', Rule::in(self::PAYMENT_METHODS)],
+            'amount_received' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $cartState = $this->buildCartState($request);
+
+        if ($cartState['items']->isEmpty()) {
+            return $this->respondOrderFailure($request, 'Cannot place order because cart is empty.');
+        }
+
+        $paymentMethod = (string) ($validated['payment_method'] ?? 'cash');
+        $total = (float) $cartState['total'];
+        $amountReceived = (float) ($validated['amount_received'] ?? 0);
+
+        if ($paymentMethod === 'cash' && $amountReceived < $total) {
+            return $this->respondOrderFailure(
+                $request,
+                'Amount received must be greater than or equal to total.',
+            );
+        }
+
+        if ($paymentMethod !== 'cash') {
+            $amountReceived = $total;
+        }
+
+        $changeAmount = max($amountReceived - $total, 0.0);
+        $orderNumber = $this->generateOrderNumber();
+        $orderMeta = [
+            'payment_method' => $paymentMethod,
+            'amount_received' => $amountReceived,
+            'change_amount' => $changeAmount,
+        ];
+
+        DB::transaction(function () use (
+            $request,
+            $cartState,
+            $orderNumber,
+            $paymentMethod,
+            $amountReceived,
+            $changeAmount,
+            $orderMeta
+        ): void {
+            $orderPayload = [
+                'order_number' => $orderNumber,
+                'subtotal' => $cartState['subtotal'],
+                'discount' => $cartState['discount'],
+                'total' => $cartState['total'],
+            ];
+
+            if (Schema::hasColumn('orders', 'cashier_id')) {
+                $orderPayload['cashier_id'] = $request->user()?->id;
+            } elseif (Schema::hasColumn('orders', 'cashier_user_id')) {
+                $orderPayload['cashier_user_id'] = $request->user()?->id;
+            }
+
+            if (Schema::hasColumn('orders', 'payment_method')) {
+                $orderPayload['payment_method'] = $paymentMethod;
+            }
+
+            if (Schema::hasColumn('orders', 'payment_status')) {
+                $orderPayload['payment_status'] = 'paid';
+            }
+
+            if (Schema::hasColumn('orders', 'amount_received')) {
+                $orderPayload['amount_received'] = $amountReceived;
+            }
+
+            if (Schema::hasColumn('orders', 'change_amount')) {
+                $orderPayload['change_amount'] = $changeAmount;
+            }
+
+            if (Schema::hasColumn('orders', 'status')) {
+                $orderPayload['status'] = 'completed';
+            }
+
+            if (Schema::hasColumn('orders', 'placed_at')) {
+                $orderPayload['placed_at'] = now();
+            }
+
+            if (Schema::hasColumn('orders', 'paid_at')) {
+                $orderPayload['paid_at'] = now();
+            }
+
+            if (Schema::hasColumn('orders', 'currency')) {
+                $orderPayload['currency'] = 'USD';
+            }
+
+            if (Schema::hasColumn('orders', 'meta')) {
+                $orderPayload['meta'] = json_encode($orderMeta, JSON_THROW_ON_ERROR);
+            }
+
+            $orderId = (int) DB::table('orders')->insertGetId($orderPayload);
+
+            $hasItemCreatedAt = Schema::hasColumn('order_items', 'created_at');
+            $hasItemUpdatedAt = Schema::hasColumn('order_items', 'updated_at');
+            $now = now();
+
+            $orderItemRows = $cartState['items']
+                ->map(function (array $item) use ($orderId, $hasItemCreatedAt, $hasItemUpdatedAt, $now): array {
+                    $row = [
+                        'order_id' => $orderId,
+                        'product_id' => $item['product_id'],
+                        'product_name' => $item['name'],
+                        'size' => $item['size'],
+                        'sugar' => $item['sugar'],
+                        'qty' => $item['qty'],
+                        'unit_price' => $item['unit_price'],
+                        'line_total' => $item['line_total'],
+                    ];
+
+                    if ($hasItemCreatedAt) {
+                        $row['created_at'] = $now;
+                    }
+
+                    if ($hasItemUpdatedAt) {
+                        $row['updated_at'] = $now;
+                    }
+
+                    return $row;
+                })
+                ->all();
+
+            DB::table('order_items')->insert(
+                $orderItemRows,
+            );
+        });
+
+        $request->session()->forget(self::CART_SESSION_KEY);
+        $refreshedCartState = $this->buildCartState($request);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Order placed successfully.',
+                'order_number' => $orderNumber,
+                'order_total' => $total,
+                'amount_received' => $amountReceived,
+                'change_amount' => $changeAmount,
+                'cart_html' => $this->renderCartHtml($refreshedCartState),
+            ]);
+        }
+
+        return redirect()
+            ->route('cashier.index')
+            ->with('status', 'Order ' . $orderNumber . ' placed successfully.');
+    }
+
     private function respondCartMutation(Request $request): RedirectResponse|JsonResponse
     {
         if ($request->expectsJson() || $request->ajax()) {
@@ -152,16 +307,58 @@ class CashierController extends Controller
 
             return response()->json([
                 'ok' => true,
-                'cart_html' => view('cashier.sidebar.cart', [
-                    'cartItems' => $cartState['items'],
-                    'cartSubtotal' => $cartState['subtotal'],
-                    'cartDiscount' => $cartState['discount'],
-                    'cartTotal' => $cartState['total'],
-                ])->render(),
+                'cart_html' => $this->renderCartHtml($cartState),
             ]);
         }
 
         return back();
+    }
+
+    /**
+     * @param array{
+     *   items: Collection<int, array{
+     *     item_key: string,
+     *     product_id: int,
+     *     name: string,
+     *     image_path: string|null,
+     *     size: string,
+     *     sugar: int,
+     *     qty: int,
+     *     unit_price: float,
+     *     line_total: float
+     *   }>,
+     *   subtotal: float,
+     *   discount: float,
+     *   total: float
+     * } $cartState
+     */
+    private function renderCartHtml(array $cartState): string
+    {
+        return view('cashier.sidebar.cart', [
+            'cartItems' => $cartState['items'],
+            'cartSubtotal' => $cartState['subtotal'],
+            'cartDiscount' => $cartState['discount'],
+            'cartTotal' => $cartState['total'],
+        ])->render();
+    }
+
+    private function respondOrderFailure(Request $request, string $message): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => false,
+                'message' => $message,
+            ], 422);
+        }
+
+        return back()->withErrors([
+            'payment' => $message,
+        ]);
+    }
+
+    private function generateOrderNumber(): string
+    {
+        return 'ORD-' . now()->format('Ymd-His') . '-' . Str::upper(Str::random(4));
     }
 
     /**

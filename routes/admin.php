@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,7 @@ Route::middleware(['auth', 'role:admin'])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
+        Route::get('/search', [DashboardController::class, 'search'])->name('search');
 
         Route::prefix('users')
             ->name('users.')
@@ -44,5 +46,14 @@ Route::middleware(['auth', 'role:admin'])
                 Route::get('/{category}/edit', 'edit')->name('edit');
                 Route::put('/{category}', 'update')->name('update');
                 Route::delete('/{category}', 'destroy')->name('destroy');
+            });
+
+        Route::prefix('settings')
+            ->name('settings.')
+            ->controller(SettingController::class)
+            ->group(function (): void {
+                Route::get('/', 'index')->name('index');
+                Route::put('/profile', 'updateProfile')->name('profile.update');
+                Route::put('/password', 'updatePassword')->name('password.update');
             });
     });

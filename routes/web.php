@@ -17,9 +17,7 @@ $activeRoles = function (): Collection {
 };
 
 Route::get('/', function () use ($activeRoles) {
-    return view('layouts.app', [
-        'roles' => $activeRoles(),
-    ]);
+    return redirect()->route('login');
 })->name('welcome');
 
 Route::get('/login', function () use ($activeRoles) {
@@ -105,6 +103,7 @@ Route::middleware(['auth', 'role:cashier'])
         Route::post('/cart/add', [CashierController::class, 'addToCart'])->name('cart.add');
         Route::post('/cart/{itemKey}/increment', [CashierController::class, 'incrementCartItem'])->name('cart.increment');
         Route::post('/cart/{itemKey}/decrement', [CashierController::class, 'decrementCartItem'])->name('cart.decrement');
+        Route::post('/order/place', [CashierController::class, 'placeOrder'])->name('order.place');
     });
 
 require __DIR__ . '/admin.php';

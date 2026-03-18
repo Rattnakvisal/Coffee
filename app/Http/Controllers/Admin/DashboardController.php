@@ -10,11 +10,17 @@ use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View|RedirectResponse
     {
+        $searchQuery = trim((string) $request->query('q', ''));
+        $searchFeedback = session('searchFeedback');
+
         $now = now();
         $today = $now->copy()->startOfDay();
 
@@ -132,6 +138,55 @@ class DashboardController extends Controller
                 ->get();
         }
 
+        $searchSuggestions = collect([
+            ['label' => 'Dashboard', 'value' => 'dashboard', 'type' => 'Shortcut', 'meta' => 'Overview'],
+            ['label' => 'Products', 'value' => 'products', 'type' => 'Shortcut', 'meta' => 'Manage products'],
+            ['label' => 'Categories', 'value' => 'categories', 'type' => 'Shortcut', 'meta' => 'Manage categories'],
+            ['label' => 'Users', 'value' => 'users', 'type' => 'Shortcut', 'meta' => 'Manage staff'],
+            ['label' => 'Settings', 'value' => 'settings', 'type' => 'Shortcut', 'meta' => 'Account settings'],
+            ['label' => 'Profile', 'value' => 'profile', 'type' => 'Shortcut', 'meta' => 'Profile settings'],
+            ['label' => 'Password', 'value' => 'password', 'type' => 'Shortcut', 'meta' => 'Security settings'],
+        ])
+            ->merge(
+                Product::query()
+                    ->latest()
+                    ->limit(8)
+                    ->get(['name'])
+                    ->map(fn (Product $product): array => [
+                        'label' => (string) $product->name,
+                        'value' => (string) $product->name,
+                        'type' => 'Product',
+                        'meta' => 'Item',
+                    ]),
+            )
+            ->merge(
+                Category::query()
+                    ->latest()
+                    ->limit(8)
+                    ->get(['name'])
+                    ->map(fn (Category $category): array => [
+                        'label' => (string) $category->name,
+                        'value' => (string) $category->name,
+                        'type' => 'Category',
+                        'meta' => 'Group',
+                    ]),
+            )
+            ->merge(
+                User::query()
+                    ->latest()
+                    ->limit(8)
+                    ->get(['name', 'email'])
+                    ->map(fn (User $user): array => [
+                        'label' => (string) $user->name,
+                        'value' => (string) $user->name,
+                        'type' => 'User',
+                        'meta' => (string) $user->email,
+                    ]),
+            )
+            ->filter(fn (array $item): bool => trim((string) ($item['value'] ?? '')) !== '')
+            ->unique(fn (array $item): string => strtolower($item['value'] . '|' . $item['type']))
+            ->values();
+
         return view('admin.index', [
             'stats' => [
                 'inventoryValue' => $inventoryValue,
@@ -166,7 +221,120 @@ class DashboardController extends Controller
                     ->map(fn ($count): int => (int) $count)
                     ->values(),
             ],
+            'searchQuery' => $searchQuery,
+            'searchFeedback' => $searchFeedback,
+            'searchSuggestions' => $searchSuggestions,
         ]);
+    }
+
+    public function search(Request $request): RedirectResponse
+    {
+        $search = trim((string) $request->query('q', ''));
+
+        if ($search === '') {
+            return redirect()->route('admin.index');
+        }
+
+        $target = $this->resolveRouteFromSearch($search);
+
+        if ($target === null) {
+            return redirect()
+                ->route('admin.index', ['q' => $search])
+                ->with('searchFeedback', 'No match found. Try products, categories, users, or settings.');
+        }
+
+        $url = route($target['route'], $target['params'] ?? []);
+
+        if (! empty($target['fragment'])) {
+            $url .= '#' . $target['fragment'];
+        }
+
+        return redirect()->to($url);
+    }
+
+    private function resolveRouteFromSearch(string $search): ?array
+    {
+        $normalized = Str::of($search)->lower()->squish()->value();
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        $keywordMap = [
+            'admin.index' => ['dashboard', 'home', 'overview'],
+            'admin.products.index' => ['product', 'products', 'item', 'items', 'inventory', 'menu'],
+            'admin.categories.index' => ['category', 'categories'],
+            'admin.users.index' => ['user', 'users', 'member', 'members', 'staff', 'team', 'admin', 'cashier'],
+            'admin.settings.index#profile' => ['setting', 'settings', 'profile', 'account'],
+            'admin.settings.index#security' => ['password', 'security'],
+        ];
+
+        foreach ($keywordMap as $target => $keywords) {
+            foreach ($keywords as $keyword) {
+                if ($normalized === $keyword || str_contains($normalized, $keyword)) {
+                    return $this->toSearchTarget($target, $search);
+                }
+            }
+        }
+
+        $productMatches = Product::query()
+            ->where(function ($query) use ($search): void {
+                $query
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            })
+            ->count();
+
+        $categoryMatches = Category::query()
+            ->where(function ($query) use ($search): void {
+                $query
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            })
+            ->count();
+
+        $userMatches = User::query()
+            ->where(function ($query) use ($search): void {
+                $query
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->count();
+
+        $matchedCounts = [
+            'admin.products.index' => $productMatches,
+            'admin.categories.index' => $categoryMatches,
+            'admin.users.index' => $userMatches,
+        ];
+
+        arsort($matchedCounts);
+        $topRoute = array_key_first($matchedCounts);
+        $topCount = $topRoute ? $matchedCounts[$topRoute] : 0;
+
+        if ($topRoute !== null && $topCount > 0) {
+            return $this->toSearchTarget($topRoute, $search);
+        }
+
+        return null;
+    }
+
+    private function toSearchTarget(string $target, string $search): array
+    {
+        [$route, $fragment] = array_pad(explode('#', $target, 2), 2, null);
+
+        $params = [];
+
+        if (in_array($route, ['admin.products.index', 'admin.categories.index', 'admin.users.index'], true)) {
+            $params['search'] = $search;
+        } elseif ($route === 'admin.index') {
+            $params['q'] = $search;
+        }
+
+        return [
+            'route' => $route,
+            'params' => $params,
+            'fragment' => $fragment,
+        ];
     }
 
     private function usersCountByRole(string $slug): int

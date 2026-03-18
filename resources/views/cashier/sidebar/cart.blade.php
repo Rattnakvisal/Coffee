@@ -10,7 +10,7 @@
     <div class="flex items-start justify-between gap-3">
         <div>
             <h3 class="text-lg font-bold text-[#2f241f]">Cart</h3>
-            <p class="text-sm text-gray-400">Order #3243</p>
+            <p class="text-sm text-gray-400">Ready to checkout</p>
         </div>
         <div class="flex items-start gap-2">
             <button type="button" data-cashier-close
@@ -87,14 +87,47 @@
         </div>
     </div>
 
-    <button type="button" data-place-order
-        class="anim-pop anim-delay-400 mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#f4a06b] py-4 font-semibold text-white shadow-lg shadow-[#e8b28f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-        @disabled($cartItems->isEmpty())>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            stroke-width="1.9">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                d="M3.75 6.75h16.5m-15 0 1.5 11.25A2.25 2.25 0 0 0 9 20.25h6a2.25 2.25 0 0 0 2.25-2.25l1.5-11.25M9.75 6.75v-1.5A2.25 2.25 0 0 1 12 3h0a2.25 2.25 0 0 1 2.25 2.25v1.5" />
-        </svg>
-        Place an order
-    </button>
+    <form method="POST" action="{{ route('cashier.order.place') }}" class="js-place-order-form mt-7 space-y-3"
+        data-order-total="{{ number_format($cartTotal, 2, '.', '') }}">
+        @csrf
+        <div class="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">Payment
+                        Method</label>
+                    <select name="payment_method" data-payment-method
+                        class="mt-1.5 w-full rounded-xl border border-[#ead8cc] bg-white px-3 py-2.5 text-sm text-[#4b372d] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/25"
+                        @disabled($cartItems->isEmpty())>
+                        <option value="cash" selected>Cash</option>
+                        <option value="card">Card</option>
+                        <option value="qr">QR</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">Amount
+                        Received</label>
+                    <input type="number" name="amount_received" data-amount-received min="0" step="0.01"
+                        value="{{ number_format($cartTotal, 2, '.', '') }}"
+                        class="mt-1.5 w-full rounded-xl border border-[#ead8cc] bg-white px-3 py-2.5 text-sm text-[#4b372d] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/25 disabled:cursor-not-allowed disabled:bg-slate-100"
+                        @disabled($cartItems->isEmpty())>
+                    <p data-payment-hint class="mt-1.5 text-[11px] text-[#8b6a59]">
+                        For cash payment, received amount should be >= total.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <p data-place-order-feedback class="hidden text-xs font-semibold"></p>
+
+        <button type="submit" data-place-order
+            class="anim-pop anim-delay-400 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#f4a06b] py-4 font-semibold text-white shadow-lg shadow-[#e8b28f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+            @disabled($cartItems->isEmpty())>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="1.9">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3.75 6.75h16.5m-15 0 1.5 11.25A2.25 2.25 0 0 0 9 20.25h6a2.25 2.25 0 0 0 2.25-2.25l1.5-11.25M9.75 6.75v-1.5A2.25 2.25 0 0 1 12 3h0a2.25 2.25 0 0 1 2.25 2.25v1.5" />
+            </svg>
+            Place an order
+        </button>
+    </form>
 </aside>
