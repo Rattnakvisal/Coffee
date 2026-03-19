@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -34,7 +35,10 @@ class UserController extends Controller
                     $query->where(function ($userQuery) use ($search): void {
                         $userQuery
                             ->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
+                            ->orWhere('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
                     });
                 },
             )
@@ -52,8 +56,11 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'role_id' => [
                 'required',
                 Rule::exists('roles', 'id')->where(function ($query): void {
@@ -63,11 +70,22 @@ class UserController extends Controller
                 }),
             ],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
         ]);
 
+        $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
+        $avatarPath = $request->hasFile('avatar')
+            ? $request->file('avatar')->store('avatars', 'public')
+            : null;
+
         User::query()->create([
-            'name' => $validated['name'],
+            'name' => $fullName,
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
             'email' => $validated['email'],
+            'phone' => filled($validated['phone'] ?? null) ? $validated['phone'] : null,
+            'gender' => filled($validated['gender'] ?? null) ? $validated['gender'] : null,
+            'avatar_path' => $avatarPath,
             'role_id' => $validated['role_id'],
             'password' => $validated['password'],
         ]);
@@ -98,15 +116,21 @@ class UserController extends Controller
             ->where(function ($query) use ($search): void {
                 $query
                     ->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             })
             ->orderBy('name')
             ->limit(8)
-            ->get(['id', 'name', 'email'])
+            ->get(['id', 'name', 'first_name', 'last_name', 'email', 'phone'])
             ->map(fn (User $user): array => [
                 'id' => $user->id,
-                'name' => $user->name,
+                'name' => trim((string) ($user->first_name ?? '') . ' ' . (string) ($user->last_name ?? '')) !== ''
+                    ? trim((string) $user->first_name . ' ' . (string) $user->last_name)
+                    : (string) $user->name,
                 'email' => $user->email,
+                'phone' => (string) ($user->phone ?? ''),
             ])
             ->values();
 
@@ -130,8 +154,11 @@ class UserController extends Controller
         $this->abortIfUserRoleNotManaged($user);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'role_id' => [
                 'required',
                 Rule::exists('roles', 'id')->where(function ($query): void {
@@ -141,10 +168,30 @@ class UserController extends Controller
                 }),
             ],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'remove_avatar' => ['nullable', Rule::in(['0', '1'])],
+            'avatar' => ['nullable', 'image', 'max:2048'],
         ]);
 
-        $user->name = $validated['name'];
+        if (($validated['remove_avatar'] ?? '0') === '1') {
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+
+            $user->avatar_path = null;
+        } elseif ($request->hasFile('avatar')) {
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+
+            $user->avatar_path = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        $user->first_name = $validated['first_name'];
+        $user->last_name = $validated['last_name'];
+        $user->name = trim($validated['first_name'] . ' ' . $validated['last_name']);
         $user->email = $validated['email'];
+        $user->phone = filled($validated['phone'] ?? null) ? $validated['phone'] : null;
+        $user->gender = filled($validated['gender'] ?? null) ? $validated['gender'] : null;
         $user->role_id = $validated['role_id'];
 
         if (! empty($validated['password'])) {
@@ -192,6 +239,10 @@ class UserController extends Controller
                         'text' => 'At least one admin account must remain.',
                     ]);
             }
+        }
+
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
         }
 
         $user->delete();

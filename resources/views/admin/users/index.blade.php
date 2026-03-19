@@ -38,16 +38,26 @@
                 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
                     <template id="add-user-template">
                         <form id="swal-add-user-form" method="POST" action="{{ route('admin.users.store') }}"
-                            class="space-y-4 text-left">
+                            enctype="multipart/form-data" class="space-y-4 text-left">
                             @csrf
 
-                            <div>
-                                <label for="swal-add-user-name"
-                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Full Name</label>
-                                <input id="swal-add-user-name" name="name" type="text" value="{{ old('name') }}"
-                                    required
-                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
-                                    placeholder="Member name">
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label for="swal-add-user-first-name"
+                                        class="mb-1 block text-sm font-semibold text-[#5f4b40]">First Name</label>
+                                    <input id="swal-add-user-first-name" name="first_name" type="text"
+                                        value="{{ old('first_name') }}" required
+                                        class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                        placeholder="First name">
+                                </div>
+                                <div>
+                                    <label for="swal-add-user-last-name"
+                                        class="mb-1 block text-sm font-semibold text-[#5f4b40]">Last Name</label>
+                                    <input id="swal-add-user-last-name" name="last_name" type="text"
+                                        value="{{ old('last_name') }}" required
+                                        class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                        placeholder="Last name">
+                                </div>
                             </div>
 
                             <div>
@@ -57,6 +67,28 @@
                                     value="{{ old('email') }}" required
                                     class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
                                     placeholder="member@example.com">
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label for="swal-add-user-phone"
+                                        class="mb-1 block text-sm font-semibold text-[#5f4b40]">Phone</label>
+                                    <input id="swal-add-user-phone" name="phone" type="text"
+                                        value="{{ old('phone') }}"
+                                        class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                        placeholder="+1##########">
+                                </div>
+                                <div>
+                                    <label for="swal-add-user-gender"
+                                        class="mb-1 block text-sm font-semibold text-[#5f4b40]">Gender</label>
+                                    <select id="swal-add-user-gender" name="gender"
+                                        class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                        <option value="">Prefer not to say</option>
+                                        <option value="male" @selected(old('gender') === 'male')>Male</option>
+                                        <option value="female" @selected(old('gender') === 'female')>Female</option>
+                                        <option value="other" @selected(old('gender') === 'other')>Other</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
@@ -90,6 +122,13 @@
                                     placeholder="Re-enter password">
                             </div>
 
+                            <div>
+                                <label for="swal-add-user-avatar"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Profile Photo</label>
+                                <input id="swal-add-user-avatar" name="avatar" type="file" accept="image/*"
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                            </div>
+
                             <button type="submit"
                                 class="inline-flex w-full items-center justify-center rounded-xl bg-[#2f241f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#201813]">
                                 Add Member
@@ -121,10 +160,10 @@
                         </div>
 
                         <div class="mt-5 overflow-x-auto">
-                            <table class="w-full min-w-[640px] text-left text-sm">
+                            <table class="w-full min-w-[740px] text-left text-sm">
                                 <thead>
                                     <tr class="border-b border-slate-200 text-[#7b5e50]">
-                                        <th class="pb-3 font-semibold">Name</th>
+                                        <th class="pb-3 font-semibold">Profile</th>
                                         <th class="pb-3 font-semibold">Email</th>
                                         <th class="pb-3 font-semibold">Role</th>
                                         <th class="pb-3 font-semibold">Joined</th>
@@ -133,9 +172,41 @@
                                 </thead>
                                 <tbody>
                                     @forelse ($users as $member)
+                                        @php
+                                            $memberDisplayName = trim((string) ($member->first_name ?? '') . ' ' . (string) ($member->last_name ?? ''));
+                                            $memberDisplayName = $memberDisplayName !== '' ? $memberDisplayName : (string) $member->name;
+                                            $memberFirstNameForForm = (string) ($member->first_name ?? '');
+                                            $memberLastNameForForm = (string) ($member->last_name ?? '');
+                                            if ($memberFirstNameForForm === '' && $memberLastNameForForm === '' && trim((string) $member->name) !== '') {
+                                                $nameParts = preg_split('/\s+/', trim((string) $member->name), 2);
+                                                $memberFirstNameForForm = (string) ($nameParts[0] ?? '');
+                                                $memberLastNameForForm = (string) ($nameParts[1] ?? '');
+                                            }
+                                            $memberInitials = collect(explode(' ', $memberDisplayName))
+                                                ->filter()
+                                                ->map(fn(string $namePart): string => strtoupper(substr($namePart, 0, 1)))
+                                                ->take(2)
+                                                ->implode('');
+                                            $memberAvatarUrl = $member->avatar_path ? asset('storage/' . $member->avatar_path) : null;
+                                        @endphp
                                         <tr class="border-b border-slate-100 anim-pop anim-stagger"
                                             style="--stagger: {{ $loop->index + 1 }};">
-                                            <td class="py-3.5 font-semibold text-[#2f241f]">{{ $member->name }}</td>
+                                            <td class="py-3.5">
+                                                <div class="flex items-center gap-3">
+                                                    @if ($memberAvatarUrl)
+                                                        <img src="{{ $memberAvatarUrl }}" alt="{{ $memberDisplayName }}"
+                                                            class="h-11 w-11 rounded-xl object-cover ring-1 ring-black/5">
+                                                    @else
+                                                        <span
+                                                            class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#2f241f] text-sm font-bold text-white">{{ $memberInitials }}</span>
+                                                    @endif
+                                                    <div>
+                                                        <p class="font-semibold text-[#2f241f]">{{ $memberDisplayName }}</p>
+                                                        <p class="text-xs text-slate-500">{{ $member->phone ?: 'No phone' }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </td>
                                             <td class="py-3.5 text-slate-600">{{ $member->email }}</td>
                                             <td class="py-3.5">
                                                 <span
@@ -150,9 +221,13 @@
                                                     <button type="button"
                                                         class="js-edit-trigger rounded-lg border border-[#edd5c4] bg-white px-3 py-1.5 text-xs font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]"
                                                         data-update-url="{{ route('admin.users.update', $member) }}"
-                                                        data-name="{{ $member->name }}"
+                                                        data-first-name="{{ $memberFirstNameForForm }}"
+                                                        data-last-name="{{ $memberLastNameForForm }}"
                                                         data-email="{{ $member->email }}"
-                                                        data-role-id="{{ $member->role_id }}">
+                                                        data-phone="{{ $member->phone }}"
+                                                        data-gender="{{ $member->gender }}"
+                                                        data-role-id="{{ $member->role_id }}"
+                                                        data-avatar-url="{{ $memberAvatarUrl }}">
                                                         Edit
                                                     </button>
 
@@ -196,6 +271,15 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const escapeHtml = function(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            };
+
             const alertData = @json(session('alert'));
             const roleOptions = @json(
                 $roles->map(fn($role) => [
@@ -266,9 +350,13 @@
             document.querySelectorAll('.js-edit-trigger').forEach(function(button) {
                 button.addEventListener('click', function() {
                     const updateUrl = button.dataset.updateUrl;
-                    const currentName = button.dataset.name ?? '';
+                    const currentFirstName = button.dataset.firstName ?? '';
+                    const currentLastName = button.dataset.lastName ?? '';
                     const currentEmail = button.dataset.email ?? '';
+                    const currentPhone = button.dataset.phone ?? '';
+                    const currentGender = button.dataset.gender ?? '';
                     const currentRoleId = button.dataset.roleId ?? '';
+                    const currentAvatarUrl = button.dataset.avatarUrl ?? '';
 
                     const roleSelectOptions = roleOptions.map(function(role) {
                         const selected = role.id === currentRoleId ? 'selected' : '';
@@ -276,105 +364,143 @@
                             .name + '</option>';
                     }).join('');
 
+                    const genderOptions = [{
+                            value: '',
+                            label: 'Prefer not to say'
+                        },
+                        {
+                            value: 'male',
+                            label: 'Male'
+                        },
+                        {
+                            value: 'female',
+                            label: 'Female'
+                        },
+                        {
+                            value: 'other',
+                            label: 'Other'
+                        },
+                    ].map(function(option) {
+                        const selected = option.value === currentGender ? 'selected' : '';
+                        return '<option value="' + option.value + '" ' + selected + '>' + option
+                            .label + '</option>';
+                    }).join('');
+
+                    const avatarPreview = currentAvatarUrl ?
+                        `
+                            <img src="${escapeHtml(currentAvatarUrl)}" alt="Current profile photo" class="h-14 w-14 rounded-xl object-cover ring-1 ring-black/5">
+                        ` :
+                        `
+                            <span class="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-[#2f241f] text-sm font-bold text-white">
+                                N/A
+                            </span>
+                        `;
+
                     Swal.fire({
                         title: 'Edit member',
                         html: `
-                            <div class="space-y-4 text-left">
-                                <div>
-                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Full Name</label>
-                                    <input id="swal-name" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentName}">
+                            <form id="swal-edit-user-form" method="POST" action="${escapeHtml(updateUrl)}" enctype="multipart/form-data" class="space-y-4 text-left">
+                                <input type="hidden" name="_token" value="${escapeHtml(csrfToken)}">
+                                <input type="hidden" name="_method" value="PUT">
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label for="swal-edit-user-first-name" class="mb-1 block text-sm font-semibold text-[#5f4b40]">First Name</label>
+                                        <input id="swal-edit-user-first-name" name="first_name" type="text" required value="${escapeHtml(currentFirstName)}" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                    </div>
+                                    <div>
+                                        <label for="swal-edit-user-last-name" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Last Name</label>
+                                        <input id="swal-edit-user-last-name" name="last_name" type="text" required value="${escapeHtml(currentLastName)}" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                    </div>
                                 </div>
                                 <div>
-                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Email</label>
-                                    <input id="swal-email" type="email" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentEmail}">
+                                    <label for="swal-edit-user-email" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Email</label>
+                                    <input id="swal-edit-user-email" name="email" type="email" required value="${escapeHtml(currentEmail)}" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                </div>
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label for="swal-edit-user-phone" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Phone</label>
+                                        <input id="swal-edit-user-phone" name="phone" type="text" value="${escapeHtml(currentPhone)}" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" placeholder="+1##########">
+                                    </div>
+                                    <div>
+                                        <label for="swal-edit-user-gender" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Gender</label>
+                                        <select id="swal-edit-user-gender" name="gender" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                            ${genderOptions}
+                                        </select>
+                                    </div>
                                 </div>
                                 <div>
-                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Role</label>
-                                    <select id="swal-role" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                    <label for="swal-edit-user-role" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Role</label>
+                                    <select id="swal-edit-user-role" name="role_id" required class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
                                         ${roleSelectOptions}
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">New Password (Optional)</label>
-                                    <input id="swal-password" type="password" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" placeholder="Leave blank to keep current password">
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label for="swal-edit-user-password" class="mb-1 block text-sm font-semibold text-[#5f4b40]">New Password (Optional)</label>
+                                        <input id="swal-edit-user-password" name="password" type="password" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" placeholder="Leave blank to keep current password">
+                                    </div>
+                                    <div>
+                                        <label for="swal-edit-user-password-confirmation" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Confirm Password</label>
+                                        <input id="swal-edit-user-password-confirmation" name="password_confirmation" type="password" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" placeholder="Re-enter password">
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Confirm Password</label>
-                                    <input id="swal-password-confirmation" type="password" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                <div class="rounded-xl border border-[#ecd9cc] bg-[#fffaf6] p-3">
+                                    <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-[#7b5e50]">Current Photo</p>
+                                    ${avatarPreview}
+                                    <div class="mt-3">
+                                        <label for="swal-edit-user-avatar" class="mb-1 block text-sm font-semibold text-[#5f4b40]">Replace Photo</label>
+                                        <input id="swal-edit-user-avatar" name="avatar" type="file" accept="image/*" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">
+                                    </div>
+                                    <label class="mt-3 inline-flex items-center gap-2 text-sm text-[#5f4b40]">
+                                        <input type="checkbox" name="remove_avatar" value="1" class="rounded border-[#d8c4b8] text-[#2f241f] focus:ring-[#f4a06b]/40">
+                                        Remove current photo
+                                    </label>
                                 </div>
-                            </div>
+                                <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-[#2f241f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#201813]">
+                                    Update Member
+                                </button>
+                            </form>
                         `,
-                        showCancelButton: true,
-                        confirmButtonText: 'Update',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#2f241f',
-                        preConfirm: function() {
-                            const name = document.getElementById('swal-name').value
-                                .trim();
-                            const email = document.getElementById('swal-email').value
-                                .trim();
-                            const roleId = document.getElementById('swal-role').value;
-                            const password = document.getElementById('swal-password')
-                                .value;
+                        showConfirmButton: false,
+                        showCloseButton: true,
+                        width: 700,
+                        didOpen: function() {
+                            const form = document.getElementById('swal-edit-user-form');
+                            const password = document.getElementById('swal-edit-user-password');
                             const passwordConfirmation = document.getElementById(
-                                'swal-password-confirmation').value;
+                                'swal-edit-user-password-confirmation');
 
-                            if (!name || !email || !roleId) {
-                                Swal.showValidationMessage(
-                                    'Name, email, and role are required.');
-                                return false;
+                            if (!form || !password || !passwordConfirmation) {
+                                return;
                             }
 
-                            if (password && password.length < 8) {
-                                Swal.showValidationMessage(
-                                    'Password must be at least 8 characters.');
-                                return false;
-                            }
-
-                            if (password !== passwordConfirmation) {
-                                Swal.showValidationMessage(
-                                    'Password confirmation does not match.');
-                                return false;
-                            }
-
-                            return {
-                                name: name,
-                                email: email,
-                                role_id: roleId,
-                                password: password,
-                                password_confirmation: passwordConfirmation,
+                            const validatePassword = function() {
+                                if (password.value !== passwordConfirmation.value) {
+                                    passwordConfirmation.setCustomValidity(
+                                        'Password confirmation does not match.'
+                                    );
+                                } else if (password.value && password.value.length < 8) {
+                                    password.setCustomValidity(
+                                        'Password must be at least 8 characters.'
+                                    );
+                                    passwordConfirmation.setCustomValidity('');
+                                } else {
+                                    password.setCustomValidity('');
+                                    passwordConfirmation.setCustomValidity('');
+                                }
                             };
+
+                            password.addEventListener('input', validatePassword);
+                            passwordConfirmation.addEventListener('input', validatePassword);
+
+                            form.addEventListener('submit', function(event) {
+                                validatePassword();
+
+                                if (!form.reportValidity()) {
+                                    event.preventDefault();
+                                }
+                            });
                         },
-                    }).then(function(result) {
-                        if (!result.isConfirmed || !result.value) {
-                            return;
-                        }
-
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = updateUrl;
-                        form.style.display = 'none';
-
-                        const fields = {
-                            _token: csrfToken,
-                            _method: 'PUT',
-                            name: result.value.name,
-                            email: result.value.email,
-                            role_id: result.value.role_id,
-                            password: result.value.password,
-                            password_confirmation: result.value.password_confirmation,
-                        };
-
-                        Object.keys(fields).forEach(function(key) {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = key;
-                            input.value = fields[key] ?? '';
-                            form.appendChild(input);
-                        });
-
-                        document.body.appendChild(form);
-                        form.submit();
                     });
                 });
             });
@@ -383,15 +509,6 @@
                 const hideSuggestions = function() {
                     suggestionsBox.classList.add('hidden');
                     suggestionsBox.innerHTML = '';
-                };
-
-                const escapeHtml = function(value) {
-                    return String(value ?? '')
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#039;');
                 };
 
                 const fetchSuggestions = function(query) {
@@ -419,12 +536,13 @@
                         suggestionsBox.innerHTML = items.map(function(item) {
                             const safeName = escapeHtml(item.name ?? '');
                             const safeEmail = escapeHtml(item.email ?? '');
+                            const safePhone = escapeHtml(item.phone ?? '');
                             const encodedName = encodeURIComponent(item.name ?? '');
 
                             return `
                                 <button type="button" class="js-suggestion-item block w-full border-b border-[#f5ebe3] px-4 py-2.5 text-left last:border-b-0 hover:bg-[#fff4ec]" data-name="${encodedName}">
                                     <p class="text-sm font-semibold text-[#2f241f]">${safeName}</p>
-                                    <p class="text-xs text-slate-500">${safeEmail}</p>
+                                    <p class="text-xs text-slate-500">${safeEmail}${safePhone ? ' • ' + safePhone : ''}</p>
                                 </button>
                             `;
                         }).join('');

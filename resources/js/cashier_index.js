@@ -376,14 +376,40 @@
         const qtyLabel = form.querySelector(".js-product-qty-label");
         const decreaseButton = form.querySelector(".js-product-qty-decrease");
         const increaseButton = form.querySelector(".js-product-qty-increase");
+        const priceLabel = form
+            .closest(".rounded-3xl")
+            ?.querySelector(".js-size-price-label");
+        const basePriceLabel = form
+            .closest(".rounded-3xl")
+            ?.querySelector(".js-size-base-price-label");
         const sizeInput = form.querySelector(".js-size-input");
         const sizeLabel = form.querySelector(".js-size-label");
         const sizeButtons = form.querySelectorAll(".js-size-option");
         const sugarRange = form.querySelector(".js-sugar-range");
         const sugarLabel = form.querySelector(".js-sugar-label");
+        const baseSizePrices = {
+            small: Number(form.dataset.basePriceSmall || 0),
+            medium: Number(form.dataset.basePriceMedium || 0),
+            large: Number(form.dataset.basePriceLarge || 0),
+        };
+        const sizePrices = {
+            small: Number(form.dataset.priceSmall || 0),
+            medium: Number(form.dataset.priceMedium || 0),
+            large: Number(form.dataset.priceLarge || 0),
+        };
 
         if (!qtyInput || !qtyLabel || !decreaseButton || !increaseButton)
             return;
+
+        const formatPrice = function (value) {
+            return (
+                "$" +
+                Number(value || 0).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })
+            );
+        };
 
         const syncQty = function (value) {
             const nextQty = Math.min(99, Math.max(1, Number(value) || 1));
@@ -412,6 +438,19 @@
                     isActive ? "true" : "false",
                 );
             });
+
+            if (priceLabel) {
+                priceLabel.textContent = formatPrice(sizePrices[normalized]);
+            }
+
+            if (basePriceLabel) {
+                const basePrice = baseSizePrices[normalized];
+                const finalPrice = sizePrices[normalized];
+                const hasDiscount = basePrice > finalPrice;
+
+                basePriceLabel.textContent = formatPrice(basePrice);
+                basePriceLabel.classList.toggle("hidden", !hasDiscount);
+            }
         };
 
         const syncSugar = function (value) {

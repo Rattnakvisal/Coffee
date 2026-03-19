@@ -44,8 +44,15 @@
                     <h4 class="font-semibold text-[#2f241f]">{{ $item['name'] }}</h4>
                     <p class="text-xs text-gray-400">{{ ucfirst($item['size']) }} - Sugar {{ $item['sugar'] }}%</p>
                     <div class="mt-2 flex items-center justify-between">
-                        <span
-                            class="font-semibold text-[#2f241f]">${{ number_format((float) $item['line_total'], 2) }}</span>
+                        <span class="text-right">
+                            @if ((float) ($item['line_discount'] ?? 0) > 0)
+                                <span class="block text-xs text-slate-400 line-through">
+                                    ${{ number_format((float) ($item['line_base_total'] ?? 0), 2) }}
+                                </span>
+                            @endif
+                            <span
+                                class="block font-semibold text-[#2f241f]">${{ number_format((float) $item['line_total'], 2) }}</span>
+                        </span>
                         <div class="flex items-center gap-2">
                             <form method="POST" action="{{ route('cashier.cart.decrement', $item['item_key']) }}"
                                 class="js-cart-item-form">

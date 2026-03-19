@@ -11,9 +11,21 @@
             ->take(2)
             ->implode('');
         $avatarUrl = $currentUser->avatar_path ? asset('storage/' . $currentUser->avatar_path) : null;
+
+        $roleLabels = collect($charts['roleLabels'] ?? [])->values();
+        $roleCounts = collect($charts['roleCounts'] ?? [])->values();
+        $roleRows = $roleLabels->map(function ($label, $index) use ($roleCounts) {
+            return [
+                'label' => (string) $label,
+                'count' => (int) ($roleCounts->get($index) ?? 0),
+            ];
+        });
+        $roleMaxCount = (int) ($roleRows->max('count') ?? 0);
+        $teamUsers = (int) ($stats['cashiersCount'] ?? 0) + (int) ($stats['adminsCount'] ?? 0);
+        $todayLabel = now()->format('M d, Y');
     @endphp
 
-    <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
+    <div class="anim-enter-up w-full min-h-screen overflow-hidden bg-white/85 lg:overflow-visible">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
             @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'dashboard'])
 
@@ -64,21 +76,6 @@
                             </p>
                         </div>
                     </form>
-
-                    <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
-                        @if ($avatarUrl)
-                            <img src="{{ $avatarUrl }}" alt="Profile avatar"
-                                class="h-10 w-10 rounded-xl object-cover ring-1 ring-[#ecd9cc]">
-                        @else
-                            <span
-                                class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#2f241f] text-sm font-bold text-white">{{ $initials }}</span>
-                        @endif
-                        <div>
-                            <p class="text-sm font-semibold text-[#2f241f]">{{ $displayName }}</p>
-                            <p class="text-xs text-slate-500">{{ str($currentUser->role?->name ?? 'Admin')->headline() }}
-                            </p>
-                        </div>
-                    </div>
                 </div>
 
                 @if (!empty($searchFeedback))
@@ -87,182 +84,303 @@
                     </div>
                 @endif
 
-                <div class="anim-enter-up anim-delay-100 flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <p
-                            class="inline-flex items-center gap-2 rounded-full bg-[#ffe7d5] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#b16231]">
-                            <span class="h-2 w-2 rounded-full bg-[#f4a06b]"></span>
-                            Admin
-                        </p>
-                        <h2 class="mt-3 text-3xl font-black text-[#2f241f]">Dashboard Overview</h2>
-                        <p class="mt-1 text-sm text-gray-500">Dynamic data with animated counters and charts.</p>
-                    </div>
-
-                    <a href="{{ route('admin.products.index') }}"
-                        class="anim-pop anim-delay-200 inline-flex items-center gap-2 rounded-xl bg-[#f4a06b] px-5 py-3 font-semibold text-white shadow-lg shadow-[#e9b08d] transition hover:brightness-105">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        Add Product
-                    </a>
-                </div>
-
-                <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <div class="anim-pop anim-delay-200 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                        <p class="text-sm text-gray-500">Inventory Value</p>
-                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
-                            data-counter-value="{{ $stats['inventoryValue'] }}" data-counter-type="currency"
-                            data-counter-decimals="2">$0.00</h3>
-                        <p
-                            class="mt-2 text-xs font-medium {{ $stats['inventoryGrowth']['isPositive'] ? 'text-emerald-600' : 'text-rose-600' }}">
-                            {{ $stats['inventoryGrowth']['text'] }}
-                        </p>
-                    </div>
-
-                    <div class="anim-pop anim-delay-300 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                        <p class="text-sm text-gray-500">Products Today</p>
-                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
-                            data-counter-value="{{ $stats['productsToday'] }}" data-counter-type="number">0</h3>
-                        <p
-                            class="mt-2 text-xs font-medium {{ $stats['productsGrowth']['isPositive'] ? 'text-emerald-600' : 'text-rose-600' }}">
-                            {{ $stats['productsGrowth']['text'] }}
-                        </p>
-                    </div>
-
-                    <div class="anim-pop anim-delay-400 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                        <p class="text-sm text-gray-500">Active Products</p>
-                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
-                            data-counter-value="{{ $stats['activeProductsCount'] }}" data-counter-type="number">0</h3>
-                        <p class="mt-2 text-xs font-medium text-slate-500">
-                            {{ number_format($stats['categoriesCount']) }} active categories
-                        </p>
-                    </div>
-
-                    <div class="anim-pop anim-delay-500 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-                        <p class="text-sm text-gray-500">Cashier Accounts</p>
-                        <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
-                            data-counter-value="{{ $stats['cashiersCount'] }}" data-counter-type="number">0</h3>
-                        <p
-                            class="mt-2 text-xs font-medium {{ $stats['usersGrowth']['isPositive'] ? 'text-emerald-600' : 'text-rose-600' }}">
-                            {{ $stats['usersGrowth']['text'] }} ({{ number_format($stats['adminsCount']) }} admins)
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <section
-                        class="anim-enter-up anim-delay-200 xl:col-span-2 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-                        <div class="mb-4 flex items-center justify-between">
-                            <h3 class="text-xl font-bold text-[#2f241f]">Weekly Activity</h3>
-                            <span class="rounded-full bg-[#fff2e7] px-3 py-1 text-xs font-semibold text-[#be6f3c]">Last 7
-                                days</span>
-                        </div>
-                        <div class="dashboard-chart-wrap">
-                            <canvas id="weeklyOverviewChart"></canvas>
-                        </div>
-                    </section>
-
-                    <section class="anim-enter-up anim-delay-300 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-                        <h3 class="mb-4 text-xl font-bold text-[#2f241f]">Category Mix</h3>
-                        <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
-                            <canvas id="categoryMixChart"></canvas>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <section
-                        class="anim-enter-up anim-delay-300 xl:col-span-2 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-                        <h3 class="mb-4 text-xl font-bold text-[#2f241f]">Monthly Product Growth</h3>
-                        <div class="dashboard-chart-wrap">
-                            <canvas id="monthlyProductsChart"></canvas>
-                        </div>
-                    </section>
-
-                    <section class="anim-enter-up anim-delay-400 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-                        <h3 class="mb-4 text-xl font-bold text-[#2f241f]">Team Roles</h3>
-                        <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
-                            <canvas id="roleDistributionChart"></canvas>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
-                    <section
-                        class="anim-enter-up anim-delay-300 xl:col-span-2 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-                        <div class="mb-4 flex items-center justify-between">
-                            <h3 class="text-xl font-bold text-[#2f241f]">Recent Products</h3>
-                            <a href="{{ route('admin.products.index') }}"
-                                class="text-sm font-medium text-[#d97f46] hover:underline">View all</a>
-                        </div>
-
-                        <div class="overflow-x-auto">
-                            <table class="w-full min-w-[620px] text-left">
-                                <thead>
-                                    <tr class="border-b border-slate-200 text-sm text-gray-500">
-                                        <th class="pb-3 font-medium">Product</th>
-                                        <th class="pb-3 font-medium">Category</th>
-                                        <th class="pb-3 font-medium">Price</th>
-                                        <th class="pb-3 font-medium">Status</th>
-                                        <th class="pb-3 font-medium">Added</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-sm">
-                                    @forelse ($recentProducts as $product)
-                                        <tr class="border-b border-slate-100 last:border-b-0">
-                                            <td class="py-4 font-semibold text-[#2f241f]">{{ $product->name }}</td>
-                                            <td class="text-slate-500">{{ $product->category?->name ?? 'Uncategorized' }}
-                                            </td>
-                                            <td class="font-semibold">${{ number_format((float) $product->price, 2) }}
-                                            </td>
-                                            <td>
-                                                <span
-                                                    class="rounded-full px-3 py-1 text-xs font-semibold {{ $product->is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600' }}">
-                                                    {{ $product->is_active ? 'Active' : 'Inactive' }}
-                                                </span>
-                                            </td>
-                                            <td class="text-slate-500">{{ $product->created_at?->diffForHumans() ?? '-' }}
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="py-10 text-center text-sm text-slate-500">
-                                                No products yet. Add your first product to populate the dashboard.
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <section class="anim-enter-up anim-delay-400 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-                        <h3 class="text-xl font-bold text-[#2f241f]">Top Products (By Price)</h3>
-                        <div class="mt-5 space-y-5 text-sm">
-                            @forelse ($topProducts as $product)
-                                @php
-                                    $progress =
-                                        $topProductsMaxPrice > 0
-                                            ? ((float) $product->price / $topProductsMaxPrice) * 100
-                                            : 0;
-                                @endphp
+                <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                    <section class="space-y-4 xl:col-span-8">
+                        <div
+                            class="anim-enter-up rounded-3xl bg-gradient-to-r from-[#cca25a] via-[#c79d56] to-[#b88d47] p-6 text-white shadow-lg shadow-[#b88d47]/25">
+                            <div class="flex flex-wrap items-center justify-between gap-4">
                                 <div>
-                                    <div class="mb-2 flex items-center justify-between gap-3">
-                                        <span class="truncate pr-2">{{ $product->name }}</span>
-                                        <span
-                                            class="font-semibold">${{ number_format((float) $product->price, 2) }}</span>
-                                    </div>
-                                    <div class="h-2 rounded-full bg-slate-100">
-                                        <div class="dashboard-progress-bar h-2 rounded-full bg-[#f4a06b]"
-                                            style="--progress-width: {{ round($progress, 2) }}%;"></div>
+                                    <h2 class="text-3xl font-black">Dashboard</h2>
+                                    <p class="mt-2 text-sm text-white/90">Welcome back, {{ $displayName }}. Today is
+                                        {{ $todayLabel }}.</p>
+                                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                                        <a href="{{ route('admin.products.index') }}"
+                                            class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[#7a5c4e] transition hover:bg-[#fff3ea]">
+                                            Manage Products
+                                        </a>
+                                        <a href="{{ route('admin.reports') }}"
+                                            class="rounded-xl border border-white/40 bg-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/25">
+                                            View Reports
+                                        </a>
                                     </div>
                                 </div>
-                            @empty
-                                <p class="text-sm text-slate-500">No product data available yet.</p>
-                            @endforelse
+
+                                <div
+                                    class="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white/45 bg-white/20 shadow-xl shadow-[#7a5c4e]/25">
+                                    @if ($avatarUrl)
+                                        <img src="{{ $avatarUrl }}" alt="Profile avatar"
+                                            class="h-full w-full object-cover">
+                                    @else
+                                        <span class="text-2xl font-black text-white">{{ $initials }}</span>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
+
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            <article
+                                class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Teams</p>
+                                    <span
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff5ec] text-[#b16231]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M18 18.72a9.094 9.094 0 0 0 3.742-.479 3 3 0 0 0-4.682-2.72m.94 3.198v.038c0 .264-.21.478-.476.478H6.476A.477.477 0 0 1 6 18.757v-.038m12 0a9.14 9.14 0 0 1-12 0m12 0v-.038a3 3 0 0 0-.94-2.16m-10.12 2.198a9.14 9.14 0 0 0 12 0m-12 0v-.038a3 3 0 0 1 .94-2.16m10.12 2.198a3 3 0 0 0-.94-2.16m-8.24 2.16a3 3 0 0 1 .94-2.16m0 0a3 3 0 1 1 5.6 0m-5.6 0a9.093 9.093 0 0 0 5.6 0" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $teamUsers }}"
+                                    data-counter-type="number">0</h3>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{ number_format((int) ($stats['adminsCount'] ?? 0)) }} admins /
+                                    {{ number_format((int) ($stats['cashiersCount'] ?? 0)) }} cashiers
+                                </p>
+                            </article>
+
+                            <article
+                                class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Products</p>
+                                    <span
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#edf6ff] text-[#3d75b8]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M20.25 7.5 12 3 3.75 7.5m16.5 0V16.5L12 21m8.25-13.5L12 12m0 9V12m0 0L3.75 7.5" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                                    data-counter-value="{{ $stats['activeProductsCount'] }}" data-counter-type="number">0
+                                </h3>
+                                <p
+                                    class="mt-1 text-xs font-semibold {{ ($stats['productsGrowth']['isPositive'] ?? true) ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    {{ $stats['productsGrowth']['text'] ?? '+0.0% vs last week' }}
+                                </p>
+                            </article>
+
+                            <article
+                                class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Categories</p>
+                                    <span
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4f2ff] text-[#6b5caa]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3.75 6.75A2.25 2.25 0 0 1 6 4.5h2.25A2.25 2.25 0 0 1 10.5 6.75V9A2.25 2.25 0 0 1 8.25 11.25H6A2.25 2.25 0 0 1 3.75 9V6.75Zm9.75 0A2.25 2.25 0 0 1 15.75 4.5H18A2.25 2.25 0 0 1 20.25 6.75V9A2.25 2.25 0 0 1 18 11.25h-2.25A2.25 2.25 0 0 1 13.5 9V6.75ZM3.75 15A2.25 2.25 0 0 1 6 12.75h2.25A2.25 2.25 0 0 1 10.5 15v2.25A2.25 2.25 0 0 1 8.25 19.5H6a2.25 2.25 0 0 1-2.25-2.25V15Zm9.75 0a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 15v2.25A2.25 2.25 0 0 1 18 19.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V15Z" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                                    data-counter-value="{{ $stats['categoriesCount'] }}" data-counter-type="number">0</h3>
+                                <p class="mt-1 text-xs text-slate-500">Used by active menu products</p>
+                            </article>
+
+                            <article
+                                class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Inventory</p>
+                                    <span
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#ebfaf1] text-[#2e8f5e]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M12 6v12m6-6H6" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                                    data-counter-value="{{ $stats['inventoryValue'] }}" data-counter-type="currency"
+                                    data-counter-decimals="2">$0.00</h3>
+                                <p
+                                    class="mt-1 text-xs font-semibold {{ ($stats['inventoryGrowth']['isPositive'] ?? true) ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    {{ $stats['inventoryGrowth']['text'] ?? '+0.0% vs last month' }}
+                                </p>
+                            </article>
+                        </div>
+
+                        <section class="anim-enter-up rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                            <div class="mb-5 flex items-center justify-between">
+                                <h3 class="text-xl font-bold text-[#2f241f]">Team Executive</h3>
+                                <p class="text-sm font-semibold text-[#7b5e50]">{{ number_format($teamUsers) }} users</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div class="relative">
+                                    <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
+                                        <canvas id="roleDistributionChart"></canvas>
+                                    </div>
+                                    <div
+                                        class="pointer-events-none absolute inset-0 flex items-center justify-center text-center">
+                                        <div>
+                                            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                                                Total</p>
+                                            <p class="text-2xl font-black text-[#2f241f]">{{ number_format($teamUsers) }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4 text-sm">
+                                    @forelse ($roleRows as $roleRow)
+                                        @php
+                                            $progress =
+                                                $roleMaxCount > 0 ? ((int) $roleRow['count'] / $roleMaxCount) * 100 : 0;
+                                        @endphp
+                                        <div>
+                                            <div class="mb-1 flex items-center justify-between gap-2">
+                                                <span class="font-semibold text-slate-700">{{ $roleRow['label'] }}</span>
+                                                <span class="font-semibold text-[#2f241f]">{{ $roleRow['count'] }}</span>
+                                            </div>
+                                            <div class="h-2 rounded-full bg-slate-100">
+                                                <div class="dashboard-progress-bar h-2 rounded-full bg-[#6d9f2f]"
+                                                    style="--progress-width: {{ round($progress, 2) }}%;"></div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <p class="text-slate-500">No team distribution data.</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </section>
                     </section>
+
+                    <aside class="anim-enter-up rounded-3xl bg-[#fffdf9] p-5 shadow-sm ring-1 ring-black/5 xl:col-span-4">
+                        <h3 class="text-3xl font-black text-[#2f241f]">My Activity</h3>
+
+                        <div class="mt-5 space-y-6">
+                            <section>
+                                <div class="mb-3 flex items-center justify-between">
+                                    <p class="text-sm font-semibold text-[#8f6f5c]">Upcoming Tasks</p>
+                                    <a href="{{ route('admin.products.index') }}"
+                                        class="text-xs font-semibold text-[#b6784d] hover:underline">View all</a>
+                                </div>
+                                <div class="space-y-2">
+                                    <a href="{{ route('admin.products.index') }}"
+                                        class="block rounded-2xl border border-[#f0e3da] bg-white px-4 py-3 transition hover:bg-[#fff6f0]">
+                                        <p class="text-sm font-semibold text-[#2f241f]">Review Product Prices</p>
+                                        <p class="mt-0.5 text-xs text-slate-500">Validate size pricing and discounts.</p>
+                                    </a>
+                                    <a href="{{ route('admin.reports') }}"
+                                        class="block rounded-2xl border border-[#f0e3da] bg-white px-4 py-3 transition hover:bg-[#fff6f0]">
+                                        <p class="text-sm font-semibold text-[#2f241f]">Check Sales Report</p>
+                                        <p class="mt-0.5 text-xs text-slate-500">Monitor revenue and order trends.</p>
+                                    </a>
+                                </div>
+                            </section>
+
+                            <section>
+                                <div class="mb-3 flex items-center justify-between">
+                                    <p class="text-sm font-semibold text-[#8f6f5c]">Latest Shoutouts</p>
+                                    <a href="{{ route('admin.users.index') }}"
+                                        class="text-xs font-semibold text-[#b6784d] hover:underline">View all</a>
+                                </div>
+                                <div class="space-y-2">
+                                    @forelse ($latestShoutouts as $member)
+                                        @php
+                                            $memberDisplayName = trim((string) ($member->first_name ?? '') . ' ' . (string) ($member->last_name ?? ''));
+                                            $memberDisplayName = $memberDisplayName !== '' ? $memberDisplayName : (string) $member->name;
+                                            $memberInitials = collect(explode(' ', $memberDisplayName))
+                                                ->filter()
+                                                ->map(fn(string $namePart): string => strtoupper(substr($namePart, 0, 1)))
+                                                ->take(2)
+                                                ->implode('');
+                                            $memberAvatarUrl = $member->avatar_path ? asset('storage/' . $member->avatar_path) : null;
+                                            $memberRoleLabel = str($member->role?->name ?? 'Team')->headline();
+                                        @endphp
+                                        <a href="{{ route('admin.users.index', ['search' => $memberDisplayName]) }}"
+                                            class="flex items-center gap-3 rounded-2xl border border-[#f0e3da] bg-white px-3 py-2.5 transition hover:bg-[#fff6f0]">
+                                            <div
+                                                class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#2f241f] text-xs font-bold text-white ring-2 ring-[#fff1e6]">
+                                                @if ($memberAvatarUrl)
+                                                    <img src="{{ $memberAvatarUrl }}" alt="{{ $memberDisplayName }}"
+                                                        class="h-full w-full object-cover">
+                                                @else
+                                                    {{ $memberInitials !== '' ? $memberInitials : 'U' }}
+                                                @endif
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate text-sm font-semibold text-[#2f241f]">
+                                                    {{ $memberDisplayName }}</p>
+                                                <p class="truncate text-xs text-slate-500">
+                                                    Joined as {{ strtolower($memberRoleLabel) }} •
+                                                    {{ $member->created_at?->diffForHumans() }}
+                                                </p>
+                                            </div>
+                                            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                        </a>
+                                    @empty
+                                        <p
+                                            class="rounded-2xl border border-[#f0e3da] bg-white px-4 py-3 text-sm text-slate-500">
+                                            No shoutouts yet.
+                                        </p>
+                                    @endforelse
+                                </div>
+                            </section>
+
+                            <section>
+                                <div class="mb-3 flex items-center justify-between">
+                                    <p class="text-sm font-semibold text-[#8f6f5c]">Recent Products</p>
+                                    <a href="{{ route('admin.products.index') }}"
+                                        class="text-xs font-semibold text-[#b6784d] hover:underline">View all</a>
+                                </div>
+                                <div class="space-y-2">
+                                    @forelse ($recentProducts->take(4) as $product)
+                                        <div class="rounded-2xl border border-[#f0e3da] bg-white px-4 py-3">
+                                            <p class="text-sm font-semibold text-[#2f241f]">{{ $product->name }}</p>
+                                            <p class="mt-0.5 text-xs text-slate-500">
+                                                {{ $product->category?->name ?? 'Uncategorized' }} •
+                                                {{ $product->created_at?->format('M d, Y') ?? '-' }}
+                                            </p>
+                                        </div>
+                                    @empty
+                                        <p
+                                            class="rounded-2xl border border-[#f0e3da] bg-white px-4 py-3 text-sm text-slate-500">
+                                            No products added yet.
+                                        </p>
+                                    @endforelse
+                                </div>
+                            </section>
+
+                            <section>
+                                <div class="mb-3 flex items-center justify-between">
+                                    <p class="text-sm font-semibold text-[#8f6f5c]">Top Priced</p>
+                                    <a href="{{ route('admin.products.index') }}"
+                                        class="text-xs font-semibold text-[#b6784d] hover:underline">Manage</a>
+                                </div>
+                                <div class="space-y-3 text-sm">
+                                    @forelse ($topProducts->take(4) as $product)
+                                        @php
+                                            $progress =
+                                                $topProductsMaxPrice > 0
+                                                    ? ((float) $product->price / $topProductsMaxPrice) * 100
+                                                    : 0;
+                                        @endphp
+                                        <div class="rounded-2xl border border-[#f0e3da] bg-white px-4 py-3">
+                                            <div class="mb-1 flex items-center justify-between gap-2">
+                                                <span
+                                                    class="truncate font-semibold text-[#2f241f]">{{ $product->name }}</span>
+                                                <span
+                                                    class="font-semibold text-[#7a5c4e]">${{ number_format((float) $product->price, 2) }}</span>
+                                            </div>
+                                            <div class="h-2 rounded-full bg-slate-100">
+                                                <div class="dashboard-progress-bar h-2 rounded-full bg-[#f4a06b]"
+                                                    style="--progress-width: {{ round($progress, 2) }}%;"></div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <p
+                                            class="rounded-2xl border border-[#f0e3da] bg-white px-4 py-3 text-sm text-slate-500">
+                                            No top product data yet.
+                                        </p>
+                                    @endforelse
+                                </div>
+                            </section>
+                        </div>
+                    </aside>
                 </div>
             </main>
         </div>

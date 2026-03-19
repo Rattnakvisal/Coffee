@@ -477,6 +477,13 @@
         }
     };
 
+    const printButton = document.querySelector("[data-report-print]");
+    if (printButton) {
+        printButton.addEventListener("click", function () {
+            window.print();
+        });
+    }
+
     animateCounters();
     animateProgressBars();
     createCharts();

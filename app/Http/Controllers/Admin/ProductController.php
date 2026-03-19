@@ -55,7 +55,10 @@ class ProductController extends Controller
                 }),
             ],
             'description' => ['nullable', 'string', 'max:1500'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price_small' => ['required', 'numeric', 'min:0'],
+            'price_medium' => ['required', 'numeric', 'min:0'],
+            'price_large' => ['required', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'image' => ['nullable', 'image', 'max:2048'],
             'is_active' => ['nullable', Rule::in(['0', '1'])],
         ]);
@@ -81,7 +84,11 @@ class ProductController extends Controller
             'category_id' => $validated['category_id'],
             'description' => $validated['description'] ?? null,
             'image_path' => $imagePath,
-            'price' => $validated['price'],
+            'price' => $validated['price_small'],
+            'price_small' => $validated['price_small'],
+            'price_medium' => $validated['price_medium'],
+            'price_large' => $validated['price_large'],
+            'discount_percent' => $validated['discount_percent'] ?? 0,
             'is_active' => ($validated['is_active'] ?? '1') === '1',
         ]);
 
@@ -113,7 +120,10 @@ class ProductController extends Controller
                 }),
             ],
             'description' => ['nullable', 'string', 'max:1500'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price_small' => ['required', 'numeric', 'min:0'],
+            'price_medium' => ['required', 'numeric', 'min:0'],
+            'price_large' => ['required', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'image' => ['nullable', 'image', 'max:2048'],
             'is_active' => ['nullable', Rule::in(['0', '1'])],
         ]);
@@ -149,7 +159,11 @@ class ProductController extends Controller
             'category_id' => $validated['category_id'],
             'description' => $validated['description'] ?? null,
             'image_path' => $imagePath,
-            'price' => $validated['price'],
+            'price' => $validated['price_small'],
+            'price_small' => $validated['price_small'],
+            'price_medium' => $validated['price_medium'],
+            'price_large' => $validated['price_large'],
+            'discount_percent' => $validated['discount_percent'] ?? 0,
             'is_active' => ($validated['is_active'] ?? '1') === '1',
         ]);
 

@@ -12,10 +12,12 @@ use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DashboardController extends Controller
 {
@@ -81,13 +83,26 @@ class DashboardController extends Controller
 
         $topProductsMaxPrice = (float) ($topProducts->max('price') ?? 0);
 
+        $latestShoutouts = User::query()
+            ->with('role:id,name,slug')
+            ->whereHas('role', function ($query): void {
+                $query->whereIn('slug', ['admin', 'cashier']);
+            })
+            ->when(
+                $request->user() !== null,
+                fn($query) => $query->where('id', '!=', (int) $request->user()->id),
+            )
+            ->latest()
+            ->take(4)
+            ->get(['id', 'name', 'first_name', 'last_name', 'email', 'avatar_path', 'role_id', 'created_at']);
+
         $categoryMix = Category::query()
             ->active()
             ->withCount('products')
             ->orderByDesc('products_count')
             ->take(6)
             ->get()
-            ->filter(fn (Category $category): bool => $category->products_count > 0)
+            ->filter(fn(Category $category): bool => $category->products_count > 0)
             ->values();
 
         if ($categoryMix->isEmpty()) {
@@ -156,7 +171,7 @@ class DashboardController extends Controller
                     ->latest()
                     ->limit(8)
                     ->get(['name'])
-                    ->map(fn (Product $product): array => [
+                    ->map(fn(Product $product): array => [
                         'label' => (string) $product->name,
                         'value' => (string) $product->name,
                         'type' => 'Product',
@@ -168,7 +183,7 @@ class DashboardController extends Controller
                     ->latest()
                     ->limit(8)
                     ->get(['name'])
-                    ->map(fn (Category $category): array => [
+                    ->map(fn(Category $category): array => [
                         'label' => (string) $category->name,
                         'value' => (string) $category->name,
                         'type' => 'Category',
@@ -180,15 +195,15 @@ class DashboardController extends Controller
                     ->latest()
                     ->limit(8)
                     ->get(['name', 'email'])
-                    ->map(fn (User $user): array => [
+                    ->map(fn(User $user): array => [
                         'label' => (string) $user->name,
                         'value' => (string) $user->name,
                         'type' => 'User',
                         'meta' => (string) $user->email,
                     ]),
             )
-            ->filter(fn (array $item): bool => trim((string) ($item['value'] ?? '')) !== '')
-            ->unique(fn (array $item): string => strtolower($item['value'] . '|' . $item['type']))
+            ->filter(fn(array $item): bool => trim((string) ($item['value'] ?? '')) !== '')
+            ->unique(fn(array $item): string => strtolower($item['value'] . '|' . $item['type']))
             ->values();
 
         return view('admin.index', [
@@ -206,23 +221,24 @@ class DashboardController extends Controller
             'recentProducts' => $recentProducts,
             'topProducts' => $topProducts,
             'topProductsMaxPrice' => $topProductsMaxPrice,
+            'latestShoutouts' => $latestShoutouts,
             'charts' => [
                 'weekLabels' => $weekLabels,
                 'weeklyProducts' => array_column($weeklyTimeline, 'products'),
                 'weeklyInventory' => array_map(
-                    static fn (float $value): float => round($value, 2),
+                    static fn(float $value): float => round($value, 2),
                     array_column($weeklyTimeline, 'inventory'),
                 ),
                 'monthLabels' => $monthLabels,
                 'monthlyProducts' => $monthlyProducts,
                 'categoryLabels' => $categoryMix->pluck('name')->values(),
-                'categoryCounts' => $categoryMix->pluck('products_count')->map(fn ($count): int => (int) $count)->values(),
+                'categoryCounts' => $categoryMix->pluck('products_count')->map(fn($count): int => (int) $count)->values(),
                 'roleLabels' => $rolesDistribution
-                    ->map(fn (Role $role): string => str($role->name)->headline())
+                    ->map(fn(Role $role): string => str($role->name)->headline())
                     ->values(),
                 'roleCounts' => $rolesDistribution
                     ->pluck('users_count')
-                    ->map(fn ($count): int => (int) $count)
+                    ->map(fn($count): int => (int) $count)
                     ->values(),
             ],
             'searchQuery' => $searchQuery,
@@ -235,8 +251,11 @@ class DashboardController extends Controller
     {
         $dateColumn = $this->orderDateColumn();
         [$start, $end, $rangeLabel, $startDate, $endDate, $hasCustomRange, $selectedPreset] = $this->resolveReportDateRange($request);
+        $filters = $this->resolveReportFilters($request);
+        $cashierColumn = $this->orderCashierColumn();
 
         $ordersQuery = Order::query()->whereBetween($dateColumn, [$start, $end]);
+        $this->applyReportFilters($ordersQuery, $filters, $cashierColumn);
 
         $ordersCount = (int) (clone $ordersQuery)->count();
         $revenue = (float) (clone $ordersQuery)->sum('total');
@@ -247,8 +266,9 @@ class DashboardController extends Controller
             ? (float) (clone $ordersQuery)->sum('discount')
             : 0.0;
         $itemsSold = (int) OrderItem::query()
-            ->whereHas('order', function ($query) use ($dateColumn, $start, $end): void {
+            ->whereHas('order', function (Builder $query) use ($dateColumn, $start, $end, $filters, $cashierColumn): void {
                 $query->whereBetween($dateColumn, [$start, $end]);
+                $this->applyReportFilters($query, $filters, $cashierColumn);
             })
             ->sum('qty');
         $averageOrder = $ordersCount > 0 ? $revenue / $ordersCount : 0.0;
@@ -261,48 +281,59 @@ class DashboardController extends Controller
         $previousStart = $previousEnd->copy()->subDays($rangeDays - 1)->startOfDay();
 
         $previousOrdersQuery = Order::query()->whereBetween($dateColumn, [$previousStart, $previousEnd]);
+        $this->applyReportFilters($previousOrdersQuery, $filters, $cashierColumn);
         $previousOrders = (int) (clone $previousOrdersQuery)->count();
         $previousRevenue = (float) (clone $previousOrdersQuery)->sum('total');
         $previousItems = (int) OrderItem::query()
-            ->whereHas('order', function ($query) use ($dateColumn, $previousStart, $previousEnd): void {
+            ->whereHas('order', function (Builder $query) use ($dateColumn, $previousStart, $previousEnd, $filters, $cashierColumn): void {
                 $query->whereBetween($dateColumn, [$previousStart, $previousEnd]);
+                $this->applyReportFilters($query, $filters, $cashierColumn);
             })
             ->sum('qty');
 
-        $paymentBreakdown = Schema::hasColumn('orders', 'payment_method')
-            ? Order::query()
-                ->whereBetween($dateColumn, [$start, $end])
+        if (Schema::hasColumn('orders', 'payment_method')) {
+            $paymentBreakdownQuery = Order::query()->whereBetween($dateColumn, [$start, $end]);
+            $this->applyReportFilters($paymentBreakdownQuery, $filters, $cashierColumn);
+
+            $paymentBreakdown = $paymentBreakdownQuery
                 ->selectRaw("COALESCE(payment_method, 'unknown') as payment_method, COUNT(*) as orders_count, SUM(total) as revenue")
                 ->groupBy('payment_method')
                 ->orderByDesc('revenue')
-                ->get()
-            : collect([
+                ->get();
+        } else {
+            $paymentBreakdown = collect([
                 (object) [
                     'payment_method' => 'unknown',
                     'orders_count' => $ordersCount,
                     'revenue' => $revenue,
                 ],
             ]);
+        }
 
-        $statusBreakdown = Schema::hasColumn('orders', 'status')
-            ? Order::query()
-                ->whereBetween($dateColumn, [$start, $end])
+        if (Schema::hasColumn('orders', 'status')) {
+            $statusBreakdownQuery = Order::query()->whereBetween($dateColumn, [$start, $end]);
+            $this->applyReportFilters($statusBreakdownQuery, $filters, $cashierColumn);
+
+            $statusBreakdown = $statusBreakdownQuery
                 ->selectRaw("COALESCE(status, 'completed') as status_name, COUNT(*) as orders_count, SUM(total) as revenue")
                 ->groupBy('status_name')
                 ->orderByDesc('orders_count')
-                ->get()
-            : collect([
+                ->get();
+        } else {
+            $statusBreakdown = collect([
                 (object) [
                     'status_name' => 'completed',
                     'orders_count' => $ordersCount,
                     'revenue' => $revenue,
                 ],
             ]);
+        }
 
         $topItems = OrderItem::query()
             ->selectRaw('product_name, SUM(qty) as qty_sold, SUM(line_total) as revenue')
-            ->whereHas('order', function ($query) use ($dateColumn, $start, $end): void {
+            ->whereHas('order', function (Builder $query) use ($dateColumn, $start, $end, $filters, $cashierColumn): void {
                 $query->whereBetween($dateColumn, [$start, $end]);
+                $this->applyReportFilters($query, $filters, $cashierColumn);
             })
             ->groupBy('product_name')
             ->orderByDesc('qty_sold')
@@ -313,7 +344,9 @@ class DashboardController extends Controller
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('products', 'order_items.product_id', '=', 'products.id')
             ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
-            ->whereBetween('orders.' . $dateColumn, [$start, $end])
+            ->whereBetween('orders.' . $dateColumn, [$start, $end]);
+        $this->applyReportFilters($categoryBreakdown, $filters, $cashierColumn, 'orders');
+        $categoryBreakdown = $categoryBreakdown
             ->selectRaw("COALESCE(categories.name, 'Uncategorized') as category_name, SUM(order_items.qty) as qty_sold, SUM(order_items.line_total) as revenue")
             ->groupBy('category_name')
             ->orderByDesc('revenue')
@@ -321,16 +354,21 @@ class DashboardController extends Controller
             ->get();
 
         $recentOrders = Order::query()
-            ->whereBetween($dateColumn, [$start, $end])
+            ->with('cashier:id,name')
+            ->withCount('items')
+            ->whereBetween($dateColumn, [$start, $end]);
+        $this->applyReportFilters($recentOrders, $filters, $cashierColumn);
+        $recentOrders = $recentOrders
             ->orderByDesc($dateColumn)
             ->limit(10)
             ->get();
 
         $cashierBreakdown = collect();
-        $cashierColumn = $this->orderCashierColumn();
         if ($cashierColumn !== null) {
             $cashierRows = Order::query()
-                ->whereBetween($dateColumn, [$start, $end])
+                ->whereBetween($dateColumn, [$start, $end]);
+            $this->applyReportFilters($cashierRows, $filters, $cashierColumn);
+            $cashierRows = $cashierRows
                 ->selectRaw($cashierColumn . ' as cashier_ref, COUNT(*) as orders_count, SUM(total) as revenue')
                 ->groupBy($cashierColumn)
                 ->orderByDesc('revenue')
@@ -338,7 +376,7 @@ class DashboardController extends Controller
                 ->get();
 
             $cashierNames = User::query()
-                ->whereIn('id', $cashierRows->pluck('cashier_ref')->filter()->map(fn ($id): int => (int) $id)->all())
+                ->whereIn('id', $cashierRows->pluck('cashier_ref')->filter()->map(fn($id): int => (int) $id)->all())
                 ->pluck('name', 'id');
 
             $cashierBreakdown = $cashierRows->map(function ($row) use ($cashierNames) {
@@ -356,56 +394,56 @@ class DashboardController extends Controller
         $activeCashiers = (int) $cashierBreakdown->count();
 
         $charts = [
-            'trend' => $this->buildAdminTrend($dateColumn, $start, $end, $hasCustomRange),
+            'trend' => $this->buildAdminTrend($dateColumn, $start, $end, $hasCustomRange, $filters, $cashierColumn),
             'payments' => [
                 'labels' => $paymentBreakdown
-                    ->map(fn ($row): string => strtoupper((string) ($row->payment_method ?? 'UNKNOWN')))
+                    ->map(fn($row): string => strtoupper((string) ($row->payment_method ?? 'UNKNOWN')))
                     ->values()
                     ->all(),
                 'revenue' => $paymentBreakdown
-                    ->map(fn ($row): float => round((float) ($row->revenue ?? 0), 2))
+                    ->map(fn($row): float => round((float) ($row->revenue ?? 0), 2))
                     ->values()
                     ->all(),
             ],
             'topItems' => [
                 'labels' => $topItems
-                    ->map(fn ($row): string => (string) ($row->product_name ?? 'Item'))
+                    ->map(fn($row): string => (string) ($row->product_name ?? 'Item'))
                     ->values()
                     ->all(),
                 'qty' => $topItems
-                    ->map(fn ($row): int => (int) ($row->qty_sold ?? 0))
+                    ->map(fn($row): int => (int) ($row->qty_sold ?? 0))
                     ->values()
                     ->all(),
                 'revenue' => $topItems
-                    ->map(fn ($row): float => round((float) ($row->revenue ?? 0), 2))
+                    ->map(fn($row): float => round((float) ($row->revenue ?? 0), 2))
                     ->values()
                     ->all(),
             ],
             'statuses' => [
                 'labels' => $statusBreakdown
-                    ->map(fn ($row): string => str((string) ($row->status_name ?? 'completed'))->headline()->toString())
+                    ->map(fn($row): string => str((string) ($row->status_name ?? 'completed'))->headline()->toString())
                     ->values()
                     ->all(),
                 'orders' => $statusBreakdown
-                    ->map(fn ($row): int => (int) ($row->orders_count ?? 0))
+                    ->map(fn($row): int => (int) ($row->orders_count ?? 0))
                     ->values()
                     ->all(),
                 'revenue' => $statusBreakdown
-                    ->map(fn ($row): float => round((float) ($row->revenue ?? 0), 2))
+                    ->map(fn($row): float => round((float) ($row->revenue ?? 0), 2))
                     ->values()
                     ->all(),
             ],
             'categories' => [
                 'labels' => $categoryBreakdown
-                    ->map(fn ($row): string => (string) ($row->category_name ?? 'Uncategorized'))
+                    ->map(fn($row): string => (string) ($row->category_name ?? 'Uncategorized'))
                     ->values()
                     ->all(),
                 'qty' => $categoryBreakdown
-                    ->map(fn ($row): int => (int) ($row->qty_sold ?? 0))
+                    ->map(fn($row): int => (int) ($row->qty_sold ?? 0))
                     ->values()
                     ->all(),
                 'revenue' => $categoryBreakdown
-                    ->map(fn ($row): float => round((float) ($row->revenue ?? 0), 2))
+                    ->map(fn($row): float => round((float) ($row->revenue ?? 0), 2))
                     ->values()
                     ->all(),
             ],
@@ -417,11 +455,17 @@ class DashboardController extends Controller
             ],
         ];
 
-        return view('admin.reports', [
+        return view('admin.reports.reports', [
             'rangeLabel' => $rangeLabel,
             'startDate' => $startDate,
             'endDate' => $endDate,
             'selectedPreset' => $selectedPreset,
+            'selectedPayment' => $filters['payment'],
+            'selectedStatus' => $filters['status'],
+            'selectedCashier' => $filters['cashier_id'],
+            'paymentOptions' => $this->reportPaymentOptions(),
+            'statusOptions' => $this->reportStatusOptions(),
+            'cashierOptions' => $this->reportCashierOptions($cashierColumn),
             'ordersCount' => $ordersCount,
             'revenue' => $revenue,
             'grossSales' => $grossSales,
@@ -440,7 +484,114 @@ class DashboardController extends Controller
             'categoryBreakdown' => $categoryBreakdown,
             'recentOrders' => $recentOrders,
             'cashierBreakdown' => $cashierBreakdown,
+            'reportDateColumn' => $dateColumn,
             'charts' => $charts,
+        ]);
+    }
+
+    public function exportReportsExcel(Request $request): StreamedResponse
+    {
+        $dateColumn = $this->orderDateColumn();
+        [$start, $end, $rangeLabel, $startDate, $endDate] = $this->resolveReportDateRange($request);
+        $filters = $this->resolveReportFilters($request);
+        $cashierColumn = $this->orderCashierColumn();
+
+        $ordersQuery = Order::query()
+            ->with('cashier:id,name')
+            ->withCount('items')
+            ->whereBetween($dateColumn, [$start, $end]);
+        $this->applyReportFilters($ordersQuery, $filters, $cashierColumn);
+
+        $orders = $ordersQuery
+            ->orderBy($dateColumn)
+            ->get();
+
+        $filename = sprintf('admin-reports-%s_to_%s.csv', $startDate, $endDate);
+
+        return response()->streamDownload(
+            function () use ($orders, $rangeLabel, $startDate, $endDate, $dateColumn): void {
+                $output = fopen('php://output', 'wb');
+                if ($output === false) {
+                    return;
+                }
+
+                fwrite($output, "\xEF\xBB\xBF");
+
+                fputcsv($output, ['Admin Reports Export']);
+                fputcsv($output, ['Range', $rangeLabel]);
+                fputcsv($output, ['Start Date', $startDate]);
+                fputcsv($output, ['End Date', $endDate]);
+                fputcsv($output, []);
+                fputcsv($output, ['Date', 'Order Number', 'Cashier', 'Payment', 'Status', 'Items', 'Subtotal', 'Discount', 'Total']);
+
+                foreach ($orders as $order) {
+                    $dateValue = $order->{$dateColumn} ?? null;
+
+                    if ($dateValue instanceof Carbon) {
+                        $formattedDate = $dateValue->format('Y-m-d H:i');
+                    } elseif ($dateValue !== null && $dateValue !== '') {
+                        $formattedDate = Carbon::parse((string) $dateValue)->format('Y-m-d H:i');
+                    } else {
+                        $formattedDate = '-';
+                    }
+
+                    fputcsv($output, [
+                        $formattedDate,
+                        (string) ($order->order_number ?? '-'),
+                        (string) ($order->cashier?->name ?? 'Unknown Cashier'),
+                        (string) strtoupper((string) ($order->payment_method ?? 'unknown')),
+                        (string) str((string) ($order->status ?? 'completed'))->headline(),
+                        (int) ($order->items_count ?? 0),
+                        number_format((float) ($order->subtotal ?? 0), 2, '.', ''),
+                        number_format((float) ($order->discount ?? 0), 2, '.', ''),
+                        number_format((float) ($order->total ?? 0), 2, '.', ''),
+                    ]);
+                }
+
+                fclose($output);
+            },
+            $filename,
+            [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Cache-Control' => 'no-store, no-cache',
+            ],
+        );
+    }
+
+    public function exportReportsPdf(Request $request): View
+    {
+        $dateColumn = $this->orderDateColumn();
+        [$start, $end, $rangeLabel, $startDate, $endDate] = $this->resolveReportDateRange($request);
+        $filters = $this->resolveReportFilters($request);
+        $cashierColumn = $this->orderCashierColumn();
+
+        $ordersQuery = Order::query()
+            ->with('cashier:id,name')
+            ->withCount('items')
+            ->whereBetween($dateColumn, [$start, $end]);
+        $this->applyReportFilters($ordersQuery, $filters, $cashierColumn);
+
+        $orders = $ordersQuery
+            ->orderByDesc($dateColumn)
+            ->get();
+
+        $ordersCount = (int) $orders->count();
+        $revenue = (float) $orders->sum('total');
+        $subtotal = (float) $orders->sum('subtotal');
+        $discountTotal = (float) $orders->sum('discount');
+        $itemsSold = (int) $orders->sum('items_count');
+
+        return view('admin.reports.exports.pdf', [
+            'rangeLabel' => $rangeLabel,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'ordersCount' => $ordersCount,
+            'revenue' => $revenue,
+            'subtotal' => $subtotal,
+            'discountTotal' => $discountTotal,
+            'itemsSold' => $itemsSold,
+            'orders' => $orders,
+            'reportDateColumn' => $dateColumn,
         ]);
     }
 
@@ -574,6 +725,124 @@ class DashboardController extends Controller
     }
 
     /**
+     * @return array{payment: string, status: string, cashier_id: int|null}
+     */
+    private function resolveReportFilters(Request $request): array
+    {
+        $payment = Str::of((string) $request->query('payment', 'all'))
+            ->lower()
+            ->squish()
+            ->value();
+        $status = Str::of((string) $request->query('status', 'all'))
+            ->lower()
+            ->squish()
+            ->value();
+        $cashierId = (int) $request->query('cashier_id', 0);
+
+        return [
+            'payment' => $payment === '' ? 'all' : $payment,
+            'status' => $status === '' ? 'all' : $status,
+            'cashier_id' => $cashierId > 0 ? $cashierId : null,
+        ];
+    }
+
+    /**
+     * @param array{payment?: string, status?: string, cashier_id?: int|null} $filters
+     */
+    private function applyReportFilters(
+        Builder $query,
+        array $filters,
+        ?string $cashierColumn = null,
+        string $tablePrefix = 'orders',
+    ): void {
+        $payment = (string) ($filters['payment'] ?? 'all');
+        $status = (string) ($filters['status'] ?? 'all');
+        $cashierId = (int) ($filters['cashier_id'] ?? 0);
+
+        if ($payment !== 'all' && Schema::hasColumn('orders', 'payment_method')) {
+            $paymentColumn = $tablePrefix !== '' ? $tablePrefix . '.payment_method' : 'payment_method';
+            $query->whereRaw("LOWER(COALESCE({$paymentColumn}, 'unknown')) = ?", [$payment]);
+        }
+
+        if ($status !== 'all' && Schema::hasColumn('orders', 'status')) {
+            $statusColumn = $tablePrefix !== '' ? $tablePrefix . '.status' : 'status';
+            $query->whereRaw("LOWER(COALESCE({$statusColumn}, 'completed')) = ?", [$status]);
+        }
+
+        if ($cashierId > 0 && $cashierColumn !== null && Schema::hasColumn('orders', $cashierColumn)) {
+            $qualifiedCashierColumn = $tablePrefix !== ''
+                ? $tablePrefix . '.' . $cashierColumn
+                : $cashierColumn;
+
+            $query->where($qualifiedCashierColumn, $cashierId);
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function reportPaymentOptions(): array
+    {
+        if (! Schema::hasColumn('orders', 'payment_method')) {
+            return [];
+        }
+
+        return Order::query()
+            ->selectRaw("LOWER(COALESCE(payment_method, 'unknown')) as value")
+            ->pluck('value')
+            ->filter(fn($value): bool => trim((string) $value) !== '')
+            ->map(fn($value): string => (string) $value)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function reportStatusOptions(): array
+    {
+        if (! Schema::hasColumn('orders', 'status')) {
+            return [];
+        }
+
+        return Order::query()
+            ->selectRaw("LOWER(COALESCE(status, 'completed')) as value")
+            ->pluck('value')
+            ->filter(fn($value): bool => trim((string) $value) !== '')
+            ->map(fn($value): string => (string) $value)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    private function reportCashierOptions(?string $cashierColumn): \Illuminate\Support\Collection
+    {
+        if ($cashierColumn === null || ! Schema::hasColumn('orders', $cashierColumn)) {
+            return collect();
+        }
+
+        $cashierIds = Order::query()
+            ->whereNotNull($cashierColumn)
+            ->pluck($cashierColumn)
+            ->map(fn($id): int => (int) $id)
+            ->filter(fn(int $id): bool => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($cashierIds->isEmpty()) {
+            return collect();
+        }
+
+        return User::query()
+            ->whereIn('id', $cashierIds->all())
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
+
+    /**
      * @return array{0: Carbon, 1: Carbon, 2: string, 3: string, 4: string, 5: bool, 6: string}
      */
     private function resolveReportDateRange(Request $request): array
@@ -636,8 +905,14 @@ class DashboardController extends Controller
      *   revenue: array<int, float>
      * }
      */
-    private function buildAdminTrend(string $dateColumn, Carbon $start, Carbon $end, bool $hasCustomRange): array
-    {
+    private function buildAdminTrend(
+        string $dateColumn,
+        Carbon $start,
+        Carbon $end,
+        bool $hasCustomRange,
+        array $filters = [],
+        ?string $cashierColumn = null,
+    ): array {
         $buckets = [];
         $labels = [];
 
@@ -649,7 +924,9 @@ class DashboardController extends Controller
         }
 
         $orders = Order::query()
-            ->whereBetween($dateColumn, [$start, $end])
+            ->whereBetween($dateColumn, [$start, $end]);
+        $this->applyReportFilters($orders, $filters, $cashierColumn);
+        $orders = $orders
             ->orderBy($dateColumn)
             ->get([$dateColumn, 'total']);
 

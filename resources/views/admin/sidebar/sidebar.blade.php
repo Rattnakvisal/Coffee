@@ -1,5 +1,15 @@
 @php
     $activeAdminMenu = $activeAdminMenu ?? 'dashboard';
+    $authUser = auth()->user();
+    $profileName = trim((string) ($authUser->first_name ?? '') . ' ' . (string) ($authUser->last_name ?? ''));
+    $profileName = $profileName !== '' ? $profileName : (string) ($authUser->name ?? 'User');
+    $avatarUrl = !empty($authUser?->avatar_path) ? asset('storage/' . $authUser->avatar_path) : null;
+    $initials = collect(explode(' ', $profileName))
+        ->filter()
+        ->map(fn(string $part): string => strtoupper(substr($part, 0, 1)))
+        ->take(2)
+        ->implode('');
+    $initials = $initials !== '' ? $initials : 'U';
 
     $menuGroups = [
         [
@@ -156,13 +166,17 @@
             <div class="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                 <div class="flex items-center gap-3">
                     <div
-                        class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4a06b]/15 text-sm font-bold text-[#ffd1b5]">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        class="flex h-12 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-white/45 bg-white/20 shadow-xl shadow-[#7a5c4e]/25">
+                        @if ($avatarUrl)
+                            <img src="{{ $avatarUrl }}" alt="Profile avatar" class="h-full w-full object-cover">
+                        @else
+                            <span class="text-2xl font-black text-white">{{ $initials }}</span>
+                        @endif
                     </div>
 
                     <div class="min-w-0">
-                        <p class="truncate text-sm font-semibold text-white">{{ auth()->user()->name }}</p>
-                        <p class="truncate text-xs text-white/55">{{ auth()->user()->email }}</p>
+                        <p class="truncate text-sm font-semibold text-white">{{ $profileName }}</p>
+                        <p class="truncate text-xs text-white/55">{{ $authUser->email ?? '-' }}</p>
                     </div>
                 </div>
 

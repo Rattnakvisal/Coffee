@@ -337,45 +337,34 @@
         }
 
         if (roleCtx) {
+            const hasRoleData =
+                chartPayload.roleLabels.length > 0 &&
+                chartPayload.roleCounts.length > 0;
+
             new window.Chart(roleCtx, {
-                type: "bar",
+                type: "doughnut",
                 data: {
-                    labels: chartPayload.roleLabels,
+                    labels: hasRoleData ? chartPayload.roleLabels : ["No Data"],
                     datasets: [
                         {
-                            label: "Users",
-                            data: chartPayload.roleCounts,
+                            data: hasRoleData ? chartPayload.roleCounts : [1],
                             backgroundColor: [
-                                "#2f241f",
-                                "#f4a06b",
-                                "#d97f46",
-                                "#b76b3f",
+                                "#5f9925",
+                                "#4a86d9",
+                                "#f0b73e",
+                                "#de4b35",
                             ],
-                            borderRadius: 10,
-                            borderSkipped: false,
+                            borderWidth: 0,
                         },
                     ],
                 },
                 options: {
-                    indexAxis: "y",
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: "70%",
                     plugins: {
                         legend: {
-                            display: false,
-                        },
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0,
-                            },
-                        },
-                        y: {
-                            grid: {
-                                display: false,
-                            },
+                            position: "bottom",
                         },
                     },
                 },

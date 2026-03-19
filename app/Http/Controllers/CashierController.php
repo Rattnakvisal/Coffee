@@ -92,12 +92,41 @@ class CashierController extends Controller
     {
         $period = $this->normalizePeriod((string) $request->query('period', 'day'));
         $search = trim((string) $request->query('search', ''));
+        $selectedPayment = $this->normalizeHistoryFilter((string) $request->query('payment', 'all'));
+        $selectedStatus = $this->normalizeHistoryFilter((string) $request->query('status', 'all'));
         $dateColumn = $this->orderDateColumn();
         [$start, $end, $periodLabel] = $this->periodRange($period);
 
-        $ordersQuery = $this->cashierOrdersQuery($request)
+        $baseHistoryQuery = $this->cashierOrdersQuery($request)
+            ->whereBetween($dateColumn, [$start, $end]);
+        $this->applyHistoryOrderFilters($baseHistoryQuery, $selectedPayment, $selectedStatus);
+
+        $paymentOptions = Schema::hasColumn('orders', 'payment_method')
+            ? (clone $baseHistoryQuery)
+                ->selectRaw("LOWER(COALESCE(payment_method, 'unknown')) as value")
+                ->pluck('value')
+                ->filter(fn ($value): bool => trim((string) $value) !== '')
+                ->map(fn ($value): string => (string) $value)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all()
+            : [];
+
+        $statusOptions = Schema::hasColumn('orders', 'status')
+            ? (clone $baseHistoryQuery)
+                ->selectRaw("LOWER(COALESCE(status, 'completed')) as value")
+                ->pluck('value')
+                ->filter(fn ($value): bool => trim((string) $value) !== '')
+                ->map(fn ($value): string => (string) $value)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all()
+            : [];
+
+        $ordersQuery = (clone $baseHistoryQuery)
             ->withCount('items')
-            ->whereBetween($dateColumn, [$start, $end])
             ->when(
                 $search !== '',
                 function (Builder $query) use ($search): void {
@@ -112,12 +141,24 @@ class CashierController extends Controller
 
         $ordersCount = (int) (clone $ordersQuery)->count();
         $revenue = (float) (clone $ordersQuery)->sum('total');
+        $averageOrder = $ordersCount > 0 ? $revenue / $ordersCount : 0.0;
         $itemsSold = (int) OrderItem::query()
-            ->whereHas('order', function (Builder $query) use ($request, $dateColumn, $start, $end): void {
+            ->whereHas('order', function (Builder $query) use ($request, $dateColumn, $start, $end, $search, $selectedPayment, $selectedStatus): void {
                 $this->applyCashierScope($query, $request);
                 $query->whereBetween($dateColumn, [$start, $end]);
+                $this->applyHistoryOrderFilters($query, $selectedPayment, $selectedStatus);
+
+                if ($search !== '') {
+                    $query->where(function (Builder $orderQuery) use ($search): void {
+                        $orderQuery
+                            ->where('order_number', 'like', "%{$search}%")
+                            ->orWhere('payment_method', 'like', "%{$search}%")
+                            ->orWhere('status', 'like', "%{$search}%");
+                    });
+                }
             })
             ->sum('qty');
+        $latestOrderAt = (clone $ordersQuery)->max($dateColumn);
 
         $orders = (clone $ordersQuery)
             ->orderByDesc($dateColumn)
@@ -133,7 +174,13 @@ class CashierController extends Controller
             'orders' => $orders,
             'ordersCount' => $ordersCount,
             'revenue' => $revenue,
+            'averageOrder' => $averageOrder,
             'itemsSold' => $itemsSold,
+            'selectedPayment' => $selectedPayment,
+            'selectedStatus' => $selectedStatus,
+            'paymentOptions' => $paymentOptions,
+            'statusOptions' => $statusOptions,
+            'latestOrderAt' => $latestOrderAt,
             'cartItems' => $cartState['items'],
             'cartSubtotal' => $cartState['subtotal'],
             'cartDiscount' => $cartState['discount'],
@@ -506,7 +553,10 @@ class CashierController extends Controller
      *     size: string,
      *     sugar: int,
      *     qty: int,
+     *     base_unit_price: float,
      *     unit_price: float,
+     *     line_base_total: float,
+     *     line_discount: float,
      *     line_total: float
      *   }>,
      *   subtotal: float,
@@ -546,6 +596,27 @@ class CashierController extends Controller
     private function normalizePeriod(string $period): string
     {
         return in_array($period, ['day', 'week', 'month'], true) ? $period : 'day';
+    }
+
+    private function normalizeHistoryFilter(string $value): string
+    {
+        $normalized = Str::of($value)
+            ->lower()
+            ->squish()
+            ->value();
+
+        return $normalized === '' ? 'all' : $normalized;
+    }
+
+    private function applyHistoryOrderFilters(Builder $query, string $payment, string $status): void
+    {
+        if ($payment !== 'all' && Schema::hasColumn('orders', 'payment_method')) {
+            $query->whereRaw("LOWER(COALESCE(payment_method, 'unknown')) = ?", [$payment]);
+        }
+
+        if ($status !== 'all' && Schema::hasColumn('orders', 'status')) {
+            $query->whereRaw("LOWER(COALESCE(status, 'completed')) = ?", [$status]);
+        }
     }
 
     /**
@@ -871,8 +942,11 @@ class CashierController extends Controller
                 $qty = (int) ($entry['qty'] ?? 1);
                 $size = (string) ($entry['size'] ?? 'small');
                 $sugar = (int) ($entry['sugar'] ?? 50);
-                $unitPrice = (float) $product->price;
+                $baseUnitPrice = $product->sizeBasePrice($size);
+                $unitPrice = $product->sizePrice($size);
+                $lineBaseTotal = $baseUnitPrice * $qty;
                 $lineTotal = $unitPrice * $qty;
+                $lineDiscount = max($lineBaseTotal - $lineTotal, 0.0);
 
                 return [
                     'item_key' => $itemKey,
@@ -882,7 +956,10 @@ class CashierController extends Controller
                     'size' => $size,
                     'sugar' => $sugar,
                     'qty' => $qty,
+                    'base_unit_price' => $baseUnitPrice,
                     'unit_price' => $unitPrice,
+                    'line_base_total' => $lineBaseTotal,
+                    'line_discount' => $lineDiscount,
                     'line_total' => $lineTotal,
                 ];
             })
@@ -904,8 +981,8 @@ class CashierController extends Controller
             $request->session()->put(self::CART_SESSION_KEY, $validCart);
         }
 
-        $subtotal = (float) $items->sum('line_total');
-        $discount = 0.0;
+        $subtotal = (float) $items->sum('line_base_total');
+        $discount = (float) $items->sum('line_discount');
         $total = max($subtotal - $discount, 0.0);
 
         return [

@@ -99,6 +99,15 @@
 
                 <div class="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
                     @forelse ($products as $item)
+                        @php
+                            $discountPercent = $item->normalizedDiscountPercent();
+                            $smallBasePrice = $item->sizeBasePrice('small');
+                            $mediumBasePrice = $item->sizeBasePrice('medium');
+                            $largeBasePrice = $item->sizeBasePrice('large');
+                            $smallPrice = $item->sizePrice('small');
+                            $mediumPrice = $item->sizePrice('medium');
+                            $largePrice = $item->sizePrice('large');
+                        @endphp
                         <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger"
                             style="--stagger: {{ $loop->index + 2 }};">
                             <div class="flex gap-4">
@@ -119,19 +128,41 @@
                                 <div class="flex-1">
                                     <div class="flex items-start justify-between gap-2">
                                         <h3 class="text-lg font-bold text-[#2f241f]">{{ $item->name }}</h3>
-                                        <span
-                                            class="font-bold text-[#d97f46]">${{ number_format((float) $item->price, 2) }}</span>
+                                        <div class="text-right">
+                                            @if ($discountPercent > 0)
+                                                <p class="js-size-base-price-label text-xs font-semibold text-slate-400 line-through">
+                                                    ${{ number_format($smallBasePrice, 2) }}
+                                                </p>
+                                            @endif
+                                            <span class="js-size-price-label font-bold text-[#d97f46]">
+                                                ${{ number_format($smallPrice, 2) }}
+                                            </span>
+                                            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#b98b70]">
+                                                Size price
+                                            </p>
+                                        </div>
                                     </div>
 
                                     <p class="mt-1 text-xs font-semibold uppercase tracking-[0.11em] text-[#b16231]">
                                         {{ $item->category?->name ?? 'Uncategorized' }}
                                     </p>
+                                    @if ($discountPercent > 0)
+                                        <p class="mt-1 text-xs font-semibold uppercase tracking-[0.09em] text-emerald-700">
+                                            {{ rtrim(rtrim(number_format($discountPercent, 2), '0'), '.') }}% discount
+                                        </p>
+                                    @endif
                                     <p class="mt-2 text-sm text-gray-500">
                                         {{ $item->description ?: 'Freshly brewed and perfect for quick customer orders.' }}
                                     </p>
 
                                     <form method="POST" action="{{ route('cashier.cart.add') }}"
-                                        class="js-product-cart-form mt-4 flex items-center justify-between gap-3">
+                                        class="js-product-cart-form mt-4 flex items-center justify-between gap-3"
+                                        data-base-price-small="{{ number_format($smallBasePrice, 2, '.', '') }}"
+                                        data-base-price-medium="{{ number_format($mediumBasePrice, 2, '.', '') }}"
+                                        data-base-price-large="{{ number_format($largeBasePrice, 2, '.', '') }}"
+                                        data-price-small="{{ number_format($smallPrice, 2, '.', '') }}"
+                                        data-price-medium="{{ number_format($mediumPrice, 2, '.', '') }}"
+                                        data-price-large="{{ number_format($largePrice, 2, '.', '') }}">
                                         @csrf
                                         <input type="hidden" name="product_id" value="{{ $item->id }}">
                                         <input type="hidden" name="qty" value="1" class="js-product-qty-input">

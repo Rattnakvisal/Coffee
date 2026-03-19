@@ -53,12 +53,30 @@
                             </div>
 
                             <div>
-                                <label for="swal-add-product-price"
-                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Price (USD)</label>
-                                <input id="swal-add-product-price" name="price" type="number"
-                                    value="{{ old('price') }}" min="0" step="0.01" required
+                                <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Size Prices (USD)</label>
+                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                    <input id="swal-add-product-price-small" name="price_small" type="number"
+                                        value="{{ old('price_small', old('price')) }}" min="0" step="0.01" required
+                                        class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                        placeholder="Small">
+                                    <input id="swal-add-product-price-medium" name="price_medium" type="number"
+                                        value="{{ old('price_medium', old('price')) }}" min="0" step="0.01" required
+                                        class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                        placeholder="Medium">
+                                    <input id="swal-add-product-price-large" name="price_large" type="number"
+                                        value="{{ old('price_large', old('price')) }}" min="0" step="0.01" required
+                                        class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                        placeholder="Large">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="swal-add-product-discount"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Discount (%)</label>
+                                <input id="swal-add-product-discount" name="discount_percent" type="number"
+                                    value="{{ old('discount_percent', '0') }}" min="0" max="100" step="0.01"
                                     class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
-                                    placeholder="4.99">
+                                    placeholder="0">
                             </div>
 
                             <div>
@@ -130,7 +148,8 @@
                                         <th class="pb-3 font-semibold">Image</th>
                                         <th class="pb-3 font-semibold">Name</th>
                                         <th class="pb-3 font-semibold">Category</th>
-                                        <th class="pb-3 font-semibold">Price</th>
+                                        <th class="pb-3 font-semibold">Size Prices</th>
+                                        <th class="pb-3 font-semibold">Discount</th>
                                         <th class="pb-3 font-semibold">Status</th>
                                         <th class="pb-3 font-semibold">Created</th>
                                         <th class="pb-3 text-right font-semibold">Actions</th>
@@ -166,8 +185,37 @@
                                             <td class="py-3.5 text-slate-600">
                                                 {{ $product->category?->name ?? 'N/A' }}
                                             </td>
-                                            <td class="py-3.5 font-semibold text-[#2f241f]">
-                                                ${{ number_format((float) $product->price, 2) }}
+                                            @php
+                                                $smallPrice = (float) ($product->price_small ?? $product->price ?? 0);
+                                                $mediumPrice = (float) ($product->price_medium ?? $product->price ?? 0);
+                                                $largePrice = (float) ($product->price_large ?? $product->price ?? 0);
+                                                $discountPercent = max(
+                                                    0,
+                                                    min(100, (float) ($product->discount_percent ?? 0)),
+                                                );
+                                            @endphp
+                                            <td class="py-3.5">
+                                                <div class="flex flex-wrap items-center gap-1 text-xs">
+                                                    <span
+                                                        class="rounded-full bg-[#fff3ea] px-2 py-1 font-semibold text-[#7f4a2a]">S
+                                                        ${{ number_format($smallPrice, 2) }}</span>
+                                                    <span
+                                                        class="rounded-full bg-[#fff3ea] px-2 py-1 font-semibold text-[#7f4a2a]">M
+                                                        ${{ number_format($mediumPrice, 2) }}</span>
+                                                    <span
+                                                        class="rounded-full bg-[#fff3ea] px-2 py-1 font-semibold text-[#7f4a2a]">L
+                                                        ${{ number_format($largePrice, 2) }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3.5">
+                                                @if ($discountPercent > 0)
+                                                    <span
+                                                        class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                                        {{ rtrim(rtrim(number_format($discountPercent, 2), '0'), '.') }}% OFF
+                                                    </span>
+                                                @else
+                                                    <span class="text-xs font-semibold text-slate-400">No Discount</span>
+                                                @endif
                                             </td>
                                             <td class="py-3.5">
                                                 @if ($product->is_active)
@@ -190,7 +238,10 @@
                                                     class="js-edit-product-trigger rounded-lg border border-[#edd5c4] bg-white px-3 py-1.5 text-xs font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]"
                                                     data-update-url="{{ route('admin.products.update', $product) }}"
                                                     data-name="{{ $product->name }}"
-                                                    data-price="{{ (float) $product->price }}"
+                                                    data-price-small="{{ $smallPrice }}"
+                                                    data-price-medium="{{ $mediumPrice }}"
+                                                    data-price-large="{{ $largePrice }}"
+                                                    data-discount-percent="{{ $discountPercent }}"
                                                     data-category-id="{{ $product->category_id }}"
                                                     data-description="{{ $product->description }}"
                                                     data-active="{{ $product->is_active ? '1' : '0' }}"
@@ -211,7 +262,7 @@
                                         </tr>
                                     @empty
                                         <tr class="anim-enter-up">
-                                            <td colspan="7" class="py-8 text-center text-slate-500">No products found.
+                                            <td colspan="8" class="py-8 text-center text-slate-500">No products found.
                                             </td>
                                         </tr>
                                     @endforelse
@@ -298,7 +349,10 @@
                 button.addEventListener('click', function() {
                     const updateUrl = button.dataset.updateUrl;
                     const currentName = button.dataset.name ?? '';
-                    const currentPrice = button.dataset.price ?? '';
+                    const currentPriceSmall = button.dataset.priceSmall ?? '';
+                    const currentPriceMedium = button.dataset.priceMedium ?? '';
+                    const currentPriceLarge = button.dataset.priceLarge ?? '';
+                    const currentDiscountPercent = button.dataset.discountPercent ?? '0';
                     const currentCategoryId = button.dataset.categoryId ?? '';
                     const currentDescription = button.dataset.description ?? '';
                     const currentActive = button.dataset.active === '1';
@@ -319,8 +373,16 @@
                                     <input id="swal-product-name" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentName}">
                                 </div>
                                 <div>
-                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Price</label>
-                                    <input id="swal-product-price" type="number" min="0" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentPrice}">
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Size Prices</label>
+                                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                        <input id="swal-product-price-small" type="number" min="0" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentPriceSmall}" placeholder="Small">
+                                        <input id="swal-product-price-medium" type="number" min="0" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentPriceMedium}" placeholder="Medium">
+                                        <input id="swal-product-price-large" type="number" min="0" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentPriceLarge}" placeholder="Large">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Discount (%)</label>
+                                    <input id="swal-product-discount" type="number" min="0" max="100" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentDiscountPercent}">
                                 </div>
                                 <div>
                                     <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Category</label>
@@ -350,21 +412,42 @@
                         confirmButtonColor: '#2f241f',
                         preConfirm: function() {
                             const name = document.getElementById('swal-product-name').value.trim();
-                            const price = document.getElementById('swal-product-price').value.trim();
+                            const priceSmall = document.getElementById('swal-product-price-small').value.trim();
+                            const priceMedium = document.getElementById('swal-product-price-medium').value.trim();
+                            const priceLarge = document.getElementById('swal-product-price-large').value.trim();
+                            const discountPercentRaw = document.getElementById('swal-product-discount').value.trim();
                             const categoryId = document.getElementById('swal-product-category').value;
                             const description = document.getElementById('swal-product-description').value.trim();
                             const isActive = document.getElementById('swal-product-active').checked;
                             const imageInput = document.getElementById('swal-product-image');
                             const imageFile = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
 
-                            if (!name || !price || !categoryId) {
-                                Swal.showValidationMessage('Name, price, and category are required.');
+                            if (!name || !priceSmall || !priceMedium || !priceLarge || !categoryId) {
+                                Swal.showValidationMessage('Name, size prices, and category are required.');
                                 return false;
                             }
 
-                            const numericPrice = Number(price);
-                            if (Number.isNaN(numericPrice) || numericPrice < 0) {
-                                Swal.showValidationMessage('Price must be a valid non-negative number.');
+                            const numericPriceSmall = Number(priceSmall);
+                            const numericPriceMedium = Number(priceMedium);
+                            const numericPriceLarge = Number(priceLarge);
+                            const hasInvalidPrice = [numericPriceSmall, numericPriceMedium, numericPriceLarge]
+                                .some(function(priceValue) {
+                                    return Number.isNaN(priceValue) || priceValue < 0;
+                                });
+
+                            if (hasInvalidPrice) {
+                                Swal.showValidationMessage('All size prices must be valid non-negative numbers.');
+                                return false;
+                            }
+
+                            const numericDiscountPercent = discountPercentRaw === '' ? 0 : Number(
+                                discountPercentRaw);
+                            if (
+                                Number.isNaN(numericDiscountPercent) ||
+                                numericDiscountPercent < 0 ||
+                                numericDiscountPercent > 100
+                            ) {
+                                Swal.showValidationMessage('Discount must be between 0 and 100.');
                                 return false;
                             }
 
@@ -375,7 +458,10 @@
 
                             return {
                                 name: name,
-                                price: numericPrice.toFixed(2),
+                                price_small: numericPriceSmall.toFixed(2),
+                                price_medium: numericPriceMedium.toFixed(2),
+                                price_large: numericPriceLarge.toFixed(2),
+                                discount_percent: numericDiscountPercent.toFixed(2),
                                 category_id: categoryId,
                                 description: description,
                                 is_active: isActive ? '1' : '0',
@@ -393,7 +479,10 @@
                             _token: csrfToken,
                             _method: 'PUT',
                             name: result.value.name,
-                            price: result.value.price,
+                            price_small: result.value.price_small,
+                            price_medium: result.value.price_medium,
+                            price_large: result.value.price_large,
+                            discount_percent: result.value.discount_percent,
                             category_id: result.value.category_id,
                             description: result.value.description,
                             is_active: result.value.is_active,

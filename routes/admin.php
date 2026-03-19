@@ -14,6 +14,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::get('/search', [DashboardController::class, 'search'])->name('search');
         Route::get('/reports', [DashboardController::class, 'reports'])->name('reports');
+        Route::get('/reports/export/excel', [DashboardController::class, 'exportReportsExcel'])->name('reports.export.excel');
+        Route::get('/reports/export/pdf', [DashboardController::class, 'exportReportsPdf'])->name('reports.export.pdf');
 
         Route::prefix('users')
             ->name('users.')
