@@ -6,6 +6,16 @@
         "(prefers-reduced-motion: reduce)",
     ).matches;
 
+    const palette = {
+        deep: "#2f241f",
+        primary: "#f4a06b",
+        secondary: "#d97f46",
+        accent: "#8f5f3e",
+        mint: "#ffe7d5",
+        soft: "#fff4ec",
+        text: "#6b7280",
+    };
+
     const parsePayload = function () {
         if (!payloadScript) {
             return {};
@@ -138,6 +148,8 @@
         maximumFractionDigits: 2,
     });
 
+    const numberFormatter = new Intl.NumberFormat(undefined);
+
     const createCharts = function () {
         if (typeof window.Chart === "undefined") {
             return;
@@ -145,7 +157,7 @@
 
         window.Chart.defaults.font.family =
             "'Instrument Sans', 'Segoe UI', sans-serif";
-        window.Chart.defaults.color = "#6b7280";
+        window.Chart.defaults.color = palette.text;
 
         const trendCtx = document.getElementById("adminReportsTrendChart");
         const paymentCtx = document.getElementById("adminReportsPaymentChart");
@@ -157,36 +169,37 @@
         );
 
         if (trendCtx) {
-            const gradient = trendCtx
-                .getContext("2d")
-                .createLinearGradient(0, 0, 0, 260);
-            gradient.addColorStop(0, "rgba(244, 160, 107, 0.35)");
-            gradient.addColorStop(1, "rgba(244, 160, 107, 0.02)");
+            const trendContext = trendCtx.getContext("2d");
+            const revenueGradient = trendContext.createLinearGradient(0, 0, 0, 300);
+            revenueGradient.addColorStop(0, "rgba(244, 160, 107, 0.82)");
+            revenueGradient.addColorStop(1, "rgba(244, 160, 107, 0.18)");
 
             new window.Chart(trendCtx, {
-                type: "line",
+                type: "bar",
                 data: {
                     labels: toStringArray(trendData.labels),
                     datasets: [
                         {
-                            label: "Revenue ($)",
+                            label: "Revenue",
                             data: toNumberArray(trendData.revenue),
-                            borderColor: "#d97f46",
-                            backgroundColor: gradient,
-                            fill: true,
-                            borderWidth: 2.5,
-                            tension: 0.35,
-                            pointRadius: 3,
+                            backgroundColor: revenueGradient,
+                            borderRadius: 10,
+                            borderSkipped: false,
                             yAxisID: "y",
+                            order: 2,
                         },
                         {
                             label: "Orders",
                             data: toNumberArray(trendData.orders),
-                            borderColor: "#2f241f",
+                            borderColor: palette.deep,
+                            backgroundColor: "rgba(47, 36, 31, 0.14)",
+                            pointBackgroundColor: palette.deep,
+                            pointRadius: 3,
                             borderWidth: 2,
-                            tension: 0.32,
-                            pointRadius: 2.5,
+                            tension: 0.35,
+                            type: "line",
                             yAxisID: "y1",
+                            order: 1,
                         },
                     ],
                 },
@@ -200,6 +213,27 @@
                     plugins: {
                         legend: {
                             position: "bottom",
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    if (context.dataset.label === "Revenue") {
+                                        return (
+                                            "Revenue: " +
+                                            currencyFormatter.format(
+                                                Number(context.raw || 0),
+                                            )
+                                        );
+                                    }
+
+                                    return (
+                                        "Orders: " +
+                                        numberFormatter.format(
+                                            Number(context.raw || 0),
+                                        )
+                                    );
+                                },
+                            },
                         },
                     },
                     scales: {
@@ -238,19 +272,30 @@
                     labels: toStringArray(comparisonData.labels),
                     datasets: [
                         {
-                            label: "Revenue",
-                            data: toNumberArray(comparisonData.revenue),
-                            backgroundColor: "#f4a06b",
-                            borderRadius: 12,
+                            label: "Orders",
+                            data: toNumberArray(comparisonData.orders),
+                            backgroundColor: palette.primary,
+                            borderRadius: 10,
                             borderSkipped: false,
                             yAxisID: "y",
                         },
                         {
-                            label: "Orders",
-                            data: toNumberArray(comparisonData.orders),
-                            backgroundColor: "#2f241f",
-                            borderRadius: 12,
+                            label: "Items",
+                            data: toNumberArray(comparisonData.items),
+                            backgroundColor: palette.accent,
+                            borderRadius: 10,
                             borderSkipped: false,
+                            yAxisID: "y",
+                        },
+                        {
+                            label: "Revenue",
+                            data: toNumberArray(comparisonData.revenue),
+                            type: "line",
+                            borderColor: palette.deep,
+                            backgroundColor: "rgba(47, 36, 31, 0.18)",
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            tension: 0.35,
                             yAxisID: "y1",
                         },
                     ],
@@ -262,6 +307,30 @@
                         legend: {
                             position: "bottom",
                         },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label || "";
+                                    if (label === "Revenue") {
+                                        return (
+                                            label +
+                                            ": " +
+                                            currencyFormatter.format(
+                                                Number(context.raw || 0),
+                                            )
+                                        );
+                                    }
+
+                                    return (
+                                        label +
+                                        ": " +
+                                        numberFormatter.format(
+                                            Number(context.raw || 0),
+                                        )
+                                    );
+                                },
+                            },
+                        },
                     },
                     scales: {
                         x: {
@@ -272,9 +341,7 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                callback: function (value) {
-                                    return "$" + Number(value).toLocaleString();
-                                },
+                                precision: 0,
                             },
                         },
                         y1: {
@@ -284,7 +351,9 @@
                                 drawOnChartArea: false,
                             },
                             ticks: {
-                                precision: 0,
+                                callback: function (value) {
+                                    return "$" + Number(value).toLocaleString();
+                                },
                             },
                         },
                     },
@@ -305,7 +374,13 @@
                         {
                             data: hasPaymentData ? paymentRevenue : [1],
                             backgroundColor: hasPaymentData
-                                ? ["#f4a06b", "#d97f46", "#8f5f3e", "#2f241f"]
+                                ? [
+                                      "#f4a06b",
+                                      "#d97f46",
+                                      "#8f5f3e",
+                                      "#2f241f",
+                                      "#f6d3bf",
+                                  ]
                                 : ["#f3e2d6"],
                             borderWidth: 0,
                         },
@@ -314,7 +389,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: "66%",
+                    cutout: "68%",
                     plugins: {
                         legend: {
                             position: "bottom",
@@ -354,7 +429,13 @@
                         {
                             data: hasStatusData ? statusOrders : [1],
                             backgroundColor: hasStatusData
-                                ? ["#2f241f", "#f4a06b", "#d97f46", "#8f5f3e"]
+                                ? [
+                                      "#2f241f",
+                                      "#f4a06b",
+                                      "#d97f46",
+                                      "#8f5f3e",
+                                      "#f6d3bf",
+                                  ]
                                 : ["#f3e2d6"],
                             borderWidth: 0,
                         },
@@ -363,7 +444,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: "66%",
+                    cutout: "64%",
                     plugins: {
                         legend: {
                             position: "bottom",
@@ -374,49 +455,55 @@
         }
 
         if (categoryCtx) {
+            const categoryLabels = toStringArray(categoriesData.labels);
+            const categoryRevenue = toNumberArray(categoriesData.revenue);
+            const hasCategoryData = categoryLabels.length > 0;
+
             new window.Chart(categoryCtx, {
-                type: "bar",
+                type: "pie",
                 data: {
-                    labels: toStringArray(categoriesData.labels),
+                    labels: hasCategoryData ? categoryLabels : ["No Data"],
                     datasets: [
                         {
-                            label: "Revenue",
-                            data: toNumberArray(categoriesData.revenue),
-                            backgroundColor: "#f4a06b",
-                            borderRadius: 10,
-                            borderSkipped: false,
-                            yAxisID: "y",
-                        },
-                        {
-                            label: "Items Sold",
-                            data: toNumberArray(categoriesData.qty),
-                            backgroundColor: "#2f241f",
-                            borderRadius: 10,
-                            borderSkipped: false,
-                            yAxisID: "y1",
+                            data: hasCategoryData ? categoryRevenue : [1],
+                            backgroundColor: hasCategoryData
+                                ? [
+                                      "#2f241f",
+                                      "#8f5f3e",
+                                      "#d97f46",
+                                      "#f4a06b",
+                                      "#f6d3bf",
+                                      "#fff2e7",
+                                  ]
+                                : ["#f3e2d6"],
+                            borderWidth: 1,
+                            borderColor: "rgba(255, 255, 255, 0.6)",
                         },
                     ],
                 },
                 options: {
-                    indexAxis: "y",
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             position: "bottom",
                         },
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                        },
-                        y: {
-                            grid: {
-                                display: false,
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    if (!hasCategoryData) {
+                                        return "No category data";
+                                    }
+
+                                    return (
+                                        context.label +
+                                        ": " +
+                                        currencyFormatter.format(
+                                            Number(context.raw || 0),
+                                        )
+                                    );
+                                },
                             },
-                        },
-                        y1: {
-                            display: false,
                         },
                     },
                 },
@@ -424,26 +511,32 @@
         }
 
         if (topItemsCtx) {
+            const labels = toStringArray(topItemsData.labels);
+            const qtyValues = toNumberArray(topItemsData.qty);
+            const revenueValues = toNumberArray(topItemsData.revenue);
+
             new window.Chart(topItemsCtx, {
                 type: "bar",
                 data: {
-                    labels: toStringArray(topItemsData.labels),
+                    labels: labels,
                     datasets: [
                         {
                             label: "Qty Sold",
-                            data: toNumberArray(topItemsData.qty),
-                            backgroundColor: "#2f241f",
+                            data: qtyValues,
+                            backgroundColor: palette.primary,
                             borderRadius: 10,
                             borderSkipped: false,
-                            yAxisID: "y",
+                            xAxisID: "x",
                         },
                         {
                             label: "Revenue",
-                            data: toNumberArray(topItemsData.revenue),
-                            backgroundColor: "#f4a06b",
+                            data: revenueValues,
+                            backgroundColor: "rgba(244, 160, 107, 0.28)",
+                            borderColor: palette.deep,
+                            borderWidth: 1,
                             borderRadius: 10,
                             borderSkipped: false,
-                            yAxisID: "y1",
+                            xAxisID: "x1",
                         },
                     ],
                 },
@@ -454,6 +547,27 @@
                     plugins: {
                         legend: {
                             position: "bottom",
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    if (context.dataset.label === "Revenue") {
+                                        return (
+                                            "Revenue: " +
+                                            currencyFormatter.format(
+                                                Number(context.raw || 0),
+                                            )
+                                        );
+                                    }
+
+                                    return (
+                                        "Qty Sold: " +
+                                        numberFormatter.format(
+                                            Number(context.raw || 0),
+                                        )
+                                    );
+                                },
+                            },
                         },
                     },
                     scales: {
@@ -462,14 +576,21 @@
                             ticks: {
                                 precision: 0,
                             },
+                            grid: {
+                                color: "rgba(47, 36, 31, 0.08)",
+                            },
+                        },
+                        x1: {
+                            display: false,
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
                         },
                         y: {
                             grid: {
                                 display: false,
                             },
-                        },
-                        y1: {
-                            display: false,
                         },
                     },
                 },
@@ -484,7 +605,34 @@
         });
     }
 
+    const filterToggleButton = document.querySelector(
+        "[data-report-filter-toggle]",
+    );
+    const filterPanel = document.querySelector("[data-report-filter-panel]");
+    if (filterToggleButton && filterPanel) {
+        const setFilterVisibility = function (isVisible) {
+            filterPanel.classList.toggle("hidden", !isVisible);
+            filterToggleButton.setAttribute(
+                "aria-expanded",
+                isVisible ? "true" : "false",
+            );
+            filterToggleButton.textContent = isVisible
+                ? "Hide Filter"
+                : "Show Filter";
+        };
+
+        let isFilterVisible =
+            filterToggleButton.getAttribute("aria-expanded") === "true";
+        setFilterVisibility(isFilterVisible);
+
+        filterToggleButton.addEventListener("click", function () {
+            isFilterVisible = !isFilterVisible;
+            setFilterVisibility(isFilterVisible);
+        });
+    }
+
     animateCounters();
     animateProgressBars();
     createCharts();
 })();
+

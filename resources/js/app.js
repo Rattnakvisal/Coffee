@@ -91,4 +91,8 @@ import "./bootstrap";
     if (document.querySelector("[data-cashier-menu]")) {
         import("./cashier_index");
     }
+
+    if (document.querySelector("[data-admin-sidebar]")) {
+        import("./sidebar_admin");
+    }
 })();

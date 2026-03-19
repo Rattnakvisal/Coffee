@@ -160,10 +160,11 @@
                         @endif
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full min-w-[760px] text-left text-sm">
+                        <table class="w-full min-w-[940px] text-left text-sm">
                             <thead>
                                 <tr class="border-b border-slate-200 text-[#7b5e50]">
                                     <th class="px-4 py-3 font-semibold">Order</th>
+                                    <th class="px-4 py-3 font-semibold">Item Name</th>
                                     <th class="px-4 py-3 font-semibold">Date</th>
                                     <th class="px-4 py-3 font-semibold">Payment</th>
                                     <th class="px-4 py-3 font-semibold">Status</th>
@@ -174,6 +175,13 @@
                             <tbody>
                                 @forelse ($orders as $order)
                                     @php
+                                        $orderNumber = (string) ($order->order_number ?? '-');
+                                        $shortOrderNumber =
+                                            strlen($orderNumber) > 18
+                                                ? substr($orderNumber, 0, 8) .
+                                                    '...' .
+                                                    substr($orderNumber, -6)
+                                                : $orderNumber;
                                         $orderDateValue = $order->placed_at ?? $order->created_at;
                                         $formattedOrderDate =
                                             $orderDateValue instanceof \Carbon\Carbon
@@ -190,9 +198,24 @@
                                             'failed', 'cancelled', 'canceled', 'refunded' => 'bg-rose-100 text-rose-700',
                                             default => 'bg-slate-200 text-slate-700',
                                         };
+                                        $itemNames = $order->items->pluck('product_name')->filter()->values();
+                                        $itemNamePreview = $itemNames->take(3)->implode(', ');
+                                        if ($itemNames->count() > 3) {
+                                            $itemNamePreview .= ' +' . ($itemNames->count() - 3) . ' more';
+                                        }
+                                        if ($itemNamePreview === '') {
+                                            $itemNamePreview = '-';
+                                        }
                                     @endphp
                                     <tr class="border-b border-slate-100 transition hover:bg-[#fffaf7]">
-                                        <td class="px-4 py-3 font-semibold text-[#2f241f]">{{ $order->order_number }}</td>
+                                        <td class="px-4 py-3 font-semibold text-[#2f241f]" title="{{ $orderNumber }}">
+                                            {{ $shortOrderNumber }}
+                                        </td>
+                                        <td class="px-4 py-3 text-slate-600">
+                                            <p class="max-w-[18rem] truncate" title="{{ $itemNamePreview }}">
+                                                {{ $itemNamePreview }}
+                                            </p>
+                                        </td>
                                         <td class="px-4 py-3 text-slate-500">{{ $formattedOrderDate }}</td>
                                         <td class="px-4 py-3 text-slate-600">
                                             {{ str((string) ($order->payment_method ?? 'unknown'))->replace('_', ' ')->headline() }}
@@ -212,7 +235,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-4 py-10 text-center text-slate-500">
+                                        <td colspan="7" class="px-4 py-10 text-center text-slate-500">
                                             No order history found with the current filters.
                                         </td>
                                     </tr>

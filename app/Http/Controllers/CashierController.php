@@ -126,6 +126,7 @@ class CashierController extends Controller
             : [];
 
         $ordersQuery = (clone $baseHistoryQuery)
+            ->with('items:id,order_id,product_name,qty')
             ->withCount('items')
             ->when(
                 $search !== '',

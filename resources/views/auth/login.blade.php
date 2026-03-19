@@ -149,7 +149,11 @@
                                 data-bg="{{ $selectedProfile['button'] }}"
                                 data-bg-hover="{{ $selectedProfile['buttonHover'] }}">
                                 <span id="login-submit-label">Continue to {{ $selectedProfile['label'] }}</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                <span id="login-submit-spinner"
+                                    class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white"
+                                    aria-hidden="true"></span>
+                                <svg id="login-submit-arrow" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                    fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -194,10 +198,13 @@
             const accessLabel = document.getElementById('role-access-label');
             const submitLabel = document.getElementById('login-submit-label');
             const submitButton = document.getElementById('login-submit-button');
+            const submitArrow = document.getElementById('login-submit-arrow');
+            const submitSpinner = document.getElementById('login-submit-spinner');
             const profileCard = document.getElementById('role-profile-card');
             const profileTitle = document.getElementById('role-profile-title');
             const profileSubtitle = document.getElementById('role-profile-subtitle');
             const profileDescription = document.getElementById('role-profile-description');
+            let isSubmitting = false;
 
             const setRoleState = function(roleSlug) {
                 const profile = roleProfiles[roleSlug];
@@ -287,6 +294,40 @@
                     const baseColor = submitButton.getAttribute('data-bg');
                     if (baseColor) {
                         submitButton.style.backgroundColor = baseColor;
+                    }
+                });
+            }
+
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    if (isSubmitting) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    isSubmitting = true;
+
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.setAttribute('aria-busy', 'true');
+                        submitButton.classList.add('cursor-not-allowed', 'opacity-90');
+                    }
+
+                    roleButtons.forEach(function(button) {
+                        button.disabled = true;
+                        button.classList.add('opacity-70');
+                    });
+
+                    if (submitLabel) {
+                        submitLabel.textContent = 'Signing in...';
+                    }
+
+                    if (submitArrow) {
+                        submitArrow.classList.add('hidden');
+                    }
+
+                    if (submitSpinner) {
+                        submitSpinner.classList.remove('hidden');
                     }
                 });
             }

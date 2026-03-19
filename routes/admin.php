@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ReportsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:admin'])
@@ -13,9 +14,9 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function (): void {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::get('/search', [DashboardController::class, 'search'])->name('search');
-        Route::get('/reports', [DashboardController::class, 'reports'])->name('reports');
-        Route::get('/reports/export/excel', [DashboardController::class, 'exportReportsExcel'])->name('reports.export.excel');
-        Route::get('/reports/export/pdf', [DashboardController::class, 'exportReportsPdf'])->name('reports.export.pdf');
+        Route::get('/reports', [ReportsController::class, 'reports'])->name('reports');
+        Route::get('/reports/export/excel', [ReportsController::class, 'exportReportsExcel'])->name('reports.export.excel');
+        Route::get('/reports/export/pdf', [ReportsController::class, 'exportReportsPdf'])->name('reports.export.pdf');
 
         Route::prefix('users')
             ->name('users.')

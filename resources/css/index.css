@@ -152,7 +152,9 @@
     font-size: 0.86rem;
     font-weight: 700;
     padding: 11px 14px;
-    transition: background-color 140ms ease, color 140ms ease;
+    transition:
+        background-color 140ms ease,
+        color 140ms ease;
 }
 
 .coffee-search-dropdown li + li .coffee-search-option {

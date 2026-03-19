@@ -1,9 +1,12 @@
 @php
     $activeAdminMenu = $activeAdminMenu ?? 'dashboard';
     $authUser = auth()->user();
+
     $profileName = trim((string) ($authUser->first_name ?? '') . ' ' . (string) ($authUser->last_name ?? ''));
     $profileName = $profileName !== '' ? $profileName : (string) ($authUser->name ?? 'User');
+
     $avatarUrl = !empty($authUser?->avatar_path) ? asset('storage/' . $authUser->avatar_path) : null;
+
     $initials = collect(explode(' ', $profileName))
         ->filter()
         ->map(fn(string $part): string => strtoupper(substr($part, 0, 1)))
@@ -20,14 +23,14 @@
                     'label' => 'Dashboard',
                     'route' => route('admin.index'),
                     'icon' =>
-                        '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955a1.125 1.125 0 0 1 1.59 0L21.75 12M4.5 9.75V19.5A2.25 2.25 0 0 0 6.75 21.75h3.75v-6h3v6h3.75a2.25 2.25 0 0 0 2.25-2.25V9.75" />',
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="m3.75 3.75 7.5 6 7.5-6v15a1.5 1.5 0 0 1-1.5 1.5h-3.75V13.5h-4.5v6.75H5.25a1.5 1.5 0 0 1-1.5-1.5v-15Z" />',
                 ],
                 [
                     'key' => 'reports',
                     'label' => 'Reports',
                     'route' => route('admin.reports'),
                     'icon' =>
-                        '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 19.5h16.5M7.5 16.5v-6m4.5 6v-9m4.5 9v-3" />',
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 19.5h16.5M7.5 16.5V9.75m4.5 6.75V6.75m4.5 9.75v-3.75" />',
                 ],
             ],
         ],
@@ -39,21 +42,21 @@
                     'label' => 'Products',
                     'route' => route('admin.products.index'),
                     'icon' =>
-                        '<path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5h10.5m-10.5 4.5h10.5m-10.5 4.5h6.75M3.75 5.25A1.5 1.5 0 0 1 5.25 3.75h13.5a1.5 1.5 0 0 1 1.5 1.5v13.5a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V5.25Z" />',
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 4.5h13.5A1.5 1.5 0 0 1 20.25 6v12a1.5 1.5 0 0 1-1.5 1.5H5.25A1.5 1.5 0 0 1 3.75 18V6a1.5 1.5 0 0 1 1.5-1.5Zm3 3h7.5m-7.5 4.5h7.5m-7.5 4.5h4.5" />',
                 ],
                 [
                     'key' => 'categories',
                     'label' => 'Categories',
                     'route' => route('admin.categories.index'),
                     'icon' =>
-                        '<path stroke-linecap="round" stroke-linejoin="round" d="M6.75 4.5h10.5M6.75 9.75h10.5m-10.5 5.25h10.5m-10.5 5.25h10.5" />',
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h10.5M6.75 12h10.5M6.75 17.25h10.5" />',
                 ],
                 [
                     'key' => 'users',
                     'label' => 'Users',
                     'route' => route('admin.users.index'),
                     'icon' =>
-                        '<path stroke-linecap="round" stroke-linejoin="round" d="M18 18.75a3.75 3.75 0 1 0-7.5 0m7.5 0v.75h1.5a2.25 2.25 0 0 0 2.25-2.25v-.824a2.25 2.25 0 0 0-.663-1.588l-1.02-1.021a2.25 2.25 0 0 1-.659-1.591V8.25A6.75 6.75 0 0 0 6 8.25v4.976c0 .597-.237 1.169-.659 1.591l-1.02 1.02a2.25 2.25 0 0 0-.663 1.59v.824A2.25 2.25 0 0 0 5.908 20.5h1.5v-.75m10.592-1.5a6 6 0 0 0-12 0" />',
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 19.125a7.125 7.125 0 0 1 15 0" />',
                 ],
             ],
         ],
@@ -65,15 +68,15 @@
                     'label' => 'Settings',
                     'route' => route('admin.settings.index'),
                     'icon' =>
-                        '<path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94l.213 1.278a1.125 1.125 0 0 0 .846.894l1.251.313c.534.133.878.657.813 1.203l-.153 1.288a1.125 1.125 0 0 0 .323.939l.925.926c.39.39.39 1.024 0 1.414l-.925.926a1.125 1.125 0 0 0-.323.938l.153 1.29c.065.545-.279 1.07-.813 1.202l-1.251.313a1.125 1.125 0 0 0-.846.894l-.213 1.278c-.09.542-.56.94-1.11.94h-2.592c-.55 0-1.02-.398-1.11-.94l-.213-1.278a1.125 1.125 0 0 0-.846-.894l-1.251-.313a1.125 1.125 0 0 1-.813-1.203l.153-1.288a1.125 1.125 0 0 0-.323-.939l-.925-.926a1 1 0 0 1 0-1.414l.925-.926a1.125 1.125 0 0 0 .323-.938l-.153-1.29a1.125 1.125 0 0 1 .813-1.202l1.251-.313a1.125 1.125 0 0 0 .846-.894l.213-1.278Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />',
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h3m-7.348 1.652 2.121 2.121m7.454 7.454 2.121 2.121M6 10.5v3m12-3v3m-1.652-7.348-2.121 2.121m-7.454 7.454-2.121 2.121M12 8.25A3.75 3.75 0 1 1 12 15.75 3.75 3.75 0 0 1 12 8.25Z" />',
                 ],
             ],
         ],
     ];
 @endphp
 
-<button type="button" data-admin-sidebar-open
-    class="fixed left-4 top-4 z-40 inline-flex items-center gap-2 rounded-2xl border border-[#ead8cb] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#5d4438] shadow-lg shadow-[#2f241f]/10 backdrop-blur transition hover:bg-[#fff7f2] lg:hidden">
+<button type="button" data-admin-sidebar-open aria-label="Open sidebar"
+    class="fixed left-4 top-4 z-40 inline-flex items-center gap-2 rounded-2xl border border-[#ead8cb] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#5d4438] shadow-lg shadow-[#2f241f]/10 backdrop-blur transition lg:hidden">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
         stroke-width="1.9">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5" />
@@ -81,16 +84,18 @@
     Menu
 </button>
 
-<div data-admin-sidebar-overlay class="fixed inset-0 z-40 hidden bg-[#1a120e]/60 backdrop-blur-[2px] lg:hidden"></div>
+<div data-admin-sidebar-overlay
+    class="fixed inset-0 z-40 hidden bg-[#1a120e]/60 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden">
+</div>
 
 <aside data-admin-sidebar
-    class="fixed inset-y-0 left-0 z-50 flex w-[84vw] max-w-[330px] -translate-x-full flex-col overflow-hidden bg-gradient-to-b from-[#2f241f] via-[#2a211d] to-[#241c18] text-white shadow-2xl transition-transform duration-300 ease-out lg:sticky lg:top-0 lg:z-20 lg:col-span-3 lg:h-screen lg:w-auto lg:max-w-none lg:translate-x-0 xl:col-span-2">
+    class="fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-82.5 -translate-x-full flex-col overflow-hidden bg-linear-to-b from-[#2f241f] via-[#2a211d] to-[#241c18] text-white shadow-2xl transition-transform duration-300 ease-out lg:sticky lg:top-0 lg:z-20 lg:col-span-3 lg:h-screen lg:w-auto lg:max-w-none lg:translate-x-0 xl:col-span-2">
     <div class="flex h-full flex-col">
         <div class="border-b border-white/10 px-6 pb-5 pt-6">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <span
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f4a06b] to-[#df7e43] shadow-lg shadow-[#f4a06b]/25">
+                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-[#f4a06b] to-[#df7e43] shadow-lg shadow-[#f4a06b]/25">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" stroke-width="1.9">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -104,9 +109,8 @@
                     </div>
                 </div>
 
-                <button type="button" data-admin-sidebar-close
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/70 transition hover:bg-white/10 hover:text-white lg:hidden">
-                    <span class="sr-only">Close menu</span>
+                <button type="button" data-admin-sidebar-close aria-label="Close sidebar"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/70 transition hover:text-white lg:hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor" stroke-width="1.9">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -130,17 +134,17 @@
 
                             <a href="{{ $item['route'] }}" data-admin-sidebar-close @class([
                                 'group relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200',
-                                'bg-white text-[#2f241f] shadow-lg shadow-black/10' => $isActive,
-                                'text-white/75 hover:bg-white/8 hover:text-white' => !$isActive,
+                                'text-white' => $isActive,
+                                'text-white/75 hover:text-white' => !$isActive,
                             ])>
                                 @if ($isActive)
-                                    <span class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#f4a06b]"></span>
+                                    <span class="absolute inset-y-2 left-0 w-1 rounded-r-full bg-[#f4a06b]"></span>
                                 @endif
 
                                 <span @class([
                                     'flex h-10 w-10 items-center justify-center rounded-xl border transition',
-                                    'border-[#f6d3bf] bg-[#fff4ed] text-[#d97745]' => $isActive,
-                                    'border-white/10 bg-white/5 text-white/70 group-hover:bg-white/10 group-hover:text-white' => !$isActive,
+                                    'border-[#f6d3bf] text-[#f4a06b]' => $isActive,
+                                    'border-white/10 text-white/70 group-hover:text-white' => !$isActive,
                                 ])>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
@@ -148,9 +152,7 @@
                                     </svg>
                                 </span>
 
-                                <div class="flex-1">
-                                    <span>{{ $item['label'] }}</span>
-                                </div>
+                                <span class="flex-1">{{ $item['label'] }}</span>
 
                                 @if ($isActive)
                                     <span class="h-2.5 w-2.5 rounded-full bg-[#f4a06b]"></span>
@@ -166,11 +168,11 @@
             <div class="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                 <div class="flex items-center gap-3">
                     <div
-                        class="flex h-12 w-16 items-center justify-center overflow-hidden rounded-full border-4 border-white/45 bg-white/20 shadow-xl shadow-[#7a5c4e]/25">
+                        class="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-4 border-white/40 bg-white/20 shadow-lg">
                         @if ($avatarUrl)
                             <img src="{{ $avatarUrl }}" alt="Profile avatar" class="h-full w-full object-cover">
                         @else
-                            <span class="text-2xl font-black text-white">{{ $initials }}</span>
+                            <span class="text-lg font-black text-white">{{ $initials }}</span>
                         @endif
                     </div>
 
@@ -183,7 +185,7 @@
                 <form method="POST" action="{{ route('logout') }}" class="mt-4">
                     @csrf
                     <button type="submit" data-admin-sidebar-close
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/80 transition hover:text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" stroke-width="1.9">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -196,56 +198,4 @@
         </div>
     </div>
 </aside>
-
-<script>
-    (function() {
-        const root = document.documentElement;
-        const sidebar = document.querySelector('[data-admin-sidebar]');
-        const overlay = document.querySelector('[data-admin-sidebar-overlay]');
-        const openButtons = document.querySelectorAll('[data-admin-sidebar-open]');
-        const closeButtons = document.querySelectorAll('[data-admin-sidebar-close]');
-        const desktopMediaQuery = window.matchMedia('(min-width: 1024px)');
-
-        if (!sidebar || !overlay) return;
-
-        function openSidebar() {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-            root.classList.add('overflow-hidden');
-        }
-
-        function closeSidebar() {
-            if (desktopMediaQuery.matches) return;
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-            root.classList.remove('overflow-hidden');
-        }
-
-        function syncSidebarState() {
-            if (desktopMediaQuery.matches) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.add('hidden');
-                root.classList.remove('overflow-hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        openButtons.forEach(button => button.addEventListener('click', openSidebar));
-        closeButtons.forEach(button => button.addEventListener('click', closeSidebar));
-        overlay.addEventListener('click', closeSidebar);
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') closeSidebar();
-        });
-
-        syncSidebarState();
-
-        if (desktopMediaQuery.addEventListener) {
-            desktopMediaQuery.addEventListener('change', syncSidebarState);
-        } else if (desktopMediaQuery.addListener) {
-            desktopMediaQuery.addListener(syncSidebarState);
-        }
-    })();
-</script>
+@vite('resources/js/app.js')

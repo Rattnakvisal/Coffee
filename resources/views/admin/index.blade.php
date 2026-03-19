@@ -87,7 +87,7 @@
                 <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
                     <section class="space-y-4 xl:col-span-8">
                         <div
-                            class="anim-enter-up rounded-3xl bg-gradient-to-r from-[#cca25a] via-[#c79d56] to-[#b88d47] p-6 text-white shadow-lg shadow-[#b88d47]/25">
+                            class="anim-enter-up rounded-3xl bg-linear-to-r from-[#cca25a] via-[#c79d56] to-[#b88d47] p-6 text-white shadow-lg shadow-[#b88d47]/25">
                             <div class="flex flex-wrap items-center justify-between gap-4">
                                 <div>
                                     <h2 class="text-3xl font-black">Dashboard</h2>
@@ -131,8 +131,8 @@
                                         </svg>
                                     </span>
                                 </div>
-                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $teamUsers }}"
-                                    data-counter-type="number">0</h3>
+                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                                    data-counter-value="{{ $teamUsers }}" data-counter-type="number">0</h3>
                                 <p class="mt-1 text-xs text-slate-500">
                                     {{ number_format((int) ($stats['adminsCount'] ?? 0)) }} admins /
                                     {{ number_format((int) ($stats['cashiersCount'] ?? 0)) }} cashiers
@@ -156,7 +156,7 @@
                                     data-counter-value="{{ $stats['activeProductsCount'] }}" data-counter-type="number">0
                                 </h3>
                                 <p
-                                    class="mt-1 text-xs font-semibold {{ ($stats['productsGrowth']['isPositive'] ?? true) ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    class="mt-1 text-xs font-semibold {{ $stats['productsGrowth']['isPositive'] ?? true ? 'text-emerald-600' : 'text-rose-600' }}">
                                     {{ $stats['productsGrowth']['text'] ?? '+0.0% vs last week' }}
                                 </p>
                             </article>
@@ -164,7 +164,8 @@
                             <article
                                 class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                                 <div class="flex items-center justify-between gap-2">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Categories</p>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Categories
+                                    </p>
                                     <span
                                         class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4f2ff] text-[#6b5caa]">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
@@ -175,20 +176,21 @@
                                     </span>
                                 </div>
                                 <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
-                                    data-counter-value="{{ $stats['categoriesCount'] }}" data-counter-type="number">0</h3>
+                                    data-counter-value="{{ $stats['categoriesCount'] }}" data-counter-type="number">0
+                                </h3>
                                 <p class="mt-1 text-xs text-slate-500">Used by active menu products</p>
                             </article>
 
                             <article
                                 class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                                 <div class="flex items-center justify-between gap-2">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Inventory</p>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Inventory
+                                    </p>
                                     <span
                                         class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#ebfaf1] text-[#2e8f5e]">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M12 6v12m6-6H6" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
                                         </svg>
                                     </span>
                                 </div>
@@ -196,7 +198,7 @@
                                     data-counter-value="{{ $stats['inventoryValue'] }}" data-counter-type="currency"
                                     data-counter-decimals="2">$0.00</h3>
                                 <p
-                                    class="mt-1 text-xs font-semibold {{ ($stats['inventoryGrowth']['isPositive'] ?? true) ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    class="mt-1 text-xs font-semibold {{ $stats['inventoryGrowth']['isPositive'] ?? true ? 'text-emerald-600' : 'text-rose-600' }}">
                                     {{ $stats['inventoryGrowth']['text'] ?? '+0.0% vs last month' }}
                                 </p>
                             </article>
@@ -216,7 +218,8 @@
                                     <div
                                         class="pointer-events-none absolute inset-0 flex items-center justify-center text-center">
                                         <div>
-                                            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                                            <p
+                                                class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
                                                 Total</p>
                                             <p class="text-2xl font-black text-[#2f241f]">{{ number_format($teamUsers) }}
                                             </p>
@@ -281,14 +284,23 @@
                                 <div class="space-y-2">
                                     @forelse ($latestShoutouts as $member)
                                         @php
-                                            $memberDisplayName = trim((string) ($member->first_name ?? '') . ' ' . (string) ($member->last_name ?? ''));
-                                            $memberDisplayName = $memberDisplayName !== '' ? $memberDisplayName : (string) $member->name;
+                                            $memberDisplayName = trim(
+                                                (string) ($member->first_name ?? '') .
+                                                    ' ' .
+                                                    (string) ($member->last_name ?? ''),
+                                            );
+                                            $memberDisplayName =
+                                                $memberDisplayName !== '' ? $memberDisplayName : (string) $member->name;
                                             $memberInitials = collect(explode(' ', $memberDisplayName))
                                                 ->filter()
-                                                ->map(fn(string $namePart): string => strtoupper(substr($namePart, 0, 1)))
+                                                ->map(
+                                                    fn(string $namePart): string => strtoupper(substr($namePart, 0, 1)),
+                                                )
                                                 ->take(2)
                                                 ->implode('');
-                                            $memberAvatarUrl = $member->avatar_path ? asset('storage/' . $member->avatar_path) : null;
+                                            $memberAvatarUrl = $member->avatar_path
+                                                ? asset('storage/' . $member->avatar_path)
+                                                : null;
                                             $memberRoleLabel = str($member->role?->name ?? 'Team')->headline();
                                         @endphp
                                         <a href="{{ route('admin.users.index', ['search' => $memberDisplayName]) }}"
