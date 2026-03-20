@@ -97,12 +97,24 @@
                                         <th class="pb-3 font-semibold">Name</th>
                                         <th class="pb-3 font-semibold">Products</th>
                                         <th class="pb-3 font-semibold">Status</th>
+                                        <th class="pb-3 font-semibold">Created By</th>
                                         <th class="pb-3 font-semibold">Created</th>
                                         <th class="pb-3 text-right font-semibold">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($categories as $category)
+                                        @php
+                                            $createdByName = trim(
+                                                (string) ($category->creator?->first_name ?? '') .
+                                                    ' ' .
+                                                    (string) ($category->creator?->last_name ?? ''),
+                                            );
+                                            $createdByName =
+                                                $createdByName !== ''
+                                                    ? $createdByName
+                                                    : (string) ($category->creator?->name ?? 'System');
+                                        @endphp
                                         <tr class="border-b border-slate-100 anim-pop anim-stagger"
                                             style="--stagger: {{ $loop->index + 1 }};">
                                             <td class="py-3.5">
@@ -123,6 +135,7 @@
                                                     </span>
                                                 @endif
                                             </td>
+                                            <td class="py-3.5 text-slate-600">{{ $createdByName }}</td>
                                             <td class="py-3.5 text-slate-500">{{ optional($category->created_at)->format('M d, Y') }}</td>
                                             <td class="py-3.5 text-right">
                                                 <button type="button"
@@ -146,7 +159,7 @@
                                         </tr>
                                     @empty
                                         <tr class="anim-enter-up">
-                                            <td colspan="5" class="py-8 text-center text-slate-500">No categories found.</td>
+                                            <td colspan="6" class="py-8 text-center text-slate-500">No categories found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

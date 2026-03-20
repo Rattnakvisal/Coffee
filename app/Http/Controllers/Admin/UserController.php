@@ -25,7 +25,10 @@ class UserController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         $users = User::query()
-            ->with('role')
+            ->with([
+                'role',
+                'creator:id,name,first_name,last_name',
+            ])
             ->whereHas('role', function ($query): void {
                 $query->whereIn('slug', $this->managedRoleSlugs);
             })
@@ -87,6 +90,7 @@ class UserController extends Controller
             'gender' => filled($validated['gender'] ?? null) ? $validated['gender'] : null,
             'avatar_path' => $avatarPath,
             'role_id' => $validated['role_id'],
+            'created_by' => $request->user()?->id,
             'password' => $validated['password'],
         ]);
 

@@ -186,12 +186,24 @@
                                         <th class="pb-3 font-semibold">Size Prices</th>
                                         <th class="pb-3 font-semibold">Discount</th>
                                         <th class="pb-3 font-semibold">Status</th>
+                                        <th class="pb-3 font-semibold">Created By</th>
                                         <th class="pb-3 font-semibold">Created</th>
                                         <th class="pb-3 text-right font-semibold">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($products as $product)
+                                        @php
+                                            $createdByName = trim(
+                                                (string) ($product->creator?->first_name ?? '') .
+                                                    ' ' .
+                                                    (string) ($product->creator?->last_name ?? ''),
+                                            );
+                                            $createdByName =
+                                                $createdByName !== ''
+                                                    ? $createdByName
+                                                    : (string) ($product->creator?->name ?? 'System');
+                                        @endphp
                                         <tr class="border-b border-slate-100 anim-pop anim-stagger"
                                             style="--stagger: {{ $loop->index + 1 }};">
                                             <td class="py-3.5">
@@ -285,6 +297,7 @@
                                                     </span>
                                                 @endif
                                             </td>
+                                            <td class="py-3.5 text-slate-600">{{ $createdByName }}</td>
                                             <td class="py-3.5 text-slate-500">
                                                 {{ optional($product->created_at)->format('M d, Y') }}
                                             </td>
@@ -320,7 +333,7 @@
                                         </tr>
                                     @empty
                                         <tr class="anim-enter-up">
-                                            <td colspan="8" class="py-8 text-center text-slate-500">No products found.
+                                            <td colspan="9" class="py-8 text-center text-slate-500">No products found.
                                             </td>
                                         </tr>
                                     @endforelse

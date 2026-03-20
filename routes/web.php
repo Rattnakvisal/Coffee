@@ -101,7 +101,6 @@ Route::middleware(['auth', 'role:cashier'])
     ->group(function (): void {
         Route::get('/', [CashierController::class, 'index'])->name('index');
         Route::get('/history', [CashierController::class, 'history'])->name('history');
-        Route::get('/reports', [CashierController::class, 'reports'])->name('reports');
         Route::post('/cart/add', [CashierController::class, 'addToCart'])->name('cart.add');
         Route::post('/cart/{itemKey}/increment', [CashierController::class, 'incrementCartItem'])->name('cart.increment');
         Route::post('/cart/{itemKey}/decrement', [CashierController::class, 'decrementCartItem'])->name('cart.decrement');

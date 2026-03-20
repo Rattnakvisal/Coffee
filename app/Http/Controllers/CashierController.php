@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use Carbon\Carbon;
-use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -182,130 +181,6 @@ class CashierController extends Controller
             'paymentOptions' => $paymentOptions,
             'statusOptions' => $statusOptions,
             'latestOrderAt' => $latestOrderAt,
-            'cartItems' => $cartState['items'],
-            'cartSubtotal' => $cartState['subtotal'],
-            'cartDiscount' => $cartState['discount'],
-            'cartTotal' => $cartState['total'],
-        ]);
-    }
-
-    public function reports(Request $request): View
-    {
-        $period = $this->normalizePeriod((string) $request->query('period', 'day'));
-        $dateColumn = $this->orderDateColumn();
-
-        [$selectedStart, $selectedEnd, $selectedLabel, $startDate, $endDate, $hasCustomRange] = $this->resolveReportsDateRange(
-            $request,
-            $period,
-        );
-        [$dayStart, $dayEnd] = $this->periodRange('day');
-        [$weekStart, $weekEnd] = $this->periodRange('week');
-        [$monthStart, $monthEnd] = $this->periodRange('month');
-
-        $daySummary = $this->summarizeRange($request, $dayStart, $dayEnd, $dateColumn);
-        $weekSummary = $this->summarizeRange($request, $weekStart, $weekEnd, $dateColumn);
-        $monthSummary = $this->summarizeRange($request, $monthStart, $monthEnd, $dateColumn);
-        $selectedSummary = $this->summarizeRange($request, $selectedStart, $selectedEnd, $dateColumn);
-
-        $paymentBreakdown = $this->cashierOrdersQuery($request)
-            ->whereBetween($dateColumn, [$selectedStart, $selectedEnd])
-            ->selectRaw("COALESCE(payment_method, 'unknown') as payment_method, COUNT(*) as orders_count, SUM(total) as revenue")
-            ->groupBy('payment_method')
-            ->orderByDesc('revenue')
-            ->get();
-
-        $topItems = OrderItem::query()
-            ->selectRaw('product_name, SUM(qty) as qty_sold, SUM(line_total) as revenue')
-            ->whereHas('order', function (Builder $query) use ($request, $dateColumn, $selectedStart, $selectedEnd): void {
-                $this->applyCashierScope($query, $request);
-                $query->whereBetween($dateColumn, [$selectedStart, $selectedEnd]);
-            })
-            ->groupBy('product_name')
-            ->orderByDesc('qty_sold')
-            ->limit(8)
-            ->get();
-
-        $recentOrders = $this->cashierOrdersQuery($request)
-            ->whereBetween($dateColumn, [$selectedStart, $selectedEnd])
-            ->orderByDesc($dateColumn)
-            ->limit(8)
-            ->get();
-
-        $reportTrend = $this->buildReportTrend(
-            $request,
-            $dateColumn,
-            $period,
-            $selectedStart,
-            $selectedEnd,
-            $hasCustomRange,
-        );
-
-        $reportCharts = [
-            'trend' => $reportTrend,
-            'comparison' => [
-                'labels' => ['Today', 'This Week', 'This Month'],
-                'orders' => [
-                    (int) ($daySummary['orders'] ?? 0),
-                    (int) ($weekSummary['orders'] ?? 0),
-                    (int) ($monthSummary['orders'] ?? 0),
-                ],
-                'revenue' => [
-                    (float) ($daySummary['revenue'] ?? 0),
-                    (float) ($weekSummary['revenue'] ?? 0),
-                    (float) ($monthSummary['revenue'] ?? 0),
-                ],
-                'items' => [
-                    (int) ($daySummary['items'] ?? 0),
-                    (int) ($weekSummary['items'] ?? 0),
-                    (int) ($monthSummary['items'] ?? 0),
-                ],
-            ],
-            'payments' => [
-                'labels' => $paymentBreakdown
-                    ->map(fn ($payment): string => strtoupper((string) ($payment->payment_method ?? 'UNKNOWN')))
-                    ->values()
-                    ->all(),
-                'orders' => $paymentBreakdown
-                    ->map(fn ($payment): int => (int) ($payment->orders_count ?? 0))
-                    ->values()
-                    ->all(),
-                'revenue' => $paymentBreakdown
-                    ->map(fn ($payment): float => round((float) ($payment->revenue ?? 0), 2))
-                    ->values()
-                    ->all(),
-            ],
-            'topItems' => [
-                'labels' => $topItems
-                    ->map(fn ($item): string => (string) ($item->product_name ?? 'Item'))
-                    ->values()
-                    ->all(),
-                'qty' => $topItems
-                    ->map(fn ($item): int => (int) ($item->qty_sold ?? 0))
-                    ->values()
-                    ->all(),
-                'revenue' => $topItems
-                    ->map(fn ($item): float => round((float) ($item->revenue ?? 0), 2))
-                    ->values()
-                    ->all(),
-            ],
-        ];
-
-        $cartState = $this->buildCartState($request);
-
-        return view('cashier.reports', [
-            'period' => $period,
-            'selectedLabel' => $selectedLabel,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'hasCustomRange' => $hasCustomRange,
-            'daySummary' => $daySummary,
-            'weekSummary' => $weekSummary,
-            'monthSummary' => $monthSummary,
-            'selectedSummary' => $selectedSummary,
-            'paymentBreakdown' => $paymentBreakdown,
-            'topItems' => $topItems,
-            'recentOrders' => $recentOrders,
-            'reportCharts' => $reportCharts,
             'cartItems' => $cartState['items'],
             'cartSubtotal' => $cartState['subtotal'],
             'cartDiscount' => $cartState['discount'],
@@ -522,6 +397,16 @@ class CashierController extends Controller
             DB::table('order_items')->insert(
                 $orderItemRows,
             );
+
+            if (Schema::hasTable('inventory_transactions')) {
+                InventoryTransaction::query()->create([
+                    'type' => InventoryTransaction::TYPE_MONEY_IN,
+                    'amount' => $cartState['total'],
+                    'note' => 'Order ' . $orderNumber . ' paid via ' . strtoupper($paymentMethod),
+                    'happened_at' => now(),
+                    'created_by' => $request->user()?->id,
+                ]);
+            }
         });
 
         $request->session()->forget(self::CART_SESSION_KEY);
@@ -653,46 +538,6 @@ class CashierController extends Controller
         return Schema::hasColumn('orders', 'placed_at') ? 'placed_at' : 'created_at';
     }
 
-    /**
-     * @return array{0: Carbon, 1: Carbon, 2: string, 3: string, 4: string, 5: bool}
-     */
-    private function resolveReportsDateRange(Request $request, string $period): array
-    {
-        $startInput = trim((string) $request->query('start_date', ''));
-        $endInput = trim((string) $request->query('end_date', ''));
-
-        if ($startInput !== '' && $endInput !== '') {
-            try {
-                $startDate = Carbon::createFromFormat('Y-m-d', $startInput)->startOfDay();
-                $endDate = Carbon::createFromFormat('Y-m-d', $endInput)->endOfDay();
-
-                if ($startDate->gt($endDate)) {
-                    [$startDate, $endDate] = [$endDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
-                }
-
-                $normalizedStart = $startDate->toDateString();
-                $normalizedEnd = $endDate->toDateString();
-                $label = $normalizedStart === $normalizedEnd
-                    ? 'Custom: ' . $startDate->format('M d, Y')
-                    : 'Custom: ' . $startDate->format('M d, Y') . ' - ' . $endDate->format('M d, Y');
-
-                return [$startDate, $endDate, $label, $normalizedStart, $normalizedEnd, true];
-            } catch (\Throwable $exception) {
-            }
-        }
-
-        [$defaultStart, $defaultEnd, $defaultLabel] = $this->periodRange($period);
-
-        return [
-            $defaultStart,
-            $defaultEnd,
-            $defaultLabel,
-            $defaultStart->toDateString(),
-            $defaultEnd->toDateString(),
-            false,
-        ];
-    }
-
     private function cashierOrdersQuery(Request $request): Builder
     {
         $query = Order::query();
@@ -717,121 +562,6 @@ class CashierController extends Controller
         if (Schema::hasColumn('orders', 'cashier_user_id')) {
             $query->where('cashier_user_id', $userId);
         }
-    }
-
-    /**
-     * @return array{orders: int, items: int, revenue: float, average: float}
-     */
-    private function summarizeRange(Request $request, Carbon $start, Carbon $end, string $dateColumn): array
-    {
-        $ordersQuery = $this->cashierOrdersQuery($request)
-            ->whereBetween($dateColumn, [$start, $end]);
-
-        $orders = (int) (clone $ordersQuery)->count();
-        $revenue = (float) (clone $ordersQuery)->sum('total');
-        $items = (int) OrderItem::query()
-            ->whereHas('order', function (Builder $query) use ($request, $dateColumn, $start, $end): void {
-                $this->applyCashierScope($query, $request);
-                $query->whereBetween($dateColumn, [$start, $end]);
-            })
-            ->sum('qty');
-
-        return [
-            'orders' => $orders,
-            'items' => $items,
-            'revenue' => $revenue,
-            'average' => $orders > 0 ? $revenue / $orders : 0.0,
-        ];
-    }
-
-    /**
-     * @return array{
-     *   label: string,
-     *   labels: array<int, string>,
-     *   orders: array<int, int>,
-     *   revenue: array<int, float>
-     * }
-     */
-    private function buildReportTrend(
-        Request $request,
-        string $dateColumn,
-        string $period,
-        Carbon $start,
-        Carbon $end,
-        bool $hasCustomRange
-    ): array {
-        $orders = $this->cashierOrdersQuery($request)
-            ->whereBetween($dateColumn, [$start, $end])
-            ->orderBy($dateColumn)
-            ->get([$dateColumn, 'total']);
-
-        $buckets = [];
-        $labelMap = [];
-        $label = 'Sales Trend';
-
-        $useHourly = $period === 'day' && ! $hasCustomRange && $start->isSameDay($end);
-
-        if ($useHourly) {
-            $label = 'Hourly Sales';
-
-            for ($hour = 0; $hour < 24; $hour++) {
-                $key = str_pad((string) $hour, 2, '0', STR_PAD_LEFT);
-                $buckets[$key] = ['orders' => 0, 'revenue' => 0.0];
-                $labelMap[$key] = Carbon::createFromTime($hour)->format('ga');
-            }
-        } else {
-            $label = $hasCustomRange
-                ? 'Daily Sales (Custom Range)'
-                : ($period === 'week' ? 'Daily Sales (Week)' : 'Daily Sales (Month)');
-
-            /** @var Carbon $dayPoint */
-            foreach (CarbonPeriod::create($start->copy()->startOfDay(), '1 day', $end->copy()->startOfDay()) as $dayPoint) {
-                $key = $dayPoint->format('Y-m-d');
-                $buckets[$key] = ['orders' => 0, 'revenue' => 0.0];
-                $labelMap[$key] = $period === 'week'
-                    ? $dayPoint->format('D')
-                    : $dayPoint->format('M j');
-            }
-        }
-
-        foreach ($orders as $order) {
-            $orderDateValue = $order->{$dateColumn} ?? null;
-            if ($orderDateValue === null) {
-                continue;
-            }
-
-            $orderDate = $orderDateValue instanceof Carbon
-                ? $orderDateValue->copy()
-                : Carbon::parse((string) $orderDateValue);
-
-            $bucketKey = $useHourly
-                ? $orderDate->format('H')
-                : $orderDate->format('Y-m-d');
-
-            if (! isset($buckets[$bucketKey])) {
-                continue;
-            }
-
-            $buckets[$bucketKey]['orders']++;
-            $buckets[$bucketKey]['revenue'] += (float) ($order->total ?? 0);
-        }
-
-        $labels = [];
-        $ordersSeries = [];
-        $revenueSeries = [];
-
-        foreach ($buckets as $key => $bucket) {
-            $labels[] = $labelMap[$key] ?? $key;
-            $ordersSeries[] = (int) ($bucket['orders'] ?? 0);
-            $revenueSeries[] = round((float) ($bucket['revenue'] ?? 0), 2);
-        }
-
-        return [
-            'label' => $label,
-            'labels' => $labels,
-            'orders' => $ordersSeries,
-            'revenue' => $revenueSeries,
-        ];
     }
 
     /**

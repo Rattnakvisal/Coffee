@@ -20,7 +20,10 @@ class ProductController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         $products = Product::query()
-            ->with('category')
+            ->with([
+                'category',
+                'creator:id,name,first_name,last_name',
+            ])
             ->when(
                 $search !== '',
                 function ($query) use ($search): void {
@@ -68,6 +71,7 @@ class ProductController extends Controller
             'name' => $validated['name'],
             'slug' => $slug,
             'category_id' => $validated['category_id'],
+            'created_by' => $request->user()?->id,
             'description' => $validated['description'] ?? null,
             'image_path' => $imagePath,
             'price' => $this->resolvePrimaryPrice($validated),

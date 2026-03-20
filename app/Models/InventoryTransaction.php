@@ -6,20 +6,22 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Category extends Model
+class InventoryTransaction extends Model
 {
     use HasFactory;
+
+    public const TYPE_MONEY_IN = 'money_in';
+    public const TYPE_MONEY_OUT = 'money_out';
 
     /**
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'slug',
-        'description',
-        'is_active',
+        'type',
+        'amount',
+        'note',
+        'happened_at',
         'created_by',
     ];
 
@@ -29,18 +31,19 @@ class Category extends Model
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
+            'amount' => 'decimal:2',
+            'happened_at' => 'datetime',
         ];
     }
 
-    public function scopeActive(Builder $query): Builder
+    public function scopeMoneyIn(Builder $query): Builder
     {
-        return $query->where('is_active', true);
+        return $query->where('type', self::TYPE_MONEY_IN);
     }
 
-    public function products(): HasMany
+    public function scopeMoneyOut(Builder $query): Builder
     {
-        return $this->hasMany(Product::class);
+        return $query->where('type', self::TYPE_MONEY_OUT);
     }
 
     public function creator(): BelongsTo

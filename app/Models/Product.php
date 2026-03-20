@@ -19,6 +19,7 @@ class Product extends Model
         'name',
         'slug',
         'category_id',
+        'created_by',
         'description',
         'image_path',
         'price',
@@ -106,6 +107,11 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function orderItems(): HasMany

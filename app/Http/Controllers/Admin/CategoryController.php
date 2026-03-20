@@ -17,6 +17,7 @@ class CategoryController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         $categories = Category::query()
+            ->with('creator:id,name,first_name,last_name')
             ->withCount('products')
             ->when(
                 $search !== '',
@@ -53,6 +54,7 @@ class CategoryController extends Controller
             'slug' => $slug,
             'description' => $validated['description'] ?? null,
             'is_active' => ($validated['is_active'] ?? '1') === '1',
+            'created_by' => $request->user()?->id,
         ]);
 
         return redirect()
@@ -147,4 +149,3 @@ class CategoryController extends Controller
         return $slug;
     }
 }
-

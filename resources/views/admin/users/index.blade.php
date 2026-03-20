@@ -166,6 +166,7 @@
                                         <th class="pb-3 font-semibold">Profile</th>
                                         <th class="pb-3 font-semibold">Email</th>
                                         <th class="pb-3 font-semibold">Role</th>
+                                        <th class="pb-3 font-semibold">Created By</th>
                                         <th class="pb-3 font-semibold">Joined</th>
                                         <th class="pb-3 text-right font-semibold">Actions</th>
                                     </tr>
@@ -188,6 +189,15 @@
                                                 ->take(2)
                                                 ->implode('');
                                             $memberAvatarUrl = $member->avatar_path ? asset('storage/' . $member->avatar_path) : null;
+                                            $createdByName = trim(
+                                                (string) ($member->creator?->first_name ?? '') .
+                                                    ' ' .
+                                                    (string) ($member->creator?->last_name ?? ''),
+                                            );
+                                            $createdByName =
+                                                $createdByName !== ''
+                                                    ? $createdByName
+                                                    : (string) ($member->creator?->name ?? 'System');
                                         @endphp
                                         <tr class="border-b border-slate-100 anim-pop anim-stagger"
                                             style="--stagger: {{ $loop->index + 1 }};">
@@ -214,6 +224,7 @@
                                                     {{ str($member->role?->name ?? 'N/A')->headline() }}
                                                 </span>
                                             </td>
+                                            <td class="py-3.5 text-slate-600">{{ $createdByName }}</td>
                                             <td class="py-3.5 text-slate-500">
                                                 {{ optional($member->created_at)->format('M d, Y') }}</td>
                                             <td class="py-3.5">
@@ -251,7 +262,7 @@
                                         </tr>
                                     @empty
                                         <tr class="anim-enter-up">
-                                            <td colspan="5" class="py-8 text-center text-slate-500">No members found.
+                                            <td colspan="6" class="py-8 text-center text-slate-500">No members found.
                                             </td>
                                         </tr>
                                     @endforelse

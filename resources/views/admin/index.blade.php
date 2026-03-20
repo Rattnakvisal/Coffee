@@ -23,6 +23,41 @@
         $roleMaxCount = (int) ($roleRows->max('count') ?? 0);
         $teamUsers = (int) ($stats['cashiersCount'] ?? 0) + (int) ($stats['adminsCount'] ?? 0);
         $todayLabel = now()->format('M d, Y');
+        $alertData = session('alert');
+        $cashflow = (array) ($cashflow ?? []);
+        $inventoryTransactions = collect($inventoryTransactions ?? []);
+        $inventoryTypeOptions = collect($inventoryTypeOptions ?? []);
+        $moneyInTotal = (float) ($cashflow['moneyInTotal'] ?? 0);
+        $moneyOutTotal = (float) ($cashflow['moneyOutTotal'] ?? 0);
+        $moneyBalance = (float) ($cashflow['moneyBalance'] ?? 0);
+        $moneyInToday = (float) ($cashflow['moneyInToday'] ?? 0);
+        $moneyOutToday = (float) ($cashflow['moneyOutToday'] ?? 0);
+        $moneyInFilter = (string) ($cashflow['moneyInFilter'] ?? 'month');
+        $moneyInFilterLabel = (string) ($cashflow['moneyInFilterLabel'] ?? 'This Month');
+        $moneyInFilteredTotal = (float) ($cashflow['moneyInFilteredTotal'] ?? 0);
+        $moneyInFilteredCount = (int) ($cashflow['moneyInFilteredCount'] ?? 0);
+        $moneyInGrowth = (array) ($cashflow['moneyInGrowth'] ?? [
+            'isPositive' => true,
+            'text' => '+0.0% vs last month',
+        ]);
+        $moneyOutGrowth = (array) ($cashflow['moneyOutGrowth'] ?? [
+            'isPositive' => true,
+            'text' => '+0.0% vs last month',
+        ]);
+        $cambodiaTimezone = 'Asia/Phnom_Penh';
+        $oldHappenedAt = trim((string) old('happened_at', ''));
+
+        if ($oldHappenedAt !== '') {
+            try {
+                $defaultCambodiaDateTime = \Carbon\Carbon::parse($oldHappenedAt, $cambodiaTimezone)->format(
+                    'Y-m-d\\TH:i',
+                );
+            } catch (\Throwable $exception) {
+                $defaultCambodiaDateTime = now($cambodiaTimezone)->format('Y-m-d\\TH:i');
+            }
+        } else {
+            $defaultCambodiaDateTime = now($cambodiaTimezone)->format('Y-m-d\\TH:i');
+        }
     @endphp
 
     <div class="anim-enter-up w-full min-h-screen overflow-hidden bg-white/85 lg:overflow-visible">
@@ -81,6 +116,18 @@
                 @if (!empty($searchFeedback))
                     <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
                         {{ $searchFeedback }}
+                    </div>
+                @endif
+
+                @if ($alertData)
+                    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+                        {{ $alertData['text'] ?? 'Saved successfully.' }}
+                    </div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+                        {{ $errors->first() }}
                     </div>
                 @endif
 
@@ -246,6 +293,168 @@
                                     @empty
                                         <p class="text-slate-500">No team distribution data.</p>
                                     @endforelse
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="anim-enter-up rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                            <div class="mb-5 flex flex-wrap items-center justify-between gap-2">
+                                <h3 class="text-xl font-bold text-[#2f241f]">Inventory Cashflow</h3>
+                                <form method="GET" action="{{ route('admin.index') }}"
+                                    class="flex items-center gap-2">
+                                    @if (($searchQuery ?? '') !== '')
+                                        <input type="hidden" name="q" value="{{ $searchQuery }}">
+                                    @endif
+                                    <select name="money_in_filter"
+                                        class="rounded-xl border border-[#ecd9cc] bg-white px-3 py-2 text-sm font-semibold text-[#5f4b40] outline-none">
+                                        <option value="today" @selected($moneyInFilter === 'today')>Today</option>
+                                        <option value="week" @selected($moneyInFilter === 'week')>This Week</option>
+                                        <option value="month" @selected($moneyInFilter === 'month')>This Month</option>
+                                        <option value="all" @selected($moneyInFilter === 'all')>All Time</option>
+                                    </select>
+                                    <button type="submit"
+                                        class="rounded-xl bg-[#2f241f] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white">
+                                        Filter
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                <article class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700">
+                                        Money In ({{ $moneyInFilterLabel }})
+                                    </p>
+                                    <p class="mt-2 text-2xl font-black text-emerald-800">
+                                        ${{ number_format($moneyInFilteredTotal, 2) }}
+                                    </p>
+                                    <p class="mt-1 text-xs text-emerald-700">
+                                        {{ number_format($moneyInFilteredCount) }} transactions |
+                                        Total: ${{ number_format($moneyInTotal, 2) }}
+                                    </p>
+                                </article>
+
+                                <article class="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-700">Money Out
+                                    </p>
+                                    <p class="mt-2 text-2xl font-black text-rose-800">
+                                        ${{ number_format($moneyOutTotal, 2) }}</p>
+                                    <p class="mt-1 text-xs text-rose-700">
+                                        Today: ${{ number_format($moneyOutToday, 2) }} |
+                                        {{ $moneyOutGrowth['text'] ?? '+0.0% vs last month' }}
+                                    </p>
+                                </article>
+
+                                <article class="rounded-2xl border border-[#eadfd7] bg-[#fff8f2] p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[#7a5c4e]">Balance</p>
+                                    <p
+                                        class="mt-2 text-2xl font-black {{ $moneyBalance >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                        ${{ number_format($moneyBalance, 2) }}
+                                    </p>
+                                    <p class="mt-1 text-xs text-slate-500">Money in minus money out</p>
+                                </article>
+                            </div>
+
+                            <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                <form method="POST" action="{{ route('admin.inventory.store') }}"
+                                    class="rounded-2xl border border-[#f0e3da] bg-[#fffdf9] p-4 space-y-3">
+                                    @csrf
+                                    <div>
+                                        <label for="inventory-type"
+                                            class="mb-1 block text-sm font-semibold text-[#5f4b40]">Type</label>
+                                        <select id="inventory-type" name="type" required
+                                            class="w-full rounded-xl border border-[#ecd9cc] bg-white px-3 py-2.5 text-sm outline-none">
+                                            @foreach ($inventoryTypeOptions as $typeOption)
+                                                <option value="{{ $typeOption['value'] }}" @selected(old('type', 'money_out') === $typeOption['value'])>
+                                                    {{ $typeOption['label'] }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label for="inventory-amount"
+                                            class="mb-1 block text-sm font-semibold text-[#5f4b40]">Amount (USD)</label>
+                                        <input id="inventory-amount" name="amount" type="number" step="0.01"
+                                            min="0.01" required value="{{ old('amount') }}"
+                                            class="w-full rounded-xl border border-[#ecd9cc] bg-white px-3 py-2.5 text-sm outline-none"
+                                            placeholder="0.00">
+                                    </div>
+
+                                    <div>
+                                        <label for="inventory-happened-at"
+                                            class="mb-1 block text-sm font-semibold text-[#5f4b40]">Date & Time</label>
+                                        <p
+                                            class="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                            Cambodia Local Time
+                                        </p>
+                                        <input id="inventory-happened-at" name="happened_at" type="datetime-local"
+                                            value="{{ $defaultCambodiaDateTime }}"
+                                            class="w-full rounded-xl border border-[#ecd9cc] bg-white px-3 py-2.5 text-sm outline-none">
+                                    </div>
+
+                                    <div>
+                                        <label for="inventory-note"
+                                            class="mb-1 block text-sm font-semibold text-[#5f4b40]">Note</label>
+                                        <textarea id="inventory-note" name="note" rows="3" maxlength="500"
+                                            class="w-full rounded-xl border border-[#ecd9cc] bg-white px-3 py-2.5 text-sm outline-none"
+                                            placeholder="Reason or reference">{{ old('note') }}</textarea>
+                                    </div>
+
+                                    <button type="submit"
+                                        class="inline-flex w-full items-center justify-center rounded-xl bg-[#2f241f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#201813]">
+                                        Save Entry
+                                    </button>
+                                </form>
+
+                                <div class="rounded-2xl border border-[#f0e3da] bg-[#fffdf9] p-4">
+                                    <h4 class="text-sm font-semibold uppercase tracking-[0.08em] text-[#8f6f5c]">
+                                        Money In Transactions ({{ $moneyInFilterLabel }})
+                                    </h4>
+                                    <div class="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1">
+                                        @forelse ($inventoryTransactions as $entry)
+                                            @php
+                                                $entryType = (string) ($entry->type ?? '');
+                                                $isMoneyIn = $entryType === 'money_in';
+                                                $entryActorName = (string) ($entry->actor_name ?? '');
+
+                                                if ($entryActorName === '') {
+                                                    $entryActorName = trim(
+                                                        (string) ($entry->creator?->first_name ?? '') .
+                                                            ' ' .
+                                                            (string) ($entry->creator?->last_name ?? ''),
+                                                    );
+                                                    $entryActorName =
+                                                        $entryActorName !== ''
+                                                            ? $entryActorName
+                                                            : (string) ($entry->creator?->name ?? 'System');
+                                                }
+                                            @endphp
+                                            <div class="rounded-xl border border-[#eadfd7] bg-white px-3 py-2.5">
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <span
+                                                        class="rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] {{ $isMoneyIn ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
+                                                        {{ $isMoneyIn ? 'Money In' : 'Money Out' }}
+                                                    </span>
+                                                    <span
+                                                        class="text-sm font-bold {{ $isMoneyIn ? 'text-emerald-700' : 'text-rose-700' }}">
+                                                        {{ $isMoneyIn ? '+' : '-' }}${{ number_format((float) ($entry->amount ?? 0), 2) }}
+                                                    </span>
+                                                </div>
+                                                <p class="mt-1 text-xs text-slate-600">
+                                                    {{ $entry->note ?: 'No note provided.' }}
+                                                </p>
+                                                <p class="mt-1 text-[11px] text-slate-400">
+                                                    {{ $entry->happened_at_local ?? '-' }} |
+                                                    by {{ $entryActorName }}
+                                                </p>
+                                            </div>
+                                        @empty
+                                            <p
+                                                class="rounded-xl border border-[#eadfd7] bg-white px-3 py-3 text-sm text-slate-500">
+                                                No money in transactions for this filter.
+                                            </p>
+                                        @endforelse
+                                    </div>
                                 </div>
                             </div>
                         </section>
