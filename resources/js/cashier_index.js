@@ -387,6 +387,33 @@
         const sizeButtons = form.querySelectorAll(".js-size-option");
         const sugarRange = form.querySelector(".js-sugar-range");
         const sugarLabel = form.querySelector(".js-sugar-label");
+        const hasActiveSizesAttr = form.hasAttribute("data-active-sizes");
+        const activeSizesRaw = form.dataset.activeSizes || "[]";
+        let activeSizes = [];
+
+        try {
+            const parsedActiveSizes = JSON.parse(activeSizesRaw);
+            if (Array.isArray(parsedActiveSizes)) {
+                const sanitizedActiveSizes = parsedActiveSizes
+                    .map(function (value) {
+                        return String(value || "").toLowerCase();
+                    })
+                    .filter(function (value) {
+                        return ["small", "medium", "large"].includes(value);
+                    });
+
+                if (sanitizedActiveSizes.length) {
+                    activeSizes = sanitizedActiveSizes;
+                }
+            }
+        } catch (error) {
+            activeSizes = [];
+        }
+
+        if (!hasActiveSizesAttr && !activeSizes.length) {
+            activeSizes = ["small", "medium", "large"];
+        }
+
         const baseSizePrices = {
             small: Number(form.dataset.basePriceSmall || 0),
             medium: Number(form.dataset.basePriceMedium || 0),
@@ -419,19 +446,41 @@
 
         const syncSize = function (value) {
             if (!sizeInput || !sizeLabel || !sizeButtons.length) return;
+            if (!activeSizes.length) {
+                sizeInput.value = "";
+                sizeLabel.textContent = "Unavailable";
 
-            const normalized = ["small", "medium", "large"].includes(
-                String(value),
-            )
-                ? String(value)
-                : "small";
+                sizeButtons.forEach(function (button) {
+                    button.classList.remove("is-active");
+                    button.classList.add("is-disabled");
+                    button.disabled = true;
+                    button.setAttribute("aria-disabled", "true");
+                    button.setAttribute("aria-pressed", "false");
+                });
+
+                return;
+            }
+
+            const requestedSize = String(value || "").toLowerCase();
+            const normalized = activeSizes.includes(requestedSize)
+                ? requestedSize
+                : activeSizes[0];
 
             sizeInput.value = normalized;
             sizeLabel.textContent =
                 normalized.charAt(0).toUpperCase() + normalized.slice(1);
 
             sizeButtons.forEach(function (button) {
-                const isActive = button.dataset.size === normalized;
+                const buttonSize = String(button.dataset.size || "").toLowerCase();
+                const isEnabled = activeSizes.includes(buttonSize);
+                const isActive = isEnabled && buttonSize === normalized;
+
+                button.classList.toggle("is-disabled", !isEnabled);
+                button.disabled = !isEnabled;
+                button.setAttribute(
+                    "aria-disabled",
+                    isEnabled ? "false" : "true",
+                );
                 button.classList.toggle("is-active", isActive);
                 button.setAttribute(
                     "aria-pressed",
@@ -477,6 +526,7 @@
 
         sizeButtons.forEach(function (button) {
             button.addEventListener("click", function () {
+                if (button.disabled) return;
                 syncSize(button.dataset.size);
             });
         });

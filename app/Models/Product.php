@@ -25,6 +25,9 @@ class Product extends Model
         'price_small',
         'price_medium',
         'price_large',
+        'is_small_active',
+        'is_medium_active',
+        'is_large_active',
         'discount_percent',
         'is_active',
     ];
@@ -39,9 +42,34 @@ class Product extends Model
             'price_small' => 'decimal:2',
             'price_medium' => 'decimal:2',
             'price_large' => 'decimal:2',
+            'is_small_active' => 'boolean',
+            'is_medium_active' => 'boolean',
+            'is_large_active' => 'boolean',
             'discount_percent' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function isSizeActive(string $size): bool
+    {
+        return match (strtolower($size)) {
+            'medium' => (bool) ($this->is_medium_active ?? true),
+            'large' => (bool) ($this->is_large_active ?? true),
+            default => (bool) ($this->is_small_active ?? true),
+        };
+    }
+
+    public function defaultActiveSize(): string
+    {
+        if ($this->isSizeActive('small')) {
+            return 'small';
+        }
+
+        if ($this->isSizeActive('medium')) {
+            return 'medium';
+        }
+
+        return 'large';
     }
 
     public function sizeBasePrice(string $size): float

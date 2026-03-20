@@ -7,7 +7,8 @@
     <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
             @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'products'])
-            <main class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
+            <main
+                class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
                 <div class="anim-enter-up anim-delay-100 mb-6 flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <p
@@ -56,17 +57,50 @@
                                 <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Size Prices (USD)</label>
                                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
                                     <input id="swal-add-product-price-small" name="price_small" type="number"
-                                        value="{{ old('price_small', old('price')) }}" min="0" step="0.01" required
+                                        value="{{ old('price_small', old('price')) }}" min="0" step="0.01"
+                                        required
                                         class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
                                         placeholder="Small">
                                     <input id="swal-add-product-price-medium" name="price_medium" type="number"
-                                        value="{{ old('price_medium', old('price')) }}" min="0" step="0.01" required
+                                        value="{{ old('price_medium', old('price')) }}" min="0" step="0.01"
+                                        required
                                         class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
                                         placeholder="Medium">
                                     <input id="swal-add-product-price-large" name="price_large" type="number"
-                                        value="{{ old('price_large', old('price')) }}" min="0" step="0.01" required
+                                        value="{{ old('price_large', old('price')) }}" min="0" step="0.01"
+                                        required
                                         class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
                                         placeholder="Large">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Size Availability</label>
+                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                    <label
+                                        class="inline-flex items-center gap-2 rounded-xl border border-[#ecd9cc] bg-white px-3 py-2 text-sm text-[#5f4b40]">
+                                        <input type="hidden" name="is_small_active" value="0">
+                                        <input type="checkbox" name="is_small_active" value="1"
+                                            @checked(old('is_small_active', '1') === '1')
+                                            class="h-4 w-4 rounded border-[#d8c3b4] text-[#f4a06b]">
+                                        Small
+                                    </label>
+                                    <label
+                                        class="inline-flex items-center gap-2 rounded-xl border border-[#ecd9cc] bg-white px-3 py-2 text-sm text-[#5f4b40]">
+                                        <input type="hidden" name="is_medium_active" value="0">
+                                        <input type="checkbox" name="is_medium_active" value="1"
+                                            @checked(old('is_medium_active', '1') === '1')
+                                            class="h-4 w-4 rounded border-[#d8c3b4] text-[#f4a06b]">
+                                        Medium
+                                    </label>
+                                    <label
+                                        class="inline-flex items-center gap-2 rounded-xl border border-[#ecd9cc] bg-white px-3 py-2 text-sm text-[#5f4b40]">
+                                        <input type="hidden" name="is_large_active" value="0">
+                                        <input type="checkbox" name="is_large_active" value="1"
+                                            @checked(old('is_large_active', '1') === '1')
+                                            class="h-4 w-4 rounded border-[#d8c3b4] text-[#f4a06b]">
+                                        Large
+                                    </label>
                                 </div>
                             </div>
 
@@ -109,6 +143,7 @@
                             </div>
 
                             <label class="inline-flex items-center gap-2 text-sm text-[#5f4b40]">
+                                <input type="hidden" name="is_active" value="0">
                                 <input type="checkbox" name="is_active" value="1" @checked(old('is_active', '1') === '1')
                                     class="h-4 w-4 rounded border-[#d8c3b4] text-[#f4a06b]">
                                 Active in cashier
@@ -186,9 +221,13 @@
                                                 {{ $product->category?->name ?? 'N/A' }}
                                             </td>
                                             @php
-                                                $smallPrice = (float) ($product->price_small ?? $product->price ?? 0);
-                                                $mediumPrice = (float) ($product->price_medium ?? $product->price ?? 0);
-                                                $largePrice = (float) ($product->price_large ?? $product->price ?? 0);
+                                                $smallPrice = (float) ($product->price_small ?? ($product->price ?? 0));
+                                                $mediumPrice =
+                                                    (float) ($product->price_medium ?? ($product->price ?? 0));
+                                                $largePrice = (float) ($product->price_large ?? ($product->price ?? 0));
+                                                $smallActive = (bool) ($product->is_small_active ?? true);
+                                                $mediumActive = (bool) ($product->is_medium_active ?? true);
+                                                $largeActive = (bool) ($product->is_large_active ?? true);
                                                 $discountPercent = max(
                                                     0,
                                                     min(100, (float) ($product->discount_percent ?? 0)),
@@ -196,22 +235,38 @@
                                             @endphp
                                             <td class="py-3.5">
                                                 <div class="flex flex-wrap items-center gap-1 text-xs">
-                                                    <span
-                                                        class="rounded-full bg-[#fff3ea] px-2 py-1 font-semibold text-[#7f4a2a]">S
-                                                        ${{ number_format($smallPrice, 2) }}</span>
-                                                    <span
-                                                        class="rounded-full bg-[#fff3ea] px-2 py-1 font-semibold text-[#7f4a2a]">M
-                                                        ${{ number_format($mediumPrice, 2) }}</span>
-                                                    <span
-                                                        class="rounded-full bg-[#fff3ea] px-2 py-1 font-semibold text-[#7f4a2a]">L
-                                                        ${{ number_format($largePrice, 2) }}</span>
+                                                    <span @class([
+                                                        'rounded-full px-2 py-1 font-semibold',
+                                                        'bg-[#fff3ea] text-[#7f4a2a]' => $smallActive,
+                                                        'bg-slate-100 text-slate-500' => !$smallActive,
+                                                    ])>
+                                                        S
+                                                        ${{ number_format($smallPrice, 2) }}{{ $smallActive ? '' : ' (Off)' }}
+                                                    </span>
+                                                    <span @class([
+                                                        'rounded-full px-2 py-1 font-semibold',
+                                                        'bg-[#fff3ea] text-[#7f4a2a]' => $mediumActive,
+                                                        'bg-slate-100 text-slate-500' => !$mediumActive,
+                                                    ])>
+                                                        M
+                                                        ${{ number_format($mediumPrice, 2) }}{{ $mediumActive ? '' : ' (Off)' }}
+                                                    </span>
+                                                    <span @class([
+                                                        'rounded-full px-2 py-1 font-semibold',
+                                                        'bg-[#fff3ea] text-[#7f4a2a]' => $largeActive,
+                                                        'bg-slate-100 text-slate-500' => !$largeActive,
+                                                    ])>
+                                                        L
+                                                        ${{ number_format($largePrice, 2) }}{{ $largeActive ? '' : ' (Off)' }}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td class="py-3.5">
                                                 @if ($discountPercent > 0)
                                                     <span
                                                         class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                                                        {{ rtrim(rtrim(number_format($discountPercent, 2), '0'), '.') }}% OFF
+                                                        {{ rtrim(rtrim(number_format($discountPercent, 2), '0'), '.') }}%
+                                                        OFF
                                                     </span>
                                                 @else
                                                     <span class="text-xs font-semibold text-slate-400">No Discount</span>
@@ -244,6 +299,9 @@
                                                     data-discount-percent="{{ $discountPercent }}"
                                                     data-category-id="{{ $product->category_id }}"
                                                     data-description="{{ $product->description }}"
+                                                    data-small-active="{{ $smallActive ? '1' : '0' }}"
+                                                    data-medium-active="{{ $mediumActive ? '1' : '0' }}"
+                                                    data-large-active="{{ $largeActive ? '1' : '0' }}"
                                                     data-active="{{ $product->is_active ? '1' : '0' }}"
                                                     data-image-url="{{ $product->image_path ? asset('storage/' . $product->image_path) : '' }}">
                                                     Edit
@@ -306,6 +364,27 @@
                             if (!form) return;
 
                             form.addEventListener('submit', function(event) {
+                                const smallActive = form.querySelector(
+                                    'input[name="is_small_active"][type="checkbox"]'
+                                )?.checked;
+                                const mediumActive = form.querySelector(
+                                    'input[name="is_medium_active"][type="checkbox"]'
+                                )?.checked;
+                                const largeActive = form.querySelector(
+                                    'input[name="is_large_active"][type="checkbox"]'
+                                )?.checked;
+
+                                if (!smallActive && !mediumActive && !largeActive) {
+                                    event.preventDefault();
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Size required',
+                                        text: 'At least one size must be active.',
+                                        confirmButtonColor: '#f4a06b',
+                                    });
+                                    return;
+                                }
+
                                 if (!form.reportValidity()) {
                                     event.preventDefault();
                                 }
@@ -355,12 +434,17 @@
                     const currentDiscountPercent = button.dataset.discountPercent ?? '0';
                     const currentCategoryId = button.dataset.categoryId ?? '';
                     const currentDescription = button.dataset.description ?? '';
+                    const currentSmallActive = button.dataset.smallActive !== '0';
+                    const currentMediumActive = button.dataset.mediumActive !== '0';
+                    const currentLargeActive = button.dataset.largeActive !== '0';
                     const currentActive = button.dataset.active === '1';
                     const currentImageUrl = button.dataset.imageUrl ?? '';
 
                     const categorySelectOptions = categoryOptions.map(function(category) {
-                        const selected = category.id === currentCategoryId ? 'selected' : '';
-                        return '<option value="' + category.id + '" ' + selected + '>' + category
+                        const selected = category.id === currentCategoryId ? 'selected' :
+                        '';
+                        return '<option value="' + category.id + '" ' + selected + '>' +
+                            category
                             .name + '</option>';
                     }).join('');
 
@@ -378,6 +462,23 @@
                                         <input id="swal-product-price-small" type="number" min="0" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentPriceSmall}" placeholder="Small">
                                         <input id="swal-product-price-medium" type="number" min="0" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentPriceMedium}" placeholder="Medium">
                                         <input id="swal-product-price-large" type="number" min="0" step="0.01" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentPriceLarge}" placeholder="Large">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Size Availability</label>
+                                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                        <label class="inline-flex items-center gap-2 rounded-xl border border-[#ecd9cc] bg-white px-3 py-2 text-sm text-[#5f4b40]">
+                                            <input id="swal-product-small-active" type="checkbox" class="h-4 w-4" ${currentSmallActive ? 'checked' : ''}>
+                                            Small
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 rounded-xl border border-[#ecd9cc] bg-white px-3 py-2 text-sm text-[#5f4b40]">
+                                            <input id="swal-product-medium-active" type="checkbox" class="h-4 w-4" ${currentMediumActive ? 'checked' : ''}>
+                                            Medium
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 rounded-xl border border-[#ecd9cc] bg-white px-3 py-2 text-sm text-[#5f4b40]">
+                                            <input id="swal-product-large-active" type="checkbox" class="h-4 w-4" ${currentLargeActive ? 'checked' : ''}>
+                                            Large
+                                        </label>
                                     </div>
                                 </div>
                                 <div>
@@ -411,48 +512,80 @@
                         cancelButtonText: 'Cancel',
                         confirmButtonColor: '#2f241f',
                         preConfirm: function() {
-                            const name = document.getElementById('swal-product-name').value.trim();
-                            const priceSmall = document.getElementById('swal-product-price-small').value.trim();
-                            const priceMedium = document.getElementById('swal-product-price-medium').value.trim();
-                            const priceLarge = document.getElementById('swal-product-price-large').value.trim();
-                            const discountPercentRaw = document.getElementById('swal-product-discount').value.trim();
-                            const categoryId = document.getElementById('swal-product-category').value;
-                            const description = document.getElementById('swal-product-description').value.trim();
-                            const isActive = document.getElementById('swal-product-active').checked;
-                            const imageInput = document.getElementById('swal-product-image');
-                            const imageFile = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+                            const name = document.getElementById('swal-product-name')
+                                .value.trim();
+                            const priceSmall = document.getElementById(
+                                'swal-product-price-small').value.trim();
+                            const priceMedium = document.getElementById(
+                                'swal-product-price-medium').value.trim();
+                            const priceLarge = document.getElementById(
+                                'swal-product-price-large').value.trim();
+                            const discountPercentRaw = document.getElementById(
+                                'swal-product-discount').value.trim();
+                            const categoryId = document.getElementById(
+                                'swal-product-category').value;
+                            const description = document.getElementById(
+                                'swal-product-description').value.trim();
+                            const isSmallActive = document.getElementById(
+                                'swal-product-small-active').checked;
+                            const isMediumActive = document.getElementById(
+                                'swal-product-medium-active').checked;
+                            const isLargeActive = document.getElementById(
+                                'swal-product-large-active').checked;
+                            const isActive = document.getElementById(
+                                'swal-product-active').checked;
+                            const imageInput = document.getElementById(
+                                'swal-product-image');
+                            const imageFile = imageInput && imageInput.files &&
+                                imageInput.files[0] ? imageInput.files[0] : null;
 
-                            if (!name || !priceSmall || !priceMedium || !priceLarge || !categoryId) {
-                                Swal.showValidationMessage('Name, size prices, and category are required.');
+                            if (!name || !priceSmall || !priceMedium || !priceLarge || !
+                                categoryId) {
+                                Swal.showValidationMessage(
+                                    'Name, size prices, and category are required.');
                                 return false;
                             }
 
                             const numericPriceSmall = Number(priceSmall);
                             const numericPriceMedium = Number(priceMedium);
                             const numericPriceLarge = Number(priceLarge);
-                            const hasInvalidPrice = [numericPriceSmall, numericPriceMedium, numericPriceLarge]
+                            const hasInvalidPrice = [numericPriceSmall,
+                                    numericPriceMedium, numericPriceLarge
+                                ]
                                 .some(function(priceValue) {
-                                    return Number.isNaN(priceValue) || priceValue < 0;
+                                    return Number.isNaN(priceValue) || priceValue <
+                                        0;
                                 });
 
                             if (hasInvalidPrice) {
-                                Swal.showValidationMessage('All size prices must be valid non-negative numbers.');
+                                Swal.showValidationMessage(
+                                    'All size prices must be valid non-negative numbers.'
+                                    );
                                 return false;
                             }
 
-                            const numericDiscountPercent = discountPercentRaw === '' ? 0 : Number(
-                                discountPercentRaw);
+                            if (!isSmallActive && !isMediumActive && !isLargeActive) {
+                                Swal.showValidationMessage(
+                                    'At least one size must be active.');
+                                return false;
+                            }
+
+                            const numericDiscountPercent = discountPercentRaw === '' ?
+                                0 : Number(
+                                    discountPercentRaw);
                             if (
                                 Number.isNaN(numericDiscountPercent) ||
                                 numericDiscountPercent < 0 ||
                                 numericDiscountPercent > 100
                             ) {
-                                Swal.showValidationMessage('Discount must be between 0 and 100.');
+                                Swal.showValidationMessage(
+                                    'Discount must be between 0 and 100.');
                                 return false;
                             }
 
                             if (imageFile && imageFile.size > 2 * 1024 * 1024) {
-                                Swal.showValidationMessage('Image must be at most 2MB.');
+                                Swal.showValidationMessage(
+                                    'Image must be at most 2MB.');
                                 return false;
                             }
 
@@ -464,6 +597,9 @@
                                 discount_percent: numericDiscountPercent.toFixed(2),
                                 category_id: categoryId,
                                 description: description,
+                                is_small_active: isSmallActive ? '1' : '0',
+                                is_medium_active: isMediumActive ? '1' : '0',
+                                is_large_active: isLargeActive ? '1' : '0',
                                 is_active: isActive ? '1' : '0',
                                 image: imageFile,
                             };
@@ -485,6 +621,9 @@
                             discount_percent: result.value.discount_percent,
                             category_id: result.value.category_id,
                             description: result.value.description,
+                            is_small_active: result.value.is_small_active,
+                            is_medium_active: result.value.is_medium_active,
+                            is_large_active: result.value.is_large_active,
                             is_active: result.value.is_active,
                         };
 

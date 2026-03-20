@@ -326,6 +326,20 @@ class CashierController extends Controller
         $qty = (int) ($validated['qty'] ?? 1);
         $size = strtolower((string) $validated['size']);
         $sugar = (int) ($validated['sugar'] ?? 50);
+
+        if (! $product->isSizeActive($size)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Selected size is currently inactive for this product.',
+                ], 422);
+            }
+
+            return back()->withErrors([
+                'size' => 'Selected size is currently inactive for this product.',
+            ]);
+        }
+
         $itemKey = $this->makeCartItemKey($product->id, $size, $sugar);
 
         $cart = $this->getCart($request);
@@ -943,6 +957,11 @@ class CashierController extends Controller
                 $qty = (int) ($entry['qty'] ?? 1);
                 $size = (string) ($entry['size'] ?? 'small');
                 $sugar = (int) ($entry['sugar'] ?? 50);
+
+                if (! $product->isSizeActive($size)) {
+                    return null;
+                }
+
                 $baseUnitPrice = $product->sizeBasePrice($size);
                 $unitPrice = $product->sizePrice($size);
                 $lineBaseTotal = $baseUnitPrice * $qty;

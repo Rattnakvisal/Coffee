@@ -107,6 +107,30 @@
                             $smallPrice = $item->sizePrice('small');
                             $mediumPrice = $item->sizePrice('medium');
                             $largePrice = $item->sizePrice('large');
+                            $allSizeOptions = collect([
+                                [
+                                    'key' => 'small',
+                                    'label' => 'Small',
+                                    'is_active' => $item->isSizeActive('small'),
+                                ],
+                                [
+                                    'key' => 'medium',
+                                    'label' => 'Medium',
+                                    'is_active' => $item->isSizeActive('medium'),
+                                ],
+                                [
+                                    'key' => 'large',
+                                    'label' => 'Large',
+                                    'is_active' => $item->isSizeActive('large'),
+                                ],
+                            ]);
+                            $activeSizeOptions = $allSizeOptions->filter(fn(array $size): bool => (bool) $size['is_active'])->values();
+                            $activeSizeKeys = $activeSizeOptions->pluck('key')->values()->all();
+                            $hasActiveSizes = $activeSizeOptions->isNotEmpty();
+                            $defaultSizeKey = (string) ($activeSizeOptions->first()['key'] ?? 'small');
+                            $defaultSizeLabel = (string) ($activeSizeOptions->first()['label'] ?? 'Unavailable');
+                            $defaultBasePrice = $hasActiveSizes ? $item->sizeBasePrice($defaultSizeKey) : 0;
+                            $defaultPrice = $hasActiveSizes ? $item->sizePrice($defaultSizeKey) : 0;
                         @endphp
                         <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger"
                             style="--stagger: {{ $loop->index + 2 }};">
@@ -129,13 +153,13 @@
                                     <div class="flex items-start justify-between gap-2">
                                         <h3 class="text-lg font-bold text-[#2f241f]">{{ $item->name }}</h3>
                                         <div class="text-right">
-                                            @if ($discountPercent > 0)
+                                            @if ($discountPercent > 0 && $hasActiveSizes)
                                                 <p class="js-size-base-price-label text-xs font-semibold text-slate-400 line-through">
-                                                    ${{ number_format($smallBasePrice, 2) }}
+                                                    ${{ number_format($defaultBasePrice, 2) }}
                                                 </p>
                                             @endif
                                             <span class="js-size-price-label font-bold text-[#d97f46]">
-                                                ${{ number_format($smallPrice, 2) }}
+                                                {{ $hasActiveSizes ? '$' . number_format($defaultPrice, 2) : 'Unavailable' }}
                                             </span>
                                             <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#b98b70]">
                                                 Size price
@@ -162,7 +186,8 @@
                                         data-base-price-large="{{ number_format($largeBasePrice, 2, '.', '') }}"
                                         data-price-small="{{ number_format($smallPrice, 2, '.', '') }}"
                                         data-price-medium="{{ number_format($mediumPrice, 2, '.', '') }}"
-                                        data-price-large="{{ number_format($largePrice, 2, '.', '') }}">
+                                        data-price-large="{{ number_format($largePrice, 2, '.', '') }}"
+                                        data-active-sizes='@json($activeSizeKeys)'>
                                         @csrf
                                         <input type="hidden" name="product_id" value="{{ $item->id }}">
                                         <input type="hidden" name="qty" value="1" class="js-product-qty-input">
@@ -172,26 +197,34 @@
                                                     <span
                                                         class="text-xs font-semibold uppercase tracking-[0.1em] text-gray-500">Size</span>
                                                     <span
-                                                        class="js-size-label rounded-full bg-[#fff1e8] px-2.5 py-1 text-[11px] font-semibold uppercase text-[#b16231]">Small</span>
+                                                        class="js-size-label rounded-full bg-[#fff1e8] px-2.5 py-1 text-[11px] font-semibold uppercase text-[#b16231]">{{ $defaultSizeLabel }}</span>
                                                 </div>
-                                                <input type="hidden" name="size" value="small" class="js-size-input">
+                                                <input type="hidden" name="size" value="{{ $defaultSizeKey }}"
+                                                    class="js-size-input">
                                                 <div class="grid grid-cols-3 gap-2 text-xs">
-                                                    <button type="button" data-size="small"
-                                                        class="js-size-option coffee-size-chip is-active px-3 py-1.5 font-semibold"
-                                                        aria-pressed="true">
-                                                        Small
-                                                    </button>
-                                                    <button type="button" data-size="medium"
-                                                        class="js-size-option coffee-size-chip px-3 py-1.5 font-semibold"
-                                                        aria-pressed="false">
-                                                        Medium
-                                                    </button>
-                                                    <button type="button" data-size="large"
-                                                        class="js-size-option coffee-size-chip px-3 py-1.5 font-semibold"
-                                                        aria-pressed="false">
-                                                        Large
-                                                    </button>
+                                                    @foreach ($allSizeOptions as $sizeOption)
+                                                        @php
+                                                            $sizeKey = (string) ($sizeOption['key'] ?? 'small');
+                                                            $sizeIsActive = (bool) ($sizeOption['is_active'] ?? false);
+                                                            $isDefaultSize = $sizeKey === $defaultSizeKey && $sizeIsActive;
+                                                        @endphp
+                                                        <button type="button" data-size="{{ $sizeKey }}"
+                                                            @class([
+                                                                'js-size-option coffee-size-chip px-3 py-1.5 font-semibold',
+                                                                'is-active' => $isDefaultSize,
+                                                                'is-disabled' => ! $sizeIsActive,
+                                                            ])
+                                                            aria-pressed="{{ $isDefaultSize ? 'true' : 'false' }}"
+                                                            @disabled(! $sizeIsActive)>
+                                                            {{ $sizeOption['label'] }}
+                                                        </button>
+                                                    @endforeach
                                                 </div>
+                                                @if (! $hasActiveSizes)
+                                                    <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-red-500">
+                                                        This product currently has no active sizes.
+                                                    </p>
+                                                @endif
                                             </div>
 
                                             <div class="space-y-2">
@@ -222,6 +255,7 @@
                                                 </div>
 
                                                 <button type="submit"
+                                                    @disabled(! $hasActiveSizes)
                                                     class="js-add-to-cart-btn rounded-full bg-[#f4a06b] px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:opacity-70">
                                                     Add to cart
                                                 </button>
