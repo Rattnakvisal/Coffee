@@ -313,6 +313,99 @@
     width: var(--progress-width, 0%);
 }
 
+.inventory-outgoing-trigger {
+    color: #fff;
+    transition:
+        transform 180ms ease,
+        box-shadow 180ms ease,
+        filter 180ms ease;
+}
+
+.inventory-outgoing-trigger:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 15px 28px rgba(47, 36, 31, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    filter: saturate(1.08);
+}
+
+.inventory-outgoing-trigger__icon {
+    display: inline-flex;
+    height: 1.4rem;
+    width: 1.4rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.18);
+    font-weight: 700;
+}
+
+.inventory-outgoing-trigger__chip {
+    font-size: 0.64rem;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0.36rem 0.52rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.inventory-form-panel {
+    border: 1px solid #efd7c7;
+}
+
+.inventory-form-alert {
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+}
+
+.inventory-form-alert.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@keyframes inventory-highlight-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(244, 160, 107, 0.45);
+    }
+    100% {
+        box-shadow: 0 0 0 12px rgba(244, 160, 107, 0);
+    }
+}
+
+.inventory-detail-highlight {
+    animation: inventory-highlight-pulse 900ms ease-out;
+}
+
+.admin-sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(244, 160, 107, 0.72) rgba(255, 255, 255, 0.08);
+    scrollbar-gutter: stable;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar {
+    width: 10px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #f4a06b 0%, #d97f46 100%);
+    border: 2px solid rgba(36, 28, 24, 0.72);
+    border-radius: 9999px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ffb07f 0%, #e38a53 100%);
+}
+
 @media (max-width: 768px) {
     .dashboard-chart-wrap {
         height: 250px;

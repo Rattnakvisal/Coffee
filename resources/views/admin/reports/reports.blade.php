@@ -76,10 +76,7 @@
                     </div>
 
                     <form method="GET" action="{{ route('admin.reports') }}" data-report-filter-panel
-                        @class([
-                            'mt-5 space-y-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5',
-                            'hidden' => !$isFilterOpen,
-                        ])>
+                        @class(['mt-5 space-y-4', 'hidden' => !$isFilterOpen])>
                         <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
                             <label class="space-y-1">
                                 <span class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Preset</span>
@@ -177,10 +174,10 @@
                 <section class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
                     <div class="grid grid-cols-1 gap-4 sm:auto-rows-fr sm:grid-cols-2 xl:col-span-8">
                         <article
-                            class="anim-pop h-full sm:min-h-50 rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            class="anim-pop group h-full sm:min-h-50 rounded-[26px] border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                             <div class="flex items-start justify-between gap-3">
                                 <div
-                                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff5ec] text-[#b16231]">
+                                    class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -192,17 +189,19 @@
                                     {{ $revenueGrowth['text'] }}
                                 </span>
                             </div>
-                            <p class="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Total Sales</p>
-                            <h3 class="mt-2 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $revenue }}"
-                                data-counter-type="currency" data-counter-decimals="2">$0.00</h3>
-                            <p class="mt-1 text-xs text-slate-500">Revenue compared to previous range</p>
+                            <p class="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-orange-700">Total Sales
+                            </p>
+                            <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900"
+                                data-counter-value="{{ $revenue }}" data-counter-type="currency"
+                                data-counter-decimals="2">$0.00</h3>
+                            <p class="mt-1 text-sm text-slate-500">Revenue compared to previous range</p>
                         </article>
 
                         <article
-                            class="anim-pop h-full sm:min-h-50 rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            class="anim-pop group h-full sm:min-h-50 rounded-[26px] border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                             <div class="flex items-start justify-between gap-3">
                                 <div
-                                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#edf6ff] text-[#3d75b8]">
+                                    class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -214,18 +213,18 @@
                                     {{ $ordersGrowth['text'] }}
                                 </span>
                             </div>
-                            <p class="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Total Orders
+                            <p class="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-700">Total Orders
                             </p>
-                            <h3 class="mt-2 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $ordersCount }}"
-                                data-counter-type="number">0</h3>
-                            <p class="mt-1 text-xs text-slate-500">Orders in selected range</p>
+                            <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900"
+                                data-counter-value="{{ $ordersCount }}" data-counter-type="number">0</h3>
+                            <p class="mt-1 text-sm text-slate-500">Orders in selected range</p>
                         </article>
 
                         <article
-                            class="anim-pop h-full sm:min-h-50 rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            class="anim-pop group h-full sm:min-h-50 rounded-[26px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                             <div class="flex items-start justify-between gap-3">
                                 <div
-                                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4f2ff] text-[#6b5caa]">
+                                    class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -237,18 +236,19 @@
                                     {{ $itemsGrowth['text'] }}
                                 </span>
                             </div>
-                            <p class="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Total Products
+                            <p class="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">Total
+                                Products
                                 Sold</p>
-                            <h3 class="mt-2 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $itemsSold }}"
-                                data-counter-type="number">0</h3>
-                            <p class="mt-1 text-xs text-slate-500">Units sold across all orders</p>
+                            <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900"
+                                data-counter-value="{{ $itemsSold }}" data-counter-type="number">0</h3>
+                            <p class="mt-1 text-sm text-slate-500">Units sold across all orders</p>
                         </article>
 
                         <article
-                            class="anim-pop h-full sm:min-h-50 rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                            class="anim-pop group h-full sm:min-h-50 rounded-[26px] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                             <div class="flex items-start justify-between gap-3">
                                 <div
-                                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#ebfaf1] text-[#2e8f5e]">
+                                    class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3" />
@@ -258,18 +258,20 @@
                                     class="rounded-full bg-[#eef5ff] px-2.5 py-1 text-xs font-bold text-[#3f79ba]">{{ number_format((float) $avgItemsPerOrder, 2) }}
                                     items / order</span>
                             </div>
-                            <p class="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Average Order
+                            <p class="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Average
+                                Order
                                 Value</p>
-                            <h3 class="mt-2 text-3xl font-black text-[#2f241f]" data-counter-value="{{ $averageOrder }}"
-                                data-counter-type="currency" data-counter-decimals="2">$0.00</h3>
-                            <p class="mt-1 text-xs text-slate-500">Gross sales
+                            <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900"
+                                data-counter-value="{{ $averageOrder }}" data-counter-type="currency"
+                                data-counter-decimals="2">$0.00</h3>
+                            <p class="mt-1 text-sm text-slate-500">Gross sales
                                 ${{ number_format((float) $grossSales, 2) }} - Discount
                                 {{ number_format((float) $discountRate, 2) }}%</p>
                         </article>
                     </div>
 
                     <aside
-                        class="anim-enter-up h-full xl:min-h-114 rounded-3xl bg-[#fffdf9] p-5 shadow-sm ring-1 ring-black/5 xl:col-span-4">
+                        class="anim-enter-up h-full xl:min-h-114 rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)] xl:col-span-4">
                         <div class="flex items-center justify-between gap-3">
                             <div>
                                 <h3 class="text-3xl font-black text-[#2f241f]">Product Statistic</h3>
@@ -312,7 +314,7 @@
 
                 <section class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
                     <article
-                        class="flex min-h-130 flex-col rounded-3xl border border-[#eadfd7] bg-white p-6 shadow-sm xl:col-span-8">
+                        class="flex min-h-130 flex-col rounded-[30px] border border-white/60 bg-white/90 p-6 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)] xl:col-span-8">
                         <div class="mb-4 flex items-center justify-between gap-2">
                             <div>
                                 <h3 class="text-2xl font-black text-[#2f241f]">Customer Habits</h3>
@@ -327,7 +329,8 @@
                     </article>
 
                     <div class="grid grid-cols-1 gap-6 xl:col-span-4">
-                        <article class="rounded-3xl border border-[#eadfd7] bg-white p-5 shadow-sm">
+                        <article
+                            class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
                             <div class="mb-4 flex items-center justify-between gap-2">
                                 <h3 class="text-xl font-black text-[#2f241f]">Payment Mix</h3>
                                 <span
@@ -344,7 +347,7 @@
 
                 <section class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
                     <article id="recent-orders-section"
-                        class="flex h-140 flex-col rounded-3xl border border-[#eadfd7] bg-white p-6 shadow-sm xl:col-span-8">
+                        class="flex h-140 flex-col rounded-[30px] border border-white/60 bg-white/90 p-6 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)] xl:col-span-8">
                         <div class="mb-4 flex items-center justify-between gap-2">
                             <h3 class="text-2xl font-black text-[#2f241f]">Recent Orders</h3>
                             <a href="{{ $reportPageUrl }}"
@@ -436,7 +439,8 @@
                     </article>
 
                     <div class="grid grid-cols-1 gap-6 xl:col-span-4">
-                        <article class="rounded-3xl border border-[#eadfd7] bg-white p-5 shadow-sm">
+                        <article
+                            class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
                             <h3 class="mb-4 text-xl font-black text-[#2f241f]">Order Status</h3>
                             <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
                                 <canvas id="adminReportsStatusChart"></canvas>
@@ -456,7 +460,8 @@
                             </div>
                         </article>
 
-                        <article class="rounded-3xl border border-[#eadfd7] bg-white p-5 shadow-sm">
+                        <article
+                            class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
                             <h3 class="mb-4 text-xl font-black text-[#2f241f]">Top Selling Items</h3>
                             <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
                                 <canvas id="adminReportsTopItemsChart"></canvas>
@@ -484,7 +489,8 @@
                             </div>
                         </article>
 
-                        <article class="rounded-3xl border border-[#eadfd7] bg-white p-5 shadow-sm">
+                        <article
+                            class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
                             <h3 class="mb-4 text-xl font-black text-[#2f241f]">Cashier Contribution</h3>
                             <div class="space-y-3 text-sm">
                                 @forelse ($cashierBreakdown->take(5) as $cashierRow)

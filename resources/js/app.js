@@ -95,4 +95,8 @@ import "./bootstrap";
     if (document.querySelector("[data-admin-sidebar]")) {
         import("./sidebar_admin");
     }
+
+    if (document.querySelector("[data-inventory-outgoing-toggle]")) {
+        import("./admin_inventory");
+    }
 })();

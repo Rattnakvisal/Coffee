@@ -32,6 +32,13 @@
                     'icon' =>
                         '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 19.5h16.5M7.5 16.5V9.75m4.5 6.75V6.75m4.5 9.75v-3.75" />',
                 ],
+                [
+                    'key' => 'inventory',
+                    'label' => 'Inventory',
+                    'route' => route('admin.inventory.index'),
+                    'icon' =>
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5h16.5m-13.5 4.5h10.5m-10.5 4.5h6m6.75-12.75h-15a1.5 1.5 0 0 0-1.5 1.5v13.5a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5V5.25a1.5 1.5 0 0 0-1.5-1.5Z" />',
+                ],
             ],
         ],
         [
@@ -90,7 +97,7 @@
 
 <aside data-admin-sidebar
     class="fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-82.5 -translate-x-full flex-col overflow-hidden bg-linear-to-b from-[#2f241f] via-[#2a211d] to-[#241c18] text-white shadow-2xl transition-transform duration-300 ease-out lg:sticky lg:top-0 lg:z-20 lg:col-span-3 lg:h-screen lg:w-auto lg:max-w-none lg:translate-x-0 xl:col-span-2">
-    <div class="flex h-full flex-col">
+    <div class="flex h-full min-h-0 flex-col">
         <div class="border-b border-white/10 px-6 pb-5 pt-6">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex items-center gap-3">
@@ -119,7 +126,7 @@
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-4 py-5">
+        <div data-admin-sidebar-scroll class="admin-sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5">
             @foreach ($menuGroups as $group)
                 <div class="{{ !$loop->first ? 'mt-6' : '' }}">
                     <p class="px-3 text-[11px] font-bold uppercase tracking-[0.2em] text-white/35">

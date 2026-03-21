@@ -161,16 +161,25 @@
 
         const trendCtx = document.getElementById("adminReportsTrendChart");
         const paymentCtx = document.getElementById("adminReportsPaymentChart");
-        const topItemsCtx = document.getElementById("adminReportsTopItemsChart");
+        const topItemsCtx = document.getElementById(
+            "adminReportsTopItemsChart",
+        );
         const statusCtx = document.getElementById("adminReportsStatusChart");
-        const categoryCtx = document.getElementById("adminReportsCategoryChart");
+        const categoryCtx = document.getElementById(
+            "adminReportsCategoryChart",
+        );
         const comparisonCtx = document.getElementById(
             "adminReportsComparisonChart",
         );
 
         if (trendCtx) {
             const trendContext = trendCtx.getContext("2d");
-            const revenueGradient = trendContext.createLinearGradient(0, 0, 0, 300);
+            const revenueGradient = trendContext.createLinearGradient(
+                0,
+                0,
+                0,
+                300,
+            );
             revenueGradient.addColorStop(0, "rgba(244, 160, 107, 0.82)");
             revenueGradient.addColorStop(1, "rgba(244, 160, 107, 0.18)");
 
@@ -635,4 +644,3 @@
     animateProgressBars();
     createCharts();
 })();
-

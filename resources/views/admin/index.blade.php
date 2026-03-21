@@ -24,40 +24,6 @@
         $teamUsers = (int) ($stats['cashiersCount'] ?? 0) + (int) ($stats['adminsCount'] ?? 0);
         $todayLabel = now()->format('M d, Y');
         $alertData = session('alert');
-        $cashflow = (array) ($cashflow ?? []);
-        $inventoryTransactions = collect($inventoryTransactions ?? []);
-        $inventoryTypeOptions = collect($inventoryTypeOptions ?? []);
-        $moneyInTotal = (float) ($cashflow['moneyInTotal'] ?? 0);
-        $moneyOutTotal = (float) ($cashflow['moneyOutTotal'] ?? 0);
-        $moneyBalance = (float) ($cashflow['moneyBalance'] ?? 0);
-        $moneyInToday = (float) ($cashflow['moneyInToday'] ?? 0);
-        $moneyOutToday = (float) ($cashflow['moneyOutToday'] ?? 0);
-        $moneyInFilter = (string) ($cashflow['moneyInFilter'] ?? 'month');
-        $moneyInFilterLabel = (string) ($cashflow['moneyInFilterLabel'] ?? 'This Month');
-        $moneyInFilteredTotal = (float) ($cashflow['moneyInFilteredTotal'] ?? 0);
-        $moneyInFilteredCount = (int) ($cashflow['moneyInFilteredCount'] ?? 0);
-        $moneyInGrowth = (array) ($cashflow['moneyInGrowth'] ?? [
-            'isPositive' => true,
-            'text' => '+0.0% vs last month',
-        ]);
-        $moneyOutGrowth = (array) ($cashflow['moneyOutGrowth'] ?? [
-            'isPositive' => true,
-            'text' => '+0.0% vs last month',
-        ]);
-        $cambodiaTimezone = 'Asia/Phnom_Penh';
-        $oldHappenedAt = trim((string) old('happened_at', ''));
-
-        if ($oldHappenedAt !== '') {
-            try {
-                $defaultCambodiaDateTime = \Carbon\Carbon::parse($oldHappenedAt, $cambodiaTimezone)->format(
-                    'Y-m-d\\TH:i',
-                );
-            } catch (\Throwable $exception) {
-                $defaultCambodiaDateTime = now($cambodiaTimezone)->format('Y-m-d\\TH:i');
-            }
-        } else {
-            $defaultCambodiaDateTime = now($cambodiaTimezone)->format('Y-m-d\\TH:i');
-        }
     @endphp
 
     <div class="anim-enter-up w-full min-h-screen overflow-hidden bg-white/85 lg:overflow-visible">
@@ -149,6 +115,10 @@
                                             class="rounded-xl border border-white/40 bg-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/25">
                                             View Reports
                                         </a>
+                                        <a href="{{ route('admin.inventory.index') }}"
+                                            class="rounded-xl border border-white/40 bg-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/25">
+                                            Inventory Details
+                                        </a>
                                     </div>
                                 </div>
 
@@ -166,11 +136,11 @@
 
                         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             <article
-                                class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                class="anim-pop group rounded-[26px] border border-slate-200/70 bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                                 <div class="flex items-center justify-between gap-2">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Teams</p>
+                                    <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Teams</p>
                                     <span
-                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff5ec] text-[#b16231]">
+                                        class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -178,20 +148,20 @@
                                         </svg>
                                     </span>
                                 </div>
-                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                                <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900"
                                     data-counter-value="{{ $teamUsers }}" data-counter-type="number">0</h3>
-                                <p class="mt-1 text-xs text-slate-500">
+                                <p class="mt-1 text-sm text-slate-500">
                                     {{ number_format((int) ($stats['adminsCount'] ?? 0)) }} admins /
                                     {{ number_format((int) ($stats['cashiersCount'] ?? 0)) }} cashiers
                                 </p>
                             </article>
 
                             <article
-                                class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                class="anim-pop group rounded-[26px] border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                                 <div class="flex items-center justify-between gap-2">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Products</p>
+                                    <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-sky-700">Products</p>
                                     <span
-                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#edf6ff] text-[#3d75b8]">
+                                        class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -199,22 +169,22 @@
                                         </svg>
                                     </span>
                                 </div>
-                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                                <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900"
                                     data-counter-value="{{ $stats['activeProductsCount'] }}" data-counter-type="number">0
                                 </h3>
                                 <p
-                                    class="mt-1 text-xs font-semibold {{ $stats['productsGrowth']['isPositive'] ?? true ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    class="mt-1 text-sm font-semibold {{ $stats['productsGrowth']['isPositive'] ?? true ? 'text-emerald-600' : 'text-rose-600' }}">
                                     {{ $stats['productsGrowth']['text'] ?? '+0.0% vs last week' }}
                                 </p>
                             </article>
 
                             <article
-                                class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                class="anim-pop group rounded-[26px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                                 <div class="flex items-center justify-between gap-2">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Categories
+                                    <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">Categories
                                     </p>
                                     <span
-                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4f2ff] text-[#6b5caa]">
+                                        class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -222,36 +192,37 @@
                                         </svg>
                                     </span>
                                 </div>
-                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                                <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900"
                                     data-counter-value="{{ $stats['categoriesCount'] }}" data-counter-type="number">0
                                 </h3>
-                                <p class="mt-1 text-xs text-slate-500">Used by active menu products</p>
+                                <p class="mt-1 text-sm text-slate-500">Used by active menu products</p>
                             </article>
 
                             <article
-                                class="anim-pop rounded-2xl border border-[#ebded5] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                class="anim-pop group rounded-[26px] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                                 <div class="flex items-center justify-between gap-2">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Inventory
+                                    <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Inventory
                                     </p>
                                     <span
-                                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#ebfaf1] text-[#2e8f5e]">
+                                        class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
                                         </svg>
                                     </span>
                                 </div>
-                                <h3 class="mt-3 text-3xl font-black text-[#2f241f]"
+                                <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900"
                                     data-counter-value="{{ $stats['inventoryValue'] }}" data-counter-type="currency"
                                     data-counter-decimals="2">$0.00</h3>
                                 <p
-                                    class="mt-1 text-xs font-semibold {{ $stats['inventoryGrowth']['isPositive'] ?? true ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    class="mt-1 text-sm font-semibold {{ $stats['inventoryGrowth']['isPositive'] ?? true ? 'text-emerald-600' : 'text-rose-600' }}">
                                     {{ $stats['inventoryGrowth']['text'] ?? '+0.0% vs last month' }}
                                 </p>
                             </article>
                         </div>
 
-                        <section class="anim-enter-up rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+                        <section
+                            class="anim-enter-up rounded-[30px] border border-white/60 bg-white/90 p-6 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
                             <div class="mb-5 flex items-center justify-between">
                                 <h3 class="text-xl font-bold text-[#2f241f]">Team Executive</h3>
                                 <p class="text-sm font-semibold text-[#7b5e50]">{{ number_format($teamUsers) }} users</p>
@@ -297,170 +268,23 @@
                             </div>
                         </section>
 
-                        <section class="anim-enter-up rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
-                            <div class="mb-5 flex flex-wrap items-center justify-between gap-2">
-                                <h3 class="text-xl font-bold text-[#2f241f]">Inventory Cashflow</h3>
-                                <form method="GET" action="{{ route('admin.index') }}"
-                                    class="flex items-center gap-2">
-                                    @if (($searchQuery ?? '') !== '')
-                                        <input type="hidden" name="q" value="{{ $searchQuery }}">
-                                    @endif
-                                    <select name="money_in_filter"
-                                        class="rounded-xl border border-[#ecd9cc] bg-white px-3 py-2 text-sm font-semibold text-[#5f4b40] outline-none">
-                                        <option value="today" @selected($moneyInFilter === 'today')>Today</option>
-                                        <option value="week" @selected($moneyInFilter === 'week')>This Week</option>
-                                        <option value="month" @selected($moneyInFilter === 'month')>This Month</option>
-                                        <option value="all" @selected($moneyInFilter === 'all')>All Time</option>
-                                    </select>
-                                    <button type="submit"
-                                        class="rounded-xl bg-[#2f241f] px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white">
-                                        Filter
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                <article class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700">
-                                        Money In ({{ $moneyInFilterLabel }})
-                                    </p>
-                                    <p class="mt-2 text-2xl font-black text-emerald-800">
-                                        ${{ number_format($moneyInFilteredTotal, 2) }}
-                                    </p>
-                                    <p class="mt-1 text-xs text-emerald-700">
-                                        {{ number_format($moneyInFilteredCount) }} transactions |
-                                        Total: ${{ number_format($moneyInTotal, 2) }}
-                                    </p>
-                                </article>
-
-                                <article class="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-700">Money Out
-                                    </p>
-                                    <p class="mt-2 text-2xl font-black text-rose-800">
-                                        ${{ number_format($moneyOutTotal, 2) }}</p>
-                                    <p class="mt-1 text-xs text-rose-700">
-                                        Today: ${{ number_format($moneyOutToday, 2) }} |
-                                        {{ $moneyOutGrowth['text'] ?? '+0.0% vs last month' }}
-                                    </p>
-                                </article>
-
-                                <article class="rounded-2xl border border-[#eadfd7] bg-[#fff8f2] p-4">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[#7a5c4e]">Balance</p>
-                                    <p
-                                        class="mt-2 text-2xl font-black {{ $moneyBalance >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
-                                        ${{ number_format($moneyBalance, 2) }}
-                                    </p>
-                                    <p class="mt-1 text-xs text-slate-500">Money in minus money out</p>
-                                </article>
-                            </div>
-
-                            <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                <form method="POST" action="{{ route('admin.inventory.store') }}"
-                                    class="rounded-2xl border border-[#f0e3da] bg-[#fffdf9] p-4 space-y-3">
-                                    @csrf
-                                    <div>
-                                        <label for="inventory-type"
-                                            class="mb-1 block text-sm font-semibold text-[#5f4b40]">Type</label>
-                                        <select id="inventory-type" name="type" required
-                                            class="w-full rounded-xl border border-[#ecd9cc] bg-white px-3 py-2.5 text-sm outline-none">
-                                            @foreach ($inventoryTypeOptions as $typeOption)
-                                                <option value="{{ $typeOption['value'] }}" @selected(old('type', 'money_out') === $typeOption['value'])>
-                                                    {{ $typeOption['label'] }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label for="inventory-amount"
-                                            class="mb-1 block text-sm font-semibold text-[#5f4b40]">Amount (USD)</label>
-                                        <input id="inventory-amount" name="amount" type="number" step="0.01"
-                                            min="0.01" required value="{{ old('amount') }}"
-                                            class="w-full rounded-xl border border-[#ecd9cc] bg-white px-3 py-2.5 text-sm outline-none"
-                                            placeholder="0.00">
-                                    </div>
-
-                                    <div>
-                                        <label for="inventory-happened-at"
-                                            class="mb-1 block text-sm font-semibold text-[#5f4b40]">Date & Time</label>
-                                        <p
-                                            class="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                                            Cambodia Local Time
-                                        </p>
-                                        <input id="inventory-happened-at" name="happened_at" type="datetime-local"
-                                            value="{{ $defaultCambodiaDateTime }}"
-                                            class="w-full rounded-xl border border-[#ecd9cc] bg-white px-3 py-2.5 text-sm outline-none">
-                                    </div>
-
-                                    <div>
-                                        <label for="inventory-note"
-                                            class="mb-1 block text-sm font-semibold text-[#5f4b40]">Note</label>
-                                        <textarea id="inventory-note" name="note" rows="3" maxlength="500"
-                                            class="w-full rounded-xl border border-[#ecd9cc] bg-white px-3 py-2.5 text-sm outline-none"
-                                            placeholder="Reason or reference">{{ old('note') }}</textarea>
-                                    </div>
-
-                                    <button type="submit"
-                                        class="inline-flex w-full items-center justify-center rounded-xl bg-[#2f241f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#201813]">
-                                        Save Entry
-                                    </button>
-                                </form>
-
-                                <div class="rounded-2xl border border-[#f0e3da] bg-[#fffdf9] p-4">
-                                    <h4 class="text-sm font-semibold uppercase tracking-[0.08em] text-[#8f6f5c]">
-                                        Money In Transactions ({{ $moneyInFilterLabel }})
-                                    </h4>
-                                    <div class="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1">
-                                        @forelse ($inventoryTransactions as $entry)
-                                            @php
-                                                $entryType = (string) ($entry->type ?? '');
-                                                $isMoneyIn = $entryType === 'money_in';
-                                                $entryActorName = (string) ($entry->actor_name ?? '');
-
-                                                if ($entryActorName === '') {
-                                                    $entryActorName = trim(
-                                                        (string) ($entry->creator?->first_name ?? '') .
-                                                            ' ' .
-                                                            (string) ($entry->creator?->last_name ?? ''),
-                                                    );
-                                                    $entryActorName =
-                                                        $entryActorName !== ''
-                                                            ? $entryActorName
-                                                            : (string) ($entry->creator?->name ?? 'System');
-                                                }
-                                            @endphp
-                                            <div class="rounded-xl border border-[#eadfd7] bg-white px-3 py-2.5">
-                                                <div class="flex items-center justify-between gap-2">
-                                                    <span
-                                                        class="rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] {{ $isMoneyIn ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
-                                                        {{ $isMoneyIn ? 'Money In' : 'Money Out' }}
-                                                    </span>
-                                                    <span
-                                                        class="text-sm font-bold {{ $isMoneyIn ? 'text-emerald-700' : 'text-rose-700' }}">
-                                                        {{ $isMoneyIn ? '+' : '-' }}${{ number_format((float) ($entry->amount ?? 0), 2) }}
-                                                    </span>
-                                                </div>
-                                                <p class="mt-1 text-xs text-slate-600">
-                                                    {{ $entry->note ?: 'No note provided.' }}
-                                                </p>
-                                                <p class="mt-1 text-[11px] text-slate-400">
-                                                    {{ $entry->happened_at_local ?? '-' }} |
-                                                    by {{ $entryActorName }}
-                                                </p>
-                                            </div>
-                                        @empty
-                                            <p
-                                                class="rounded-xl border border-[#eadfd7] bg-white px-3 py-3 text-sm text-slate-500">
-                                                No money in transactions for this filter.
-                                            </p>
-                                        @endforelse
-                                    </div>
+                        <section
+                            class="anim-enter-up rounded-[30px] border border-white/60 bg-white/90 p-6 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-xl font-bold text-[#2f241f]">Inventory Details</h3>
+                                    <p class="mt-1 text-sm text-slate-500">Open full income and outgoing ledger page.</p>
                                 </div>
+                                <a href="{{ route('admin.inventory.index') }}"
+                                    class="inline-flex items-center rounded-xl bg-[#2f241f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#201813]">
+                                    Open Inventory Page
+                                </a>
                             </div>
                         </section>
                     </section>
 
-                    <aside class="anim-enter-up rounded-3xl bg-[#fffdf9] p-5 shadow-sm ring-1 ring-black/5 xl:col-span-4">
+                    <aside
+                        class="anim-enter-up rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)] xl:col-span-4">
                         <h3 class="text-3xl font-black text-[#2f241f]">My Activity</h3>
 
                         <div class="mt-5 space-y-6">
