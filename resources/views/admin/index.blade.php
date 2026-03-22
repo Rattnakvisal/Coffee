@@ -24,6 +24,69 @@
         $teamUsers = (int) ($stats['cashiersCount'] ?? 0) + (int) ($stats['adminsCount'] ?? 0);
         $todayLabel = now()->format('M d, Y');
         $alertData = session('alert');
+        $attendanceAlert = $attendanceAlert ?? null;
+        $orderAlert = $orderAlert ?? null;
+        $orderNotifications = collect($orderNotifications ?? []);
+        $attendanceRows = collect($attendanceRows ?? []);
+        $dashboardNotifications = collect();
+
+        if ($orderNotifications->isNotEmpty()) {
+            $dashboardNotifications = $dashboardNotifications->merge(
+                $orderNotifications->map(function ($notification): array {
+                    return [
+                        'type' => 'order',
+                        'title' => (string) ($notification['title'] ?? 'New Order'),
+                        'message' => (string) ($notification['message'] ?? ''),
+                        'time' => (string) ($notification['time'] ?? now()->format('d/m/Y H:i')),
+                    ];
+                }),
+            );
+        } elseif ($orderAlert) {
+            $dashboardNotifications->push([
+                'type' => 'order',
+                'title' => 'Order Update',
+                'message' => (string) $orderAlert,
+                'time' => now()->format('d/m/Y H:i'),
+            ]);
+        }
+
+        if ($attendanceAlert) {
+            $dashboardNotifications->push([
+                'type' => 'attendance',
+                'title' => 'Attendance Update',
+                'message' => (string) $attendanceAlert,
+                'time' => now()->format('d/m/Y H:i'),
+            ]);
+        }
+
+        if (!empty($alertData['text'])) {
+            $dashboardNotifications->push([
+                'type' => 'success',
+                'title' => 'System Update',
+                'message' => (string) $alertData['text'],
+                'time' => now()->format('d/m/Y H:i'),
+            ]);
+        }
+
+        if (session('status')) {
+            $dashboardNotifications->push([
+                'type' => 'info',
+                'title' => 'Status',
+                'message' => (string) session('status'),
+                'time' => now()->format('d/m/Y H:i'),
+            ]);
+        }
+
+        if ($errors->any()) {
+            $dashboardNotifications->push([
+                'type' => 'warning',
+                'title' => 'Action Required',
+                'message' => (string) $errors->first(),
+                'time' => now()->format('d/m/Y H:i'),
+            ]);
+        }
+
+        $notificationCount = (int) $dashboardNotifications->count();
     @endphp
 
     <div class="anim-enter-up w-full min-h-screen overflow-hidden bg-white/85 lg:overflow-visible">
@@ -77,11 +140,129 @@
                             </p>
                         </div>
                     </form>
+
+                    <div class="ml-auto flex items-center gap-2 sm:gap-3">
+                        <div class="relative" data-admin-notification
+                            data-fetch-url="{{ route('admin.notifications.index') }}"
+                            data-mark-read-url="{{ route('admin.notifications.read') }}">
+                            <button type="button" data-admin-notification-button
+                                class="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-[#f4a06b] hover:text-[#b16231] hover:shadow-sm"
+                                aria-label="Open notifications" aria-expanded="false">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M14.857 17.082a23.848 23.848 0 0 1-5.714 0A8.967 8.967 0 0 1 6 16.139V11a6 6 0 1 1 12 0v5.139a8.967 8.967 0 0 1-3.143.943ZM15 19.5a3 3 0 1 1-6 0" />
+                                </svg>
+                                <span data-admin-notification-dot
+                                    class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white {{ $notificationCount > 0 ? '' : 'hidden' }}">
+                                    <span
+                                        class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-70"></span>
+                                    <span data-admin-notification-count
+                                        class="relative">{{ number_format($notificationCount) }}</span>
+                                </span>
+                            </button>
+
+                            <div data-admin-notification-panel
+                                class="absolute right-0 top-[calc(100%+0.55rem)] z-40 hidden w-[320px] overflow-hidden rounded-2xl border border-[#eadfd7] bg-white shadow-xl sm:w-[360px]">
+                                <div class="flex items-center justify-between border-b border-[#f2e8df] px-4 py-3">
+                                    <p class="text-sm font-bold text-[#2f241f]">Notifications</p>
+                                    <span data-admin-notification-header-count
+                                        class="rounded-full bg-[#fff2e7] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#b16231]">
+                                        {{ number_format($notificationCount) }}
+                                    </span>
+                                </div>
+                                <div data-admin-notification-list class="max-h-80 overflow-y-auto p-2">
+                                    @foreach ($dashboardNotifications as $notification)
+                                        <div data-admin-notification-item
+                                            class="mb-2 rounded-xl border border-[#f2e6dd] bg-[#fffaf6] p-3 last:mb-0">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[#b16231]">
+                                                    {{ $notification['title'] }}
+                                                </p>
+                                                <span class="text-[11px] text-slate-400">{{ $notification['time'] }}</span>
+                                            </div>
+                                            <p class="mt-1 text-sm text-[#4f3b31]">{{ $notification['message'] }}</p>
+                                        </div>
+                                    @endforeach
+                                    <div data-admin-notification-empty
+                                        class="rounded-xl border border-dashed border-[#eadfd7] px-4 py-5 text-center {{ $notificationCount > 0 ? 'hidden' : '' }}">
+                                        <p class="text-sm font-semibold text-slate-500">No new notifications.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative" data-admin-profile>
+                            <button type="button" data-admin-profile-button
+                                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[#2f241f] transition hover:border-[#f4a06b] hover:bg-[#fff9f4]"
+                                aria-label="Open profile menu" aria-expanded="false">
+                                <span
+                                    class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#2f241f] text-xs font-bold text-white">
+                                    @if ($avatarUrl)
+                                        <img src="{{ $avatarUrl }}" alt="Profile avatar" class="h-full w-full object-cover">
+                                    @else
+                                        {{ $initials !== '' ? $initials : 'A' }}
+                                    @endif
+                                </span>
+                                <span class="hidden text-sm font-semibold sm:inline">{{ $displayName }}</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </button>
+
+                            <div data-admin-profile-panel
+                                class="absolute right-0 top-[calc(100%+0.55rem)] z-40 hidden w-[280px] overflow-hidden rounded-2xl border border-[#eadfd7] bg-white shadow-xl">
+                                <div class="border-b border-[#f2e8df] px-4 py-3">
+                                    <p class="truncate text-sm font-bold text-[#2f241f]">{{ $displayName }}</p>
+                                    <p class="truncate text-xs text-slate-500">{{ $currentUser->email ?? '-' }}</p>
+                                </div>
+                                <div class="p-2">
+                                    <a href="{{ route('admin.settings.index') }}"
+                                        class="mb-1 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-[#4f3b31] transition hover:bg-[#fff3ea]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#b16231]"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M10.5 6h3m-7.348 1.652 2.121 2.121m7.454 7.454 2.121 2.121M6 10.5v3m12-3v3m-1.652-7.348-2.121 2.121m-7.454 7.454-2.121 2.121M12 8.25A3.75 3.75 0 1 1 12 15.75 3.75 3.75 0 0 1 12 8.25Z" />
+                                        </svg>
+                                        Settings
+                                    </a>
+                                    <a href="{{ route('admin.attendance.index') }}"
+                                        class="mb-1 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-[#4f3b31] transition hover:bg-[#fff3ea]">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#b16231]"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M8.25 3v1.5m7.5-1.5v1.5M3.75 8.25h16.5M5.25 5.25h13.5A1.5 1.5 0 0 1 20.25 6.75v12a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-12a1.5 1.5 0 0 1 1.5-1.5Zm3.75 6h6m-6 3h3" />
+                                        </svg>
+                                        Attendance Detail
+                                    </a>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25-2.25V15m5.25-3H9.75m0 0 3-3m-3 3 3 3" />
+                                            </svg>
+                                            Log out
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 @if (!empty($searchFeedback))
                     <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
                         {{ $searchFeedback }}
+                    </div>
+                @endif
+
+                @if (session('status'))
+                    <div class="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm text-sky-700">
+                        {{ session('status') }}
                     </div>
                 @endif
 
@@ -279,6 +460,56 @@
                                     class="inline-flex items-center rounded-xl bg-[#2f241f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#201813]">
                                     Open Inventory Page
                                 </a>
+                            </div>
+                        </section>
+
+                        <section
+                            class="anim-enter-up rounded-[30px] border border-white/60 bg-white/90 p-6 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
+                            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-xl font-bold text-[#2f241f]">Cashier Attendance Detail</h3>
+                                    <p class="mt-1 text-sm text-slate-500">Recent cashier check-ins.</p>
+                                </div>
+                                <span
+                                    class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+                                    {{ $attendanceRows->count() }} rows
+                                </span>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-left text-sm">
+                                    <thead class="bg-slate-50 text-slate-500">
+                                        <tr>
+                                            <th class="px-4 py-2.5 font-semibold">Cashier</th>
+                                            <th class="px-4 py-2.5 font-semibold">Email</th>
+                                            <th class="px-4 py-2.5 font-semibold">Check In</th>
+                                            <th class="px-4 py-2.5 font-semibold">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        @forelse ($attendanceRows as $attendance)
+                                            <tr class="transition hover:bg-slate-50/70">
+                                                <td class="px-4 py-3 font-semibold text-[#2f241f]">
+                                                    {{ $attendance['cashier_name'] }}
+                                                </td>
+                                                <td class="px-4 py-3 text-slate-600">{{ $attendance['cashier_email'] }}</td>
+                                                <td class="px-4 py-3 text-slate-600">{{ $attendance['checked_in_at'] }}</td>
+                                                <td class="px-4 py-3">
+                                                    <span
+                                                        class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $attendance['is_new'] ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
+                                                        {{ $attendance['is_new'] ? 'New' : 'Recorded' }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="px-4 py-6 text-center text-slate-500">
+                                                    No cashier attendance records yet.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
                             </div>
                         </section>
                     </section>

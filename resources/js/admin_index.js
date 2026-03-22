@@ -68,6 +68,42 @@
         document.querySelectorAll("[data-search-option]"),
     );
     const searchEmpty = document.getElementById("dashboard-search-empty");
+    const notificationRoot = document.querySelector("[data-admin-notification]");
+    const notificationButton = document.querySelector(
+        "[data-admin-notification-button]",
+    );
+    const notificationPanel = document.querySelector(
+        "[data-admin-notification-panel]",
+    );
+    const notificationFetchUrl = notificationRoot
+        ? notificationRoot.getAttribute("data-fetch-url") || ""
+        : "";
+    const notificationMarkReadUrl = notificationRoot
+        ? notificationRoot.getAttribute("data-mark-read-url") || ""
+        : "";
+    const csrfToken =
+        document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") || "";
+    const notificationDot = document.querySelector(
+        "[data-admin-notification-dot]",
+    );
+    const notificationCount = document.querySelector(
+        "[data-admin-notification-count]",
+    );
+    const notificationHeaderCount = document.querySelector(
+        "[data-admin-notification-header-count]",
+    );
+    const notificationList = document.querySelector(
+        "[data-admin-notification-list]",
+    );
+    const notificationEmpty = document.querySelector(
+        "[data-admin-notification-empty]",
+    );
+    const profileRoot = document.querySelector("[data-admin-profile]");
+    const profileButton = document.querySelector("[data-admin-profile-button]");
+    const profilePanel = document.querySelector("[data-admin-profile-panel]");
+    let notificationSyncInFlight = false;
     let activeSearchIndex = -1;
 
     const visibleSearchOptions = function () {
@@ -386,6 +422,177 @@
         }
     };
 
+    const closeNotificationPanel = function () {
+        if (!notificationPanel || !notificationButton) {
+            return;
+        }
+
+        notificationPanel.classList.add("hidden");
+        notificationButton.setAttribute("aria-expanded", "false");
+    };
+
+    const openNotificationPanel = function () {
+        if (!notificationPanel || !notificationButton) {
+            return;
+        }
+
+        notificationPanel.classList.remove("hidden");
+        notificationButton.setAttribute("aria-expanded", "true");
+    };
+
+    const closeProfilePanel = function () {
+        if (!profilePanel || !profileButton) {
+            return;
+        }
+
+        profilePanel.classList.add("hidden");
+        profileButton.setAttribute("aria-expanded", "false");
+    };
+
+    const openProfilePanel = function () {
+        if (!profilePanel || !profileButton) {
+            return;
+        }
+
+        profilePanel.classList.remove("hidden");
+        profileButton.setAttribute("aria-expanded", "true");
+    };
+
+    const escapeHtml = function (value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    };
+
+    const updateNotificationBadge = function (count) {
+        const normalizedCount = Number.isFinite(Number(count))
+            ? Math.max(0, Number(count))
+            : 0;
+        const formattedCount = normalizedCount.toLocaleString();
+
+        if (notificationCount) {
+            notificationCount.textContent = formattedCount;
+        }
+
+        if (notificationHeaderCount) {
+            notificationHeaderCount.textContent = formattedCount;
+        }
+
+        if (notificationDot) {
+            notificationDot.classList.toggle("hidden", normalizedCount <= 0);
+        }
+    };
+
+    const renderNotificationItems = function (notifications) {
+        if (!notificationList || !notificationEmpty) {
+            return;
+        }
+
+        const rows = Array.isArray(notifications) ? notifications : [];
+        const itemsMarkup = rows
+            .map(function (notification) {
+                const title = escapeHtml(notification.title || "Notification");
+                const time = escapeHtml(notification.time || "");
+                const message = escapeHtml(notification.message || "");
+
+                return (
+                    '<div class="mb-2 rounded-xl border border-[#f2e6dd] bg-[#fffaf6] p-3 last:mb-0">' +
+                    '<div class="flex items-start justify-between gap-2">' +
+                    '<p class="text-xs font-semibold uppercase tracking-[0.08em] text-[#b16231]">' +
+                    title +
+                    "</p>" +
+                    '<span class="text-[11px] text-slate-400">' +
+                    time +
+                    "</span>" +
+                    "</div>" +
+                    '<p class="mt-1 text-sm text-[#4f3b31]">' +
+                    message +
+                    "</p>" +
+                    "</div>"
+                );
+            })
+            .join("");
+
+        Array.from(
+            notificationList.querySelectorAll("[data-admin-notification-item]"),
+        ).forEach(function (node) {
+            node.remove();
+        });
+
+        if (itemsMarkup !== "") {
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = itemsMarkup;
+            Array.from(wrapper.children).forEach(function (child) {
+                child.setAttribute("data-admin-notification-item", "1");
+                notificationList.insertBefore(child, notificationEmpty);
+            });
+        }
+
+        notificationEmpty.classList.toggle("hidden", rows.length > 0);
+    };
+
+    const syncAdminNotifications = async function () {
+        if (!notificationFetchUrl || notificationSyncInFlight) {
+            return;
+        }
+
+        notificationSyncInFlight = true;
+
+        try {
+            const response = await fetch(notificationFetchUrl, {
+                headers: {
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const payload = await response.json();
+
+            if (!payload || payload.ok !== true) {
+                return;
+            }
+
+            const rows = Array.isArray(payload.notifications)
+                ? payload.notifications
+                : [];
+            const count = Number(payload.count);
+            updateNotificationBadge(
+                Number.isFinite(count) ? count : rows.length,
+            );
+            renderNotificationItems(rows);
+        } catch (error) {
+            // Silent fail; keep existing server-rendered notifications.
+        } finally {
+            notificationSyncInFlight = false;
+        }
+    };
+
+    const markAdminNotificationsAsRead = async function () {
+        if (!notificationMarkReadUrl) {
+            return;
+        }
+
+        try {
+            await fetch(notificationMarkReadUrl, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken,
+                },
+            });
+        } catch (error) {
+            // Silent fail; badge is still hidden on the UI side.
+        }
+    };
+
     const filterSearchOptions = function () {
         if (!searchOptionList) return;
 
@@ -485,6 +692,42 @@
         });
     });
 
+    if (notificationButton && notificationPanel) {
+        notificationButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const isClosed = notificationPanel.classList.contains("hidden");
+
+            if (isClosed) {
+                closeProfilePanel();
+                openNotificationPanel();
+                updateNotificationBadge(0);
+                markAdminNotificationsAsRead();
+                return;
+            }
+
+            closeNotificationPanel();
+        });
+    }
+
+    if (profileButton && profilePanel) {
+        profileButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const isClosed = profilePanel.classList.contains("hidden");
+
+            if (isClosed) {
+                closeNotificationPanel();
+                openProfilePanel();
+                return;
+            }
+
+            closeProfilePanel();
+        });
+    }
+
     document.addEventListener("click", function (event) {
         if (!searchForm || !searchDropdown) return;
 
@@ -496,13 +739,46 @@
         closeSearchDropdown();
     });
 
+    document.addEventListener("click", function (event) {
+        if (!notificationRoot || !notificationPanel) {
+            return;
+        }
+
+        const target = event.target;
+        if (target instanceof Node && notificationRoot.contains(target)) {
+            return;
+        }
+
+        closeNotificationPanel();
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!profileRoot || !profilePanel) {
+            return;
+        }
+
+        const target = event.target;
+        if (target instanceof Node && profileRoot.contains(target)) {
+            return;
+        }
+
+        closeProfilePanel();
+    });
+
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
             closeSearchDropdown();
+            closeNotificationPanel();
+            closeProfilePanel();
         }
     });
 
     animateCounters();
     animateProgressBars();
     createCharts();
+
+    if (notificationFetchUrl) {
+        syncAdminNotifications();
+        window.setInterval(syncAdminNotifications, 10000);
+    }
 })();

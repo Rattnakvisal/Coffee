@@ -83,6 +83,13 @@
                             </div>
                         @endif
 
+                        @if (session('status'))
+                            <div
+                                class="anim-pop mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                                {{ session('status') }}
+                            </div>
+                        @endif
+
                         <form id="login-form" method="POST"
                             action="{{ route('login.submit', ['role' => $selectedRole->slug]) }}"
                             data-action-template="{{ route('login.submit', ['role' => '__ROLE__']) }}"

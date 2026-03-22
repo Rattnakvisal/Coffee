@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -14,9 +15,12 @@ Route::middleware(['auth', 'role:admin'])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/', [DashboardController::class, 'index'])->name('index');
+        Route::get('/notifications', [DashboardController::class, 'notifications'])->name('notifications.index');
+        Route::post('/notifications/mark-read', [DashboardController::class, 'markNotificationsRead'])->name('notifications.read');
         Route::get('/search', [DashboardController::class, 'search'])->name('search');
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::post('/inventory/transactions', [InventoryController::class, 'store'])->name('inventory.store');
+        Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
         Route::get('/reports', [ReportsController::class, 'reports'])->name('reports');
         Route::get('/reports/export/excel', [ReportsController::class, 'exportReportsExcel'])->name('reports.export.excel');
         Route::get('/reports/export/pdf', [ReportsController::class, 'exportReportsPdf'])->name('reports.export.pdf');

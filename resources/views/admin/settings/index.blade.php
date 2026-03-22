@@ -100,6 +100,16 @@
                                     </svg>
                                     Verification
                                 </button>
+
+                                <a href="{{ route('admin.attendance.index') }}"
+                                    class="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-[#6f5a4f] transition hover:bg-[#f8ede6]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M8.25 3v1.5m7.5-1.5v1.5M3.75 8.25h16.5M5.25 5.25h13.5A1.5 1.5 0 0 1 20.25 6.75v12a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-12a1.5 1.5 0 0 1 1.5-1.5Zm3.75 6h6m-6 3h3" />
+                                    </svg>
+                                    Attendance
+                                </a>
                             </nav>
                         </aside>
 

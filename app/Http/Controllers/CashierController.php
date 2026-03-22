@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CashierAttendance;
 use App\Models\Category;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -27,6 +31,7 @@ class CashierController extends Controller
     {
         $search = trim((string) $request->query('search', ''));
         $category = trim((string) $request->query('category', ''));
+        $cashierId = (int) ($request->user()?->id ?? 0);
 
         $categories = Category::query()->active()->orderBy('name')->get();
         $searchSuggestions = Product::query()
@@ -73,6 +78,14 @@ class CashierController extends Controller
             ->get();
 
         $cartState = $this->buildCartState($request);
+        $todayAttendance = null;
+
+        if ($cashierId > 0) {
+            $todayAttendance = CashierAttendance::query()
+                ->where('cashier_id', $cashierId)
+                ->whereDate('attended_on', now()->toDateString())
+                ->first();
+        }
 
         return view('cashier.index', [
             'products' => $products,
@@ -84,7 +97,150 @@ class CashierController extends Controller
             'cartSubtotal' => $cartState['subtotal'],
             'cartDiscount' => $cartState['discount'],
             'cartTotal' => $cartState['total'],
+            'todayAttendance' => $todayAttendance,
         ]);
+    }
+
+    public function attendance(Request $request): View
+    {
+        $todayDate = now()->toDateString();
+        $todayAttendanceByCashier = CashierAttendance::query()
+            ->whereDate('attended_on', $todayDate)
+            ->get()
+            ->keyBy('cashier_id');
+
+        $cashierUsers = User::query()
+            ->with('role:id,slug')
+            ->whereHas('role', function (Builder $query): void {
+                $query->where('slug', 'cashier');
+            })
+            ->orderBy('name')
+            ->orderBy('email')
+            ->get();
+
+        $cashierRows = $cashierUsers->map(function (User $cashier) use ($todayAttendanceByCashier): array {
+            $todayAttendance = $todayAttendanceByCashier->get((int) $cashier->id);
+            $displayName = trim((string) ($cashier->name ?? ''));
+
+            if ($displayName === '') {
+                $displayName = trim((string) ($cashier->first_name . ' ' . $cashier->last_name));
+            }
+
+            if ($displayName === '') {
+                $displayName = (string) ($cashier->email ?? ('Cashier #' . $cashier->id));
+            }
+
+            return [
+                'cashier' => $cashier,
+                'name' => $displayName,
+                'email' => (string) ($cashier->email ?? '-'),
+                'todayAttendance' => $todayAttendance,
+            ];
+        })->values();
+
+        $attendanceHistory = CashierAttendance::query()
+            ->with('cashier:id,name,first_name,last_name,email')
+            ->orderByDesc('attended_on')
+            ->orderByDesc('checked_in_at')
+            ->limit(20)
+            ->get();
+
+        $totalCashiers = (int) $cashierRows->count();
+        $checkedTodayCount = (int) $cashierRows
+            ->filter(fn(array $row): bool => $row['todayAttendance'] !== null)
+            ->count();
+        $pendingTodayCount = max($totalCashiers - $checkedTodayCount, 0);
+
+        $cartState = $this->buildCartState($request);
+
+        return view('cashier.attendance', [
+            'cashierRows' => $cashierRows,
+            'attendanceHistory' => $attendanceHistory,
+            'totalCashiers' => $totalCashiers,
+            'checkedTodayCount' => $checkedTodayCount,
+            'pendingTodayCount' => $pendingTodayCount,
+            'cartItems' => $cartState['items'],
+            'cartSubtotal' => $cartState['subtotal'],
+            'cartDiscount' => $cartState['discount'],
+            'cartTotal' => $cartState['total'],
+        ]);
+    }
+
+    public function goToDashboard(Request $request): RedirectResponse
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('login.form', ['role' => 'admin'])
+            ->with('status', 'Please sign in with an admin account to open the dashboard.');
+    }
+
+    public function checkAttendance(Request $request): RedirectResponse
+    {
+        $defaultCashierId = (int) ($request->user()?->id ?? 0);
+        $cashierId = (int) $request->input('cashier_id', $defaultCashierId);
+        $redirectRoute = $request->input('redirect') === 'attendance'
+            ? 'cashier.attendance'
+            : 'cashier.index';
+
+        if ($cashierId <= 0) {
+            return redirect()
+                ->route($redirectRoute)
+                ->withErrors([
+                    'attendance' => 'Unable to check attendance. Please sign in again.',
+                ]);
+        }
+
+        $cashierRoleId = (int) (Role::query()->where('slug', 'cashier')->value('id') ?? 0);
+        $cashier = User::query()
+            ->when(
+                $cashierRoleId > 0,
+                fn(Builder $query): Builder => $query->where('role_id', $cashierRoleId),
+                fn(Builder $query): Builder => $query->whereHas('role', fn(Builder $roleQuery): Builder => $roleQuery->where('slug', 'cashier')),
+            )
+            ->find($cashierId);
+
+        if ($cashier === null) {
+            return redirect()
+                ->route($redirectRoute)
+                ->withErrors([
+                    'attendance' => 'Selected user is not a cashier account.',
+                ]);
+        }
+
+        $cashierLabel = trim((string) ($cashier->name ?? ''));
+        if ($cashierLabel === '') {
+            $cashierLabel = trim((string) ($cashier->first_name . ' ' . $cashier->last_name));
+        }
+        if ($cashierLabel === '') {
+            $cashierLabel = (string) ($cashier->email ?? ('Cashier #' . $cashier->id));
+        }
+
+        $checkedAt = now();
+        $attendance = CashierAttendance::query()->firstOrCreate(
+            [
+                'cashier_id' => $cashierId,
+                'attended_on' => $checkedAt->toDateString(),
+            ],
+            [
+                'checked_in_at' => $checkedAt,
+                'admin_notified_at' => null,
+            ],
+        );
+
+        if ($attendance->wasRecentlyCreated) {
+            return redirect()
+                ->route($redirectRoute)
+                ->with('status', $cashierLabel . ' attendance checked successfully.');
+        }
+
+        $checkedTime = $attendance->checked_in_at?->format('H:i') ?? '--:--';
+
+        return redirect()
+            ->route($redirectRoute)
+            ->with('status', $cashierLabel . ' attendance already checked today at ' . $checkedTime . '.');
     }
 
     public function history(Request $request): View
@@ -190,6 +346,11 @@ class CashierController extends Controller
 
     public function addToCart(Request $request): RedirectResponse|JsonResponse
     {
+        $attendanceGuard = $this->ensureAttendanceChecked($request);
+        if ($attendanceGuard !== null) {
+            return $attendanceGuard;
+        }
+
         $validated = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'qty' => ['nullable', 'integer', 'min:1', 'max:99'],
@@ -234,6 +395,11 @@ class CashierController extends Controller
 
     public function incrementCartItem(Request $request, string $itemKey): RedirectResponse|JsonResponse
     {
+        $attendanceGuard = $this->ensureAttendanceChecked($request);
+        if ($attendanceGuard !== null) {
+            return $attendanceGuard;
+        }
+
         $cart = $this->getCart($request);
 
         if (! isset($cart[$itemKey])) {
@@ -250,6 +416,11 @@ class CashierController extends Controller
 
     public function decrementCartItem(Request $request, string $itemKey): RedirectResponse|JsonResponse
     {
+        $attendanceGuard = $this->ensureAttendanceChecked($request);
+        if ($attendanceGuard !== null) {
+            return $attendanceGuard;
+        }
+
         $cart = $this->getCart($request);
 
         if (! isset($cart[$itemKey])) {
@@ -271,6 +442,11 @@ class CashierController extends Controller
 
     public function placeOrder(Request $request): RedirectResponse|JsonResponse
     {
+        $attendanceGuard = $this->ensureAttendanceChecked($request);
+        if ($attendanceGuard !== null) {
+            return $attendanceGuard;
+        }
+
         $validated = $request->validate([
             'payment_method' => ['required', Rule::in(self::PAYMENT_METHODS)],
             'amount_received' => ['nullable', 'numeric', 'min:0'],
@@ -349,6 +525,10 @@ class CashierController extends Controller
 
             if (Schema::hasColumn('orders', 'placed_at')) {
                 $orderPayload['placed_at'] = now();
+            }
+
+            if (Schema::hasColumn('orders', 'admin_notified_at')) {
+                $orderPayload['admin_notified_at'] = null;
             }
 
             if (Schema::hasColumn('orders', 'paid_at')) {
@@ -486,6 +666,39 @@ class CashierController extends Controller
         return back()->withErrors([
             'payment' => $message,
         ]);
+    }
+
+    private function ensureAttendanceChecked(Request $request): RedirectResponse|JsonResponse|null
+    {
+        $cashierId = (int) ($request->user()?->id ?? 0);
+
+        if ($cashierId <= 0) {
+            return null;
+        }
+
+        $hasAttendance = CashierAttendance::query()
+            ->where('cashier_id', $cashierId)
+            ->whereDate('attended_on', now()->toDateString())
+            ->exists();
+
+        if ($hasAttendance) {
+            return null;
+        }
+
+        $message = 'Please check attendance first before working.';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => false,
+                'message' => $message,
+            ], 422);
+        }
+
+        return redirect()
+            ->route('cashier.attendance')
+            ->withErrors([
+                'attendance' => $message,
+            ]);
     }
 
     private function generateOrderNumber(): string

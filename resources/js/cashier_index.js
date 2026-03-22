@@ -645,6 +645,12 @@
                     orderNumber !== ""
                         ? "Order " + orderNumber + " placed successfully."
                         : "Order placed successfully.";
+                const thankYouMessage =
+                    orderNumber !== ""
+                        ? "Thank you! Your order " +
+                          orderNumber +
+                          " has been placed successfully."
+                        : "Thank you! Your order has been placed successfully.";
                 const loadingMessage =
                     changeAmount > 0
                         ? successMessage +
@@ -656,6 +662,12 @@
 
                 window.setTimeout(function () {
                     hideLoading();
+                    setPlaceOrderFeedback(
+                        placeOrderForm,
+                        thankYouMessage,
+                        false,
+                    );
+                    window.alert(thankYouMessage);
                 }, 700);
             })
             .finally(function () {

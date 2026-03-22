@@ -77,6 +77,13 @@
                     'icon' =>
                         '<path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h3m-7.348 1.652 2.121 2.121m7.454 7.454 2.121 2.121M6 10.5v3m12-3v3m-1.652-7.348-2.121 2.121m-7.454 7.454-2.121 2.121M12 8.25A3.75 3.75 0 1 1 12 15.75 3.75 3.75 0 0 1 12 8.25Z" />',
                 ],
+                [
+                    'key' => 'attendance',
+                    'label' => 'Attendance',
+                    'route' => route('admin.attendance.index'),
+                    'icon' =>
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5m7.5-1.5v1.5M3.75 8.25h16.5M5.25 5.25h13.5A1.5 1.5 0 0 1 20.25 6.75v12a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-12a1.5 1.5 0 0 1 1.5-1.5Zm3.75 6h6m-6 3h3" />',
+                ],
             ],
         ],
     ];
@@ -126,7 +133,8 @@
             </div>
         </div>
 
-        <div data-admin-sidebar-scroll class="admin-sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5">
+        <div data-admin-sidebar-scroll
+            class="admin-sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5">
             @foreach ($menuGroups as $group)
                 <div class="{{ !$loop->first ? 'mt-6' : '' }}">
                     <p class="px-3 text-[11px] font-bold uppercase tracking-[0.2em] text-white/35">
@@ -169,39 +177,6 @@
                     </nav>
                 </div>
             @endforeach
-        </div>
-
-        <div class="border-t border-white/10 p-4">
-            <div class="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                <div class="flex items-center gap-3">
-                    <div
-                        class="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-4 border-white/40 bg-white/20 shadow-lg">
-                        @if ($avatarUrl)
-                            <img src="{{ $avatarUrl }}" alt="Profile avatar" class="h-full w-full object-cover">
-                        @else
-                            <span class="text-lg font-black text-white">{{ $initials }}</span>
-                        @endif
-                    </div>
-
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-semibold text-white">{{ $profileName }}</p>
-                        <p class="truncate text-xs text-white/55">{{ $authUser->email ?? '-' }}</p>
-                    </div>
-                </div>
-
-                <form method="POST" action="{{ route('logout') }}" class="mt-4">
-                    @csrf
-                    <button type="submit" data-admin-sidebar-close
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/80 transition hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="1.9">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25-2.25V15m5.25-3H9.75m0 0 3-3m-3 3 3 3" />
-                        </svg>
-                        Log out
-                    </button>
-                </form>
-            </div>
         </div>
     </div>
 </aside>

@@ -44,6 +44,21 @@
                     </svg>
                     Home page
                 </a>
+                <a href="{{ route('cashier.attendance') }}" @class([
+                    'flex items-center gap-3 rounded-xl px-4 py-3 transition',
+                    'bg-[#fff1e8] font-semibold text-[#c56d39] ring-1 ring-[#f6d7c2]' =>
+                        $activeCashierMenu === 'attendance',
+                    'hover:bg-[#f8ede6]' => $activeCashierMenu !== 'attendance',
+                ])>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="1.9">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M6.75 3v2.25m10.5-2.25v2.25M3.75 8.25h16.5m-14.25 3h.008v.008H6v-.008Zm0 3.75h.008v.008H6v-.008Zm3.75-3.75h.008v.008H9.75v-.008Zm0 3.75h.008v.008H9.75v-.008Zm3.75-3.75h.008v.008H13.5v-.008Zm0 3.75h.008v.008H13.5v-.008Zm3.75-3.75h.008v.008H17.25v-.008Zm0 3.75h.008v.008H17.25v-.008Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M4.5 5.25h15A1.5 1.5 0 0 1 21 6.75v12A1.5 1.5 0 0 1 19.5 20.25h-15A1.5 1.5 0 0 1 3 18.75v-12A1.5 1.5 0 0 1 4.5 5.25Z" />
+                    </svg>
+                    Attendance
+                </a>
                 <a href="{{ route('cashier.history') }}" @class([
                     'flex items-center gap-3 rounded-xl px-4 py-3 transition',
                     'bg-[#fff1e8] font-semibold text-[#c56d39] ring-1 ring-[#f6d7c2]' =>
@@ -57,6 +72,21 @@
                     </svg>
                     History
                 </a>
+
+                <form method="POST" action="{{ route('cashier.dashboard.go') }}">
+                    @csrf
+                    <button type="submit"
+                        class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left font-semibold text-[#7b5744] transition hover:bg-[#f8ede6]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="1.9">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15 19.5 21.75 12 15 4.5m6.75 7.5H8.25m0 0V7.5m0 4.5v4.5" />
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M13.5 19.5H6a2.25 2.25 0 0 1-2.25-2.25V6.75A2.25 2.25 0 0 1 6 4.5h7.5" />
+                        </svg>
+                        Go to Dashboard
+                    </button>
+                </form>
             </nav>
 
             <div class="mt-8 space-y-2 border-t border-[#f0e3da] pt-6 text-[#4f3b31]">
@@ -79,23 +109,5 @@
                     Settings
                 </a>
             </div>
-        </div>
-
-        <div class="mt-8 rounded-2xl border border-[#f0d4c2] bg-white p-4">
-            <p class="text-sm font-semibold text-[#2f241f]">{{ auth()->user()->name }}</p>
-            <p class="mt-1 text-xs text-[#8b6a59]">{{ auth()->user()->email }}</p>
-
-            <form method="POST" action="{{ route('logout') }}" class="mt-4">
-                @csrf
-                <button type="submit"
-                    class="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-[#7a5c4e] transition hover:bg-[#f8ede6]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="1.9">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 6 21h7.5a2.25 2.25 0 0 0 2.25-2.25V15m5.25-3H9.75m0 0 3-3m-3 3 3 3" />
-                    </svg>
-                    Log out
-                </button>
-            </form>
         </div>
 </aside>

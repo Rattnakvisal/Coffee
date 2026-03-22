@@ -76,6 +76,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'cashier_id');
     }
 
+    public function cashierAttendances(): HasMany
+    {
+        return $this->hasMany(CashierAttendance::class, 'cashier_id');
+    }
+
     public function hasRole(string ...$roles): bool
     {
         if (! $this->relationLoaded('role')) {

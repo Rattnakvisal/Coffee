@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashierAttendance;
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -91,6 +95,109 @@ class DashboardController extends Controller
             ->take(4)
             ->get(['id', 'name', 'first_name', 'last_name', 'email', 'avatar_path', 'role_id', 'created_at']);
 
+        $newAttendanceRows = CashierAttendance::query()
+            ->with('cashier:id,name,first_name,last_name,email')
+            ->whereNull('admin_notified_at')
+            ->orderByDesc('checked_in_at')
+            ->limit(5)
+            ->get();
+
+        $attendanceAlert = null;
+        $newAttendanceIds = $newAttendanceRows
+            ->pluck('id')
+            ->map(fn(mixed $id): int => (int) $id)
+            ->all();
+
+        if ($newAttendanceRows->isNotEmpty()) {
+            $latestChecked = $newAttendanceRows->max('checked_in_at');
+            $latestCheckedAt = $latestChecked
+                ? Carbon::parse((string) $latestChecked)->format('d/m/Y H:i')
+                : now()->format('d/m/Y H:i');
+
+            if ($newAttendanceRows->count() === 1) {
+                $cashierName = $this->formatUserDisplayName($newAttendanceRows->first()->cashier);
+                $attendanceAlert = $cashierName . ' checked attendance at ' . $latestCheckedAt . '.';
+            } else {
+                $attendanceAlert = $newAttendanceRows->count() . ' cashiers checked attendance. Latest at ' . $latestCheckedAt . '.';
+            }
+
+            CashierAttendance::query()
+                ->whereIn('id', $newAttendanceIds)
+                ->update([
+                    'admin_notified_at' => $now,
+                    'updated_at' => $now,
+                ]);
+        }
+
+        $attendanceRows = CashierAttendance::query()
+            ->with('cashier:id,name,first_name,last_name,email')
+            ->orderByDesc('checked_in_at')
+            ->take(10)
+            ->get()
+            ->map(function (CashierAttendance $attendance) use ($newAttendanceIds): array {
+                $cashierName = $this->formatUserDisplayName($attendance->cashier);
+
+                return [
+                    'id' => (int) $attendance->id,
+                    'cashier_name' => $cashierName,
+                    'cashier_email' => (string) ($attendance->cashier?->email ?? '-'),
+                    'checked_in_at' => $attendance->checked_in_at?->format('d/m/Y H:i') ?? '-',
+                    'attended_on' => $attendance->attended_on?->format('d/m/Y') ?? '-',
+                    'is_new' => in_array((int) $attendance->id, $newAttendanceIds, true),
+                ];
+            });
+
+        $orderAlert = null;
+        $orderNotifications = collect();
+
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'admin_notified_at')) {
+            $orderDateColumn = Schema::hasColumn('orders', 'placed_at') ? 'placed_at' : 'created_at';
+
+            $newOrderRows = Order::query()
+                ->with('cashier:id,name,first_name,last_name,email')
+                ->whereNull('admin_notified_at')
+                ->orderByDesc($orderDateColumn)
+                ->limit(5)
+                ->get();
+
+            if ($newOrderRows->isNotEmpty()) {
+                $latestOrderAt = $newOrderRows->max($orderDateColumn);
+                $latestOrderAtLabel = $latestOrderAt
+                    ? Carbon::parse((string) $latestOrderAt)->format('d/m/Y H:i')
+                    : now()->format('d/m/Y H:i');
+
+                if ($newOrderRows->count() === 1) {
+                    $singleOrder = $newOrderRows->first();
+                    $orderAlert = 'New order ' . (string) ($singleOrder?->order_number ?? '-') . ' at ' . $latestOrderAtLabel . '.';
+                } else {
+                    $orderAlert = $newOrderRows->count() . ' new orders placed. Latest at ' . $latestOrderAtLabel . '.';
+                }
+
+                $orderNotifications = $newOrderRows->map(function (Order $order) use ($orderDateColumn): array {
+                    $cashierName = $this->formatUserDisplayName($order->cashier);
+                    $orderedAtRaw = $order->{$orderDateColumn};
+                    $orderedAtLabel = $orderedAtRaw
+                        ? Carbon::parse((string) $orderedAtRaw)->format('d/m/Y H:i')
+                        : now()->format('d/m/Y H:i');
+                    $paymentLabel = str((string) ($order->payment_method ?? 'cash'))->upper()->value();
+
+                    return [
+                        'title' => 'New Order',
+                        'message' => 'Order ' . (string) ($order->order_number ?? '-') . ' by ' . $cashierName .
+                            ' total $' . number_format((float) ($order->total ?? 0), 2) . ' via ' . $paymentLabel . '.',
+                        'time' => $orderedAtLabel,
+                    ];
+                })->values();
+
+                Order::query()
+                    ->whereIn('id', $newOrderRows->pluck('id')->all())
+                    ->update([
+                        'admin_notified_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+            }
+        }
+
         $categoryMix = Category::query()
             ->active()
             ->withCount('products')
@@ -158,6 +265,7 @@ class DashboardController extends Controller
             ['label' => 'Users', 'value' => 'users', 'type' => 'Shortcut', 'meta' => 'Manage staff'],
             ['label' => 'Inventory', 'value' => 'inventory', 'type' => 'Shortcut', 'meta' => 'Income & outgoing details'],
             ['label' => 'Reports', 'value' => 'reports', 'type' => 'Shortcut', 'meta' => 'Sales analytics'],
+            ['label' => 'Attendance', 'value' => 'attendance', 'type' => 'Shortcut', 'meta' => 'Cashier attendance details'],
             ['label' => 'Settings', 'value' => 'settings', 'type' => 'Shortcut', 'meta' => 'Account settings'],
             ['label' => 'Profile', 'value' => 'profile', 'type' => 'Shortcut', 'meta' => 'Profile settings'],
             ['label' => 'Password', 'value' => 'password', 'type' => 'Shortcut', 'meta' => 'Security settings'],
@@ -240,6 +348,10 @@ class DashboardController extends Controller
             'searchQuery' => $searchQuery,
             'searchFeedback' => $searchFeedback,
             'searchSuggestions' => $searchSuggestions,
+            'attendanceAlert' => $attendanceAlert,
+            'attendanceRows' => $attendanceRows,
+            'orderAlert' => $orderAlert,
+            'orderNotifications' => $orderNotifications,
         ]);
     }
 
@@ -268,6 +380,120 @@ class DashboardController extends Controller
         return redirect()->to($url);
     }
 
+    public function notifications(): JsonResponse
+    {
+        $notifications = collect();
+
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'admin_notified_at')) {
+            $orderDateColumn = Schema::hasColumn('orders', 'placed_at') ? 'placed_at' : 'created_at';
+
+            $orderRows = Order::query()
+                ->with('cashier:id,name,first_name,last_name,email')
+                ->whereNull('admin_notified_at')
+                ->orderByDesc($orderDateColumn)
+                ->limit(10)
+                ->get();
+
+            $orderNotifications = $orderRows->map(function (Order $order) use ($orderDateColumn): array {
+                $orderedAtRaw = $order->{$orderDateColumn};
+                $orderedAt = $orderedAtRaw ? Carbon::parse((string) $orderedAtRaw) : now();
+                $orderedAtLabel = $orderedAt->format('d/m/Y H:i');
+                $cashierName = $this->formatUserDisplayName($order->cashier);
+                $paymentLabel = str((string) ($order->payment_method ?? 'cash'))->upper()->value();
+
+                return [
+                    'title' => 'New Order',
+                    'message' => 'Order ' . (string) ($order->order_number ?? '-') . ' by ' . $cashierName .
+                        ' total $' . number_format((float) ($order->total ?? 0), 2) . ' via ' . $paymentLabel . '.',
+                    'time' => $orderedAtLabel,
+                    'timestamp' => $orderedAt->timestamp,
+                ];
+            });
+
+            $notifications = $notifications->merge($orderNotifications);
+        }
+
+        if (Schema::hasTable('cashier_attendances') && Schema::hasColumn('cashier_attendances', 'admin_notified_at')) {
+            $attendanceRows = CashierAttendance::query()
+                ->with('cashier:id,name,first_name,last_name,email')
+                ->whereNull('admin_notified_at')
+                ->orderByDesc('checked_in_at')
+                ->limit(10)
+                ->get();
+
+            $attendanceNotifications = $attendanceRows->map(function (CashierAttendance $attendance): array {
+                $checkedAt = $attendance->checked_in_at ?? now();
+                $checkedAtLabel = $checkedAt->format('d/m/Y H:i');
+                $cashierName = $this->formatUserDisplayName($attendance->cashier);
+
+                return [
+                    'title' => 'Attendance Update',
+                    'message' => $cashierName . ' checked attendance at ' . $checkedAtLabel . '.',
+                    'time' => $checkedAtLabel,
+                    'timestamp' => $checkedAt->timestamp,
+                ];
+            });
+
+            $notifications = $notifications->merge($attendanceNotifications);
+        }
+
+        $notifications = $notifications
+            ->sortByDesc('timestamp')
+            ->take(10)
+            ->values()
+            ->map(function (array $notification): array {
+                return [
+                    'title' => (string) ($notification['title'] ?? 'Notification'),
+                    'message' => (string) ($notification['message'] ?? ''),
+                    'time' => (string) ($notification['time'] ?? now()->format('d/m/Y H:i')),
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'ok' => true,
+            'count' => $notifications->count(),
+            'notifications' => $notifications,
+        ]);
+    }
+
+    public function markNotificationsRead(): JsonResponse
+    {
+        $now = now();
+
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'admin_notified_at')) {
+            $orderUpdatePayload = [
+                'admin_notified_at' => $now,
+            ];
+
+            if (Schema::hasColumn('orders', 'updated_at')) {
+                $orderUpdatePayload['updated_at'] = $now;
+            }
+
+            Order::query()
+                ->whereNull('admin_notified_at')
+                ->update($orderUpdatePayload);
+        }
+
+        if (Schema::hasTable('cashier_attendances') && Schema::hasColumn('cashier_attendances', 'admin_notified_at')) {
+            $attendanceUpdatePayload = [
+                'admin_notified_at' => $now,
+            ];
+
+            if (Schema::hasColumn('cashier_attendances', 'updated_at')) {
+                $attendanceUpdatePayload['updated_at'] = $now;
+            }
+
+            CashierAttendance::query()
+                ->whereNull('admin_notified_at')
+                ->update($attendanceUpdatePayload);
+        }
+
+        return response()->json([
+            'ok' => true,
+        ]);
+    }
+
     private function resolveRouteFromSearch(string $search): ?array
     {
         $normalized = Str::of($search)->lower()->squish()->value();
@@ -282,6 +508,7 @@ class DashboardController extends Controller
             'admin.products.index' => ['product', 'products', 'item', 'items', 'menu'],
             'admin.categories.index' => ['category', 'categories'],
             'admin.users.index' => ['user', 'users', 'member', 'members', 'staff', 'team', 'admin', 'cashier'],
+            'admin.attendance.index' => ['attendance', 'check in', 'check-in', 'cashier attendance'],
             'admin.reports' => ['report', 'reports', 'sales', 'analytics', 'summary'],
             'admin.settings.index#profile' => ['setting', 'settings', 'profile', 'account'],
             'admin.settings.index#security' => ['password', 'security'],
@@ -381,5 +608,22 @@ class DashboardController extends Controller
             'isPositive' => $isPositive,
             'text' => sprintf('%s%.1f%% %s', $isPositive ? '+' : '-', $percent, $suffix),
         ];
+    }
+
+    private function formatUserDisplayName(?User $user): string
+    {
+        if (! $user) {
+            return 'Cashier';
+        }
+
+        $fullName = trim((string) ($user->first_name ?? '') . ' ' . (string) ($user->last_name ?? ''));
+
+        if ($fullName !== '') {
+            return $fullName;
+        }
+
+        $fallbackName = trim((string) ($user->name ?? ''));
+
+        return $fallbackName !== '' ? $fallbackName : 'Cashier';
     }
 }

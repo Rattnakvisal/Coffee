@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
     @php
@@ -7,6 +7,8 @@
         $searchSuggestions = collect($searchSuggestions ?? []);
         $search = (string) ($search ?? '');
         $category = (string) ($category ?? '');
+        $todayAttendance = $todayAttendance ?? null;
+        $canWork = $todayAttendance !== null;
     @endphp
     <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
@@ -34,6 +36,25 @@
                         Cart
                     </button>
                 </div>
+
+                @if (session('status'))
+                    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
+                @if ($errors->has('attendance'))
+                    <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {{ $errors->first('attendance') }}
+                    </div>
+                @endif
+
+                @unless ($canWork)
+                    <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                        Cashier cannot work yet. Please check attendance first.
+                    </div>
+                @endunless
+
                 <div class="flex flex-wrap items-center gap-3">
                     <form method="GET" action="{{ route('cashier.index') }}" class="relative min-w-[240px] flex-1"
                         data-cashier-search-form data-cashier-search-suggestions='@json($searchSuggestions->values()->all())'>
@@ -97,7 +118,10 @@
                     </a>
                 </div>
 
-                <div class="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+                <div @class([
+                    'mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2',
+                    'pointer-events-none opacity-60 select-none' => !$canWork,
+                ])>
                     @forelse ($products as $item)
                         @php
                             $discountPercent = $item->normalizedDiscountPercent();
@@ -124,7 +148,9 @@
                                     'is_active' => $item->isSizeActive('large'),
                                 ],
                             ]);
-                            $activeSizeOptions = $allSizeOptions->filter(fn(array $size): bool => (bool) $size['is_active'])->values();
+                            $activeSizeOptions = $allSizeOptions
+                                ->filter(fn(array $size): bool => (bool) $size['is_active'])
+                                ->values();
                             $activeSizeKeys = $activeSizeOptions->pluck('key')->values()->all();
                             $hasActiveSizes = $activeSizeOptions->isNotEmpty();
                             $defaultSizeKey = (string) ($activeSizeOptions->first()['key'] ?? 'small');
@@ -154,7 +180,8 @@
                                         <h3 class="text-lg font-bold text-[#2f241f]">{{ $item->name }}</h3>
                                         <div class="text-right">
                                             @if ($discountPercent > 0 && $hasActiveSizes)
-                                                <p class="js-size-base-price-label text-xs font-semibold text-slate-400 line-through">
+                                                <p
+                                                    class="js-size-base-price-label text-xs font-semibold text-slate-400 line-through">
                                                     ${{ number_format($defaultBasePrice, 2) }}
                                                 </p>
                                             @endif
@@ -190,7 +217,8 @@
                                         data-active-sizes='@json($activeSizeKeys)'>
                                         @csrf
                                         <input type="hidden" name="product_id" value="{{ $item->id }}">
-                                        <input type="hidden" name="qty" value="1" class="js-product-qty-input">
+                                        <input type="hidden" name="qty" value="1"
+                                            class="js-product-qty-input">
                                         <div class="w-full space-y-3 rounded-2xl bg-[#fff9f4] p-3 ring-1 ring-[#f2dfd2]">
                                             <div class="space-y-2">
                                                 <div class="flex items-center justify-between">
@@ -206,22 +234,24 @@
                                                         @php
                                                             $sizeKey = (string) ($sizeOption['key'] ?? 'small');
                                                             $sizeIsActive = (bool) ($sizeOption['is_active'] ?? false);
-                                                            $isDefaultSize = $sizeKey === $defaultSizeKey && $sizeIsActive;
+                                                            $isDefaultSize =
+                                                                $sizeKey === $defaultSizeKey && $sizeIsActive;
                                                         @endphp
                                                         <button type="button" data-size="{{ $sizeKey }}"
                                                             @class([
                                                                 'js-size-option coffee-size-chip px-3 py-1.5 font-semibold',
                                                                 'is-active' => $isDefaultSize,
-                                                                'is-disabled' => ! $sizeIsActive,
+                                                                'is-disabled' => !$sizeIsActive,
                                                             ])
                                                             aria-pressed="{{ $isDefaultSize ? 'true' : 'false' }}"
-                                                            @disabled(! $sizeIsActive)>
+                                                            @disabled(!$sizeIsActive)>
                                                             {{ $sizeOption['label'] }}
                                                         </button>
                                                     @endforeach
                                                 </div>
-                                                @if (! $hasActiveSizes)
-                                                    <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-red-500">
+                                                @if (!$hasActiveSizes)
+                                                    <p
+                                                        class="text-[11px] font-semibold uppercase tracking-[0.08em] text-red-500">
                                                         This product currently has no active sizes.
                                                     </p>
                                                 @endif
@@ -254,8 +284,7 @@
                                                         class="js-product-qty-increase flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-base">+</button>
                                                 </div>
 
-                                                <button type="submit"
-                                                    @disabled(! $hasActiveSizes)
+                                                <button type="submit" @disabled(!$hasActiveSizes || !$canWork)
                                                     class="js-add-to-cart-btn rounded-full bg-[#f4a06b] px-5 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:opacity-70">
                                                     Add to cart
                                                 </button>
