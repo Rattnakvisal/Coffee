@@ -15,11 +15,15 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
+    private const SESSION_NOTIFICATION_HIDDEN_KEYS = 'admin_notifications_hidden_keys';
+    private const SESSION_NOTIFICATION_HIDDEN_BEFORE = 'admin_notifications_hidden_before';
+
     public function index(Request $request): View|RedirectResponse
     {
         $searchQuery = trim((string) $request->query('q', ''));
@@ -98,6 +102,10 @@ class DashboardController extends Controller
         $newAttendanceRows = CashierAttendance::query()
             ->with('cashier:id,name,first_name,last_name,email')
             ->whereNull('admin_notified_at')
+            ->when(
+                Schema::hasColumn('cashier_attendances', 'admin_removed_at'),
+                fn($query) => $query->whereNull('admin_removed_at'),
+            )
             ->orderByDesc('checked_in_at')
             ->limit(5)
             ->get();
@@ -120,13 +128,6 @@ class DashboardController extends Controller
             } else {
                 $attendanceAlert = $newAttendanceRows->count() . ' cashiers checked attendance. Latest at ' . $latestCheckedAt . '.';
             }
-
-            CashierAttendance::query()
-                ->whereIn('id', $newAttendanceIds)
-                ->update([
-                    'admin_notified_at' => $now,
-                    'updated_at' => $now,
-                ]);
         }
 
         $attendanceRows = CashierAttendance::query()
@@ -156,6 +157,10 @@ class DashboardController extends Controller
             $newOrderRows = Order::query()
                 ->with('cashier:id,name,first_name,last_name,email')
                 ->whereNull('admin_notified_at')
+                ->when(
+                    Schema::hasColumn('orders', 'admin_removed_at'),
+                    fn($query) => $query->whereNull('admin_removed_at'),
+                )
                 ->orderByDesc($orderDateColumn)
                 ->limit(5)
                 ->get();
@@ -182,19 +187,14 @@ class DashboardController extends Controller
                     $paymentLabel = str((string) ($order->payment_method ?? 'cash'))->upper()->value();
 
                     return [
+                        'id' => (int) $order->id,
+                        'source' => 'order',
                         'title' => 'New Order',
                         'message' => 'Order ' . (string) ($order->order_number ?? '-') . ' by ' . $cashierName .
                             ' total $' . number_format((float) ($order->total ?? 0), 2) . ' via ' . $paymentLabel . '.',
                         'time' => $orderedAtLabel,
                     ];
                 })->values();
-
-                Order::query()
-                    ->whereIn('id', $newOrderRows->pluck('id')->all())
-                    ->update([
-                        'admin_notified_at' => $now,
-                        'updated_at' => $now,
-                    ]);
             }
         }
 
@@ -380,117 +380,65 @@ class DashboardController extends Controller
         return redirect()->to($url);
     }
 
-    public function notifications(): JsonResponse
+    public function notifications(Request $request): JsonResponse
     {
-        $notifications = collect();
-
-        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'admin_notified_at')) {
-            $orderDateColumn = Schema::hasColumn('orders', 'placed_at') ? 'placed_at' : 'created_at';
-
-            $orderRows = Order::query()
-                ->with('cashier:id,name,first_name,last_name,email')
-                ->whereNull('admin_notified_at')
-                ->orderByDesc($orderDateColumn)
-                ->limit(10)
-                ->get();
-
-            $orderNotifications = $orderRows->map(function (Order $order) use ($orderDateColumn): array {
-                $orderedAtRaw = $order->{$orderDateColumn};
-                $orderedAt = $orderedAtRaw ? Carbon::parse((string) $orderedAtRaw) : now();
-                $orderedAtLabel = $orderedAt->format('d/m/Y H:i');
-                $cashierName = $this->formatUserDisplayName($order->cashier);
-                $paymentLabel = str((string) ($order->payment_method ?? 'cash'))->upper()->value();
-
-                return [
-                    'title' => 'New Order',
-                    'message' => 'Order ' . (string) ($order->order_number ?? '-') . ' by ' . $cashierName .
-                        ' total $' . number_format((float) ($order->total ?? 0), 2) . ' via ' . $paymentLabel . '.',
-                    'time' => $orderedAtLabel,
-                    'timestamp' => $orderedAt->timestamp,
-                ];
-            });
-
-            $notifications = $notifications->merge($orderNotifications);
-        }
-
-        if (Schema::hasTable('cashier_attendances') && Schema::hasColumn('cashier_attendances', 'admin_notified_at')) {
-            $attendanceRows = CashierAttendance::query()
-                ->with('cashier:id,name,first_name,last_name,email')
-                ->whereNull('admin_notified_at')
-                ->orderByDesc('checked_in_at')
-                ->limit(10)
-                ->get();
-
-            $attendanceNotifications = $attendanceRows->map(function (CashierAttendance $attendance): array {
-                $checkedAt = $attendance->checked_in_at ?? now();
-                $checkedAtLabel = $checkedAt->format('d/m/Y H:i');
-                $cashierName = $this->formatUserDisplayName($attendance->cashier);
-
-                return [
-                    'title' => 'Attendance Update',
-                    'message' => $cashierName . ' checked attendance at ' . $checkedAtLabel . '.',
-                    'time' => $checkedAtLabel,
-                    'timestamp' => $checkedAt->timestamp,
-                ];
-            });
-
-            $notifications = $notifications->merge($attendanceNotifications);
-        }
-
-        $notifications = $notifications
-            ->sortByDesc('timestamp')
-            ->take(10)
-            ->values()
-            ->map(function (array $notification): array {
-                return [
-                    'title' => (string) ($notification['title'] ?? 'Notification'),
-                    'message' => (string) ($notification['message'] ?? ''),
-                    'time' => (string) ($notification['time'] ?? now()->format('d/m/Y H:i')),
-                ];
-            })
-            ->values();
+        $notifications = $this->serializeNotifications(
+            $this->applySessionRemovalFilters($request, $this->collectNotifications(false, 5)),
+        );
 
         return response()->json([
             'ok' => true,
-            'count' => $notifications->count(),
+            'count' => $this->unreadNotificationsCount($request),
             'notifications' => $notifications,
         ]);
     }
 
-    public function markNotificationsRead(): JsonResponse
+    public function markNotificationsRead(Request $request): JsonResponse
     {
-        $now = now();
-
-        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'admin_notified_at')) {
-            $orderUpdatePayload = [
-                'admin_notified_at' => $now,
-            ];
-
-            if (Schema::hasColumn('orders', 'updated_at')) {
-                $orderUpdatePayload['updated_at'] = $now;
-            }
-
-            Order::query()
-                ->whereNull('admin_notified_at')
-                ->update($orderUpdatePayload);
-        }
-
-        if (Schema::hasTable('cashier_attendances') && Schema::hasColumn('cashier_attendances', 'admin_notified_at')) {
-            $attendanceUpdatePayload = [
-                'admin_notified_at' => $now,
-            ];
-
-            if (Schema::hasColumn('cashier_attendances', 'updated_at')) {
-                $attendanceUpdatePayload['updated_at'] = $now;
-            }
-
-            CashierAttendance::query()
-                ->whereNull('admin_notified_at')
-                ->update($attendanceUpdatePayload);
-        }
+        $this->markAllNotificationsAsRead();
+        $notifications = $this->serializeNotifications(
+            $this->applySessionRemovalFilters($request, $this->collectNotifications(false, 5)),
+        );
 
         return response()->json([
             'ok' => true,
+            'count' => 0,
+            'notifications' => $notifications,
+        ]);
+    }
+
+    public function removeNotificationItem(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'source' => ['required', 'string', 'in:order,attendance'],
+            'id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $this->removeNotificationBySource(
+            (string) $validated['source'],
+            (int) $validated['id'],
+            $request,
+        );
+
+        return response()->json([
+            'ok' => true,
+            'count' => $this->unreadNotificationsCount($request),
+            'notifications' => $this->serializeNotifications(
+                $this->applySessionRemovalFilters($request, $this->collectNotifications(false, 5)),
+            ),
+        ]);
+    }
+
+    public function removeNotifications(Request $request): JsonResponse
+    {
+        $this->removeAllNotifications($request);
+
+        return response()->json([
+            'ok' => true,
+            'count' => $this->unreadNotificationsCount($request),
+            'notifications' => $this->serializeNotifications(
+                $this->applySessionRemovalFilters($request, $this->collectNotifications(false, 5)),
+            ),
         ]);
     }
 
@@ -625,5 +573,345 @@ class DashboardController extends Controller
         $fallbackName = trim((string) ($user->name ?? ''));
 
         return $fallbackName !== '' ? $fallbackName : 'Cashier';
+    }
+
+    private function markAllNotificationsAsRead(): void
+    {
+        $now = now();
+
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'admin_notified_at')) {
+            $orderUpdatePayload = [
+                'admin_notified_at' => $now,
+            ];
+
+            if (Schema::hasColumn('orders', 'updated_at')) {
+                $orderUpdatePayload['updated_at'] = $now;
+            }
+
+            Order::query()
+                ->whereNull('admin_notified_at')
+                ->when(
+                    Schema::hasColumn('orders', 'admin_removed_at'),
+                    fn($query) => $query->whereNull('admin_removed_at'),
+                )
+                ->update($orderUpdatePayload);
+        }
+
+        if (Schema::hasTable('cashier_attendances') && Schema::hasColumn('cashier_attendances', 'admin_notified_at')) {
+            $attendanceUpdatePayload = [
+                'admin_notified_at' => $now,
+            ];
+
+            if (Schema::hasColumn('cashier_attendances', 'updated_at')) {
+                $attendanceUpdatePayload['updated_at'] = $now;
+            }
+
+            CashierAttendance::query()
+                ->whereNull('admin_notified_at')
+                ->when(
+                    Schema::hasColumn('cashier_attendances', 'admin_removed_at'),
+                    fn($query) => $query->whereNull('admin_removed_at'),
+                )
+                ->update($attendanceUpdatePayload);
+        }
+    }
+
+    private function removeNotificationBySource(string $source, int $id, Request $request): void
+    {
+        $now = now();
+        $isRemovedPersisted = false;
+
+        if ($source === 'order' && Schema::hasTable('orders')) {
+            $payload = [];
+
+            if (Schema::hasColumn('orders', 'admin_removed_at')) {
+                $payload['admin_removed_at'] = $now;
+                $isRemovedPersisted = true;
+            }
+
+            if (Schema::hasColumn('orders', 'updated_at')) {
+                $payload['updated_at'] = $now;
+            }
+
+            if ($payload !== []) {
+                Order::query()
+                    ->whereKey($id)
+                    ->update($payload);
+            }
+
+            if (! $isRemovedPersisted) {
+                $this->appendHiddenNotificationKey($request, $source, $id);
+            }
+
+            return;
+        }
+
+        if ($source === 'attendance' && Schema::hasTable('cashier_attendances')) {
+            $payload = [];
+
+            if (Schema::hasColumn('cashier_attendances', 'admin_removed_at')) {
+                $payload['admin_removed_at'] = $now;
+                $isRemovedPersisted = true;
+            }
+
+            if (Schema::hasColumn('cashier_attendances', 'updated_at')) {
+                $payload['updated_at'] = $now;
+            }
+
+            if ($payload !== []) {
+                CashierAttendance::query()
+                    ->whereKey($id)
+                    ->update($payload);
+            }
+
+            if (! $isRemovedPersisted) {
+                $this->appendHiddenNotificationKey($request, $source, $id);
+            }
+        }
+    }
+
+    private function removeAllNotifications(Request $request): void
+    {
+        $now = now();
+        $hasPersistentRemoval = false;
+
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'admin_removed_at')) {
+            $payload = ['admin_removed_at' => $now];
+            $hasPersistentRemoval = true;
+
+            if (Schema::hasColumn('orders', 'updated_at')) {
+                $payload['updated_at'] = $now;
+            }
+
+            Order::query()
+                ->whereNull('admin_removed_at')
+                ->update($payload);
+        }
+
+        if (Schema::hasTable('cashier_attendances') && Schema::hasColumn('cashier_attendances', 'admin_removed_at')) {
+            $payload = ['admin_removed_at' => $now];
+            $hasPersistentRemoval = true;
+
+            if (Schema::hasColumn('cashier_attendances', 'updated_at')) {
+                $payload['updated_at'] = $now;
+            }
+
+            CashierAttendance::query()
+                ->whereNull('admin_removed_at')
+                ->update($payload);
+        }
+
+        if (! $hasPersistentRemoval) {
+            $request->session()->put(self::SESSION_NOTIFICATION_HIDDEN_BEFORE, $now->toIso8601String());
+            $request->session()->forget(self::SESSION_NOTIFICATION_HIDDEN_KEYS);
+            return;
+        }
+
+        $request->session()->forget(self::SESSION_NOTIFICATION_HIDDEN_BEFORE);
+        $request->session()->forget(self::SESSION_NOTIFICATION_HIDDEN_KEYS);
+    }
+
+    private function unreadNotificationsCount(Request $request): int
+    {
+        return (int) $this
+            ->applySessionRemovalFilters($request, $this->collectNotifications(true, 1000))
+            ->count();
+    }
+
+    /**
+     * @return Collection<int, array{id: int, source: string, title: string, message: string, time: string, timestamp: int}>
+     */
+    private function collectNotifications(bool $onlyUnread, int $limit): Collection
+    {
+        $notifications = collect();
+
+        if (Schema::hasTable('orders') && Schema::hasColumn('orders', 'admin_notified_at')) {
+            $orderDateColumn = Schema::hasColumn('orders', 'placed_at') ? 'placed_at' : 'created_at';
+            $orderQuery = Order::query()
+                ->with('cashier:id,name,first_name,last_name,email')
+                ->orderByDesc($orderDateColumn)
+                ->when(
+                    Schema::hasColumn('orders', 'admin_removed_at'),
+                    fn($query) => $query->whereNull('admin_removed_at'),
+                );
+
+            if ($onlyUnread) {
+                $orderQuery->whereNull('admin_notified_at');
+            }
+
+            $orderRows = $orderQuery
+                ->limit($limit)
+                ->get();
+
+            $orderNotifications = $orderRows->map(function (Order $order) use ($orderDateColumn): array {
+                $orderedAtRaw = $order->{$orderDateColumn};
+                $orderedAt = $orderedAtRaw ? Carbon::parse((string) $orderedAtRaw) : now();
+                $orderedAtLabel = $orderedAt->format('d/m/Y H:i');
+                $cashierName = $this->formatUserDisplayName($order->cashier);
+                $paymentLabel = str((string) ($order->payment_method ?? 'cash'))->upper()->value();
+
+                return [
+                    'id' => (int) $order->id,
+                    'source' => 'order',
+                    'title' => 'New Order',
+                    'message' => 'Order ' . (string) ($order->order_number ?? '-') . ' by ' . $cashierName .
+                        ' total $' . number_format((float) ($order->total ?? 0), 2) . ' via ' . $paymentLabel . '.',
+                    'time' => $orderedAtLabel,
+                    'timestamp' => $orderedAt->timestamp,
+                ];
+            });
+
+            $notifications = $notifications->merge($orderNotifications);
+        }
+
+        if (Schema::hasTable('cashier_attendances') && Schema::hasColumn('cashier_attendances', 'admin_notified_at')) {
+            $attendanceQuery = CashierAttendance::query()
+                ->with('cashier:id,name,first_name,last_name,email')
+                ->orderByDesc('checked_in_at')
+                ->when(
+                    Schema::hasColumn('cashier_attendances', 'admin_removed_at'),
+                    fn($query) => $query->whereNull('admin_removed_at'),
+                );
+
+            if ($onlyUnread) {
+                $attendanceQuery->whereNull('admin_notified_at');
+            }
+
+            $attendanceRows = $attendanceQuery
+                ->limit($limit)
+                ->get();
+
+            $attendanceNotifications = $attendanceRows->map(function (CashierAttendance $attendance): array {
+                $checkedAt = $attendance->checked_in_at ?? now();
+                $checkedAtLabel = $checkedAt->format('d/m/Y H:i');
+                $cashierName = $this->formatUserDisplayName($attendance->cashier);
+
+                return [
+                    'id' => (int) $attendance->id,
+                    'source' => 'attendance',
+                    'title' => 'Attendance Update',
+                    'message' => $cashierName . ' checked attendance at ' . $checkedAtLabel . '.',
+                    'time' => $checkedAtLabel,
+                    'timestamp' => $checkedAt->timestamp,
+                ];
+            });
+
+            $notifications = $notifications->merge($attendanceNotifications);
+        }
+
+        return $notifications
+            ->sortByDesc('timestamp')
+            ->take($limit)
+            ->values()
+            ->map(function (array $notification): array {
+                return [
+                    'id' => (int) ($notification['id'] ?? 0),
+                    'source' => (string) ($notification['source'] ?? ''),
+                    'title' => (string) ($notification['title'] ?? 'Notification'),
+                    'message' => (string) ($notification['message'] ?? ''),
+                    'time' => (string) ($notification['time'] ?? now()->format('d/m/Y H:i')),
+                    'timestamp' => (int) ($notification['timestamp'] ?? now()->timestamp),
+                ];
+            })
+            ->values();
+    }
+
+    /**
+     * @param Collection<int, array<string, mixed>> $notifications
+     * @return Collection<int, array{id: int, source: string, title: string, message: string, time: string}>
+     */
+    private function serializeNotifications(Collection $notifications): Collection
+    {
+        return $notifications
+            ->map(function (array $notification): array {
+                return [
+                    'id' => (int) ($notification['id'] ?? 0),
+                    'source' => (string) ($notification['source'] ?? ''),
+                    'title' => (string) ($notification['title'] ?? 'Notification'),
+                    'message' => (string) ($notification['message'] ?? ''),
+                    'time' => (string) ($notification['time'] ?? now()->format('d/m/Y H:i')),
+                ];
+            })
+            ->values();
+    }
+
+    /**
+     * @param Collection<int, array<string, mixed>> $notifications
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function applySessionRemovalFilters(Request $request, Collection $notifications): Collection
+    {
+        $hiddenKeys = array_flip($this->hiddenNotificationKeys($request));
+        $hiddenBeforeTimestamp = $this->hiddenBeforeTimestamp($request);
+
+        return $notifications
+            ->filter(function (array $notification) use ($hiddenKeys, $hiddenBeforeTimestamp): bool {
+                $source = (string) ($notification['source'] ?? '');
+                $id = (int) ($notification['id'] ?? 0);
+                $key = $this->notificationKey($source, $id);
+
+                if ($source !== '' && $id > 0 && isset($hiddenKeys[$key])) {
+                    return false;
+                }
+
+                if ($hiddenBeforeTimestamp === null) {
+                    return true;
+                }
+
+                $timestamp = (int) ($notification['timestamp'] ?? 0);
+
+                return $timestamp > $hiddenBeforeTimestamp;
+            })
+            ->values();
+    }
+
+    private function appendHiddenNotificationKey(Request $request, string $source, int $id): void
+    {
+        $key = $this->notificationKey($source, $id);
+        if ($key === ':0') {
+            return;
+        }
+
+        $keys = collect((array) $request->session()->get(self::SESSION_NOTIFICATION_HIDDEN_KEYS, []))
+            ->map(fn(mixed $value): string => trim((string) $value))
+            ->filter(fn(string $value): bool => $value !== '')
+            ->values();
+
+        if (! $keys->contains($key)) {
+            $keys->push($key);
+        }
+
+        $request->session()->put(self::SESSION_NOTIFICATION_HIDDEN_KEYS, $keys->unique()->values()->all());
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function hiddenNotificationKeys(Request $request): array
+    {
+        return collect((array) $request->session()->get(self::SESSION_NOTIFICATION_HIDDEN_KEYS, []))
+            ->map(fn(mixed $value): string => trim((string) $value))
+            ->filter(fn(string $value): bool => $value !== '')
+            ->values()
+            ->all();
+    }
+
+    private function hiddenBeforeTimestamp(Request $request): ?int
+    {
+        $rawValue = trim((string) $request->session()->get(self::SESSION_NOTIFICATION_HIDDEN_BEFORE, ''));
+        if ($rawValue === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($rawValue)->timestamp;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function notificationKey(string $source, int $id): string
+    {
+        return $source . ':' . $id;
     }
 }

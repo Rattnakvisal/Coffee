@@ -17,6 +17,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/', [DashboardController::class, 'index'])->name('index');
         Route::get('/notifications', [DashboardController::class, 'notifications'])->name('notifications.index');
         Route::post('/notifications/mark-read', [DashboardController::class, 'markNotificationsRead'])->name('notifications.read');
+        Route::post('/notifications/remove-item', [DashboardController::class, 'removeNotificationItem'])->name('notifications.remove.item');
+        Route::post('/notifications/remove', [DashboardController::class, 'removeNotifications'])->name('notifications.remove');
         Route::get('/search', [DashboardController::class, 'search'])->name('search');
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::post('/inventory/transactions', [InventoryController::class, 'store'])->name('inventory.store');

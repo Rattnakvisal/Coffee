@@ -81,9 +81,18 @@ class InventoryController extends Controller
                     $happenedAt = $this->toCarbonInstance($order->{$orderDateColumn} ?? $order->created_at);
                     $amountColumn = $this->incomeAmountColumn();
                     $amount = (float) ($order->{$amountColumn} ?? 0);
+                    $grossAmount = (float) ($order->subtotal ?? $amount);
+                    $discountAmount = max((float) ($order->discount ?? 0), 0.0);
                     $cashierName = $this->formatUserName($order->cashier, 'Cashier');
                     $paymentMethod = strtoupper((string) ($order->payment_method ?? 'UNKNOWN'));
                     $orderNumber = (string) ($order->order_number ?? '-');
+                    $note = $discountAmount > 0
+                        ? sprintf(
+                            'Order payment received. Discount applied: $%.2f (gross: $%.2f).',
+                            $discountAmount,
+                            $grossAmount,
+                        )
+                        : 'Order payment received.';
 
                     return [
                         'id' => 'order-' . $order->id,
@@ -93,7 +102,7 @@ class InventoryController extends Controller
                         'money_out' => 0.0,
                         'payment_method' => $paymentMethod,
                         'reference' => $orderNumber,
-                        'note' => 'Order payment received.',
+                        'note' => $note,
                         'actor_name' => $cashierName,
                         'happened_at_local' => $this->formatDateLocal($happenedAt),
                         'sort_timestamp' => $happenedAt->timestamp,
@@ -296,7 +305,15 @@ class InventoryController extends Controller
 
     private function incomeAmountColumn(): string
     {
-        return Schema::hasColumn('orders', 'subtotal') ? 'subtotal' : 'total';
+        if (Schema::hasColumn('orders', 'total')) {
+            return 'total';
+        }
+
+        if (Schema::hasColumn('orders', 'subtotal')) {
+            return 'subtotal';
+        }
+
+        return 'total';
     }
 
     /**

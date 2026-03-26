@@ -81,6 +81,12 @@
     const notificationMarkReadUrl = notificationRoot
         ? notificationRoot.getAttribute("data-mark-read-url") || ""
         : "";
+    const notificationRemoveItemUrl = notificationRoot
+        ? notificationRoot.getAttribute("data-remove-item-url") || ""
+        : "";
+    const notificationRemoveUrl = notificationRoot
+        ? notificationRoot.getAttribute("data-remove-url") || ""
+        : "";
     const csrfToken =
         document
             .querySelector('meta[name="csrf-token"]')
@@ -93,6 +99,12 @@
     );
     const notificationHeaderCount = document.querySelector(
         "[data-admin-notification-header-count]",
+    );
+    const notificationMarkButton = document.querySelector(
+        "[data-admin-notification-mark]",
+    );
+    const notificationRemoveButton = document.querySelector(
+        "[data-admin-notification-remove]",
     );
     const notificationList = document.querySelector(
         "[data-admin-notification-list]",
@@ -497,6 +509,16 @@
                 const title = escapeHtml(notification.title || "Notification");
                 const time = escapeHtml(notification.time || "");
                 const message = escapeHtml(notification.message || "");
+                const source = String(notification.source || "");
+                const id = Number(notification.id || 0);
+                const canRemove = source !== "" && Number.isInteger(id) && id > 0;
+                const removeButton = canRemove
+                    ? '<button type="button" data-admin-notification-item-remove data-source="' +
+                      escapeHtml(source) +
+                      '" data-id="' +
+                      String(id) +
+                      '" class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-xs font-bold text-rose-600 transition hover:bg-rose-100" aria-label="Remove notification item">x</button>'
+                    : "";
 
                 return (
                     '<div class="mb-2 rounded-xl border border-[#f2e6dd] bg-[#fffaf6] p-3 last:mb-0">' +
@@ -504,9 +526,12 @@
                     '<p class="text-xs font-semibold uppercase tracking-[0.08em] text-[#b16231]">' +
                     title +
                     "</p>" +
+                    '<div class="flex items-center gap-2">' +
                     '<span class="text-[11px] text-slate-400">' +
                     time +
                     "</span>" +
+                    removeButton +
+                    "</div>" +
                     "</div>" +
                     '<p class="mt-1 text-sm text-[#4f3b31]">' +
                     message +
@@ -532,6 +557,20 @@
         }
 
         notificationEmpty.classList.toggle("hidden", rows.length > 0);
+    };
+
+    const setNotificationActionDisabled = function (disabled) {
+        [notificationMarkButton, notificationRemoveButton].forEach(function (
+            button,
+        ) {
+            if (!button) {
+                return;
+            }
+
+            button.disabled = !!disabled;
+            button.classList.toggle("opacity-60", !!disabled);
+            button.classList.toggle("cursor-not-allowed", !!disabled);
+        });
     };
 
     const syncAdminNotifications = async function () {
@@ -576,11 +615,13 @@
 
     const markAdminNotificationsAsRead = async function () {
         if (!notificationMarkReadUrl) {
-            return;
+            return null;
         }
 
+        setNotificationActionDisabled(true);
+
         try {
-            await fetch(notificationMarkReadUrl, {
+            const response = await fetch(notificationMarkReadUrl, {
                 method: "POST",
                 headers: {
                     Accept: "application/json",
@@ -588,8 +629,80 @@
                     "X-CSRF-TOKEN": csrfToken,
                 },
             });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const payload = await response.json();
+            return payload && payload.ok === true ? payload : null;
         } catch (error) {
             // Silent fail; badge is still hidden on the UI side.
+            return null;
+        } finally {
+            setNotificationActionDisabled(false);
+        }
+    };
+
+    const removeAdminNotifications = async function () {
+        if (!notificationRemoveUrl) {
+            return null;
+        }
+
+        setNotificationActionDisabled(true);
+
+        try {
+            const response = await fetch(notificationRemoveUrl, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken,
+                },
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const payload = await response.json();
+            return payload && payload.ok === true ? payload : null;
+        } catch (error) {
+            // Silent fail.
+            return null;
+        } finally {
+            setNotificationActionDisabled(false);
+        }
+    };
+
+    const removeSingleAdminNotification = async function (source, id) {
+        if (!notificationRemoveItemUrl) {
+            return null;
+        }
+
+        try {
+            const response = await fetch(notificationRemoveItemUrl, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    source: source,
+                    id: id,
+                }),
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const payload = await response.json();
+            return payload && payload.ok === true ? payload : null;
+        } catch (error) {
+            return null;
         }
     };
 
@@ -702,12 +815,100 @@
             if (isClosed) {
                 closeProfilePanel();
                 openNotificationPanel();
-                updateNotificationBadge(0);
-                markAdminNotificationsAsRead();
                 return;
             }
 
             closeNotificationPanel();
+        });
+    }
+
+    if (notificationMarkButton) {
+        notificationMarkButton.addEventListener("click", async function (
+            event,
+        ) {
+            event.preventDefault();
+            event.stopPropagation();
+            const payload = await markAdminNotificationsAsRead();
+
+            if (!payload) {
+                return;
+            }
+
+            const rows = Array.isArray(payload.notifications)
+                ? payload.notifications
+                : [];
+            const count = Number(payload.count);
+            updateNotificationBadge(Number.isFinite(count) ? count : 0);
+            renderNotificationItems(rows);
+        });
+    }
+
+    if (notificationRemoveButton) {
+        notificationRemoveButton.addEventListener("click", async function (
+            event,
+        ) {
+            event.preventDefault();
+            event.stopPropagation();
+            const payload = await removeAdminNotifications();
+
+            if (!payload) {
+                return;
+            }
+
+            const rows = Array.isArray(payload.notifications)
+                ? payload.notifications
+                : [];
+            const count = Number(payload.count);
+            updateNotificationBadge(Number.isFinite(count) ? count : 0);
+            renderNotificationItems(rows);
+        });
+    }
+
+    if (notificationList) {
+        notificationList.addEventListener("click", async function (event) {
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const removeButton = target.closest(
+                "[data-admin-notification-item-remove]",
+            );
+
+            if (!removeButton) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const source = removeButton.getAttribute("data-source") || "";
+            const rawId = Number(removeButton.getAttribute("data-id") || 0);
+
+            if (!source || !Number.isInteger(rawId) || rawId <= 0) {
+                return;
+            }
+
+            removeButton.setAttribute("disabled", "disabled");
+            removeButton.classList.add("opacity-60", "cursor-not-allowed");
+
+            const payload = await removeSingleAdminNotification(source, rawId);
+
+            if (!payload) {
+                removeButton.removeAttribute("disabled");
+                removeButton.classList.remove(
+                    "opacity-60",
+                    "cursor-not-allowed",
+                );
+                return;
+            }
+
+            const rows = Array.isArray(payload.notifications)
+                ? payload.notifications
+                : [];
+            const count = Number(payload.count);
+            updateNotificationBadge(Number.isFinite(count) ? count : 0);
+            renderNotificationItems(rows);
         });
     }
 

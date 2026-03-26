@@ -18,6 +18,7 @@ class CashierAttendance extends Model
         'attended_on',
         'checked_in_at',
         'admin_notified_at',
+        'admin_removed_at',
     ];
 
     /**
@@ -29,6 +30,7 @@ class CashierAttendance extends Model
             'attended_on' => 'date',
             'checked_in_at' => 'datetime',
             'admin_notified_at' => 'datetime',
+            'admin_removed_at' => 'datetime',
         ];
     }
 

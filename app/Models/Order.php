@@ -27,6 +27,7 @@ class Order extends Model
         'status',
         'placed_at',
         'admin_notified_at',
+        'admin_removed_at',
     ];
 
     /**
@@ -42,6 +43,7 @@ class Order extends Model
             'change_amount' => 'decimal:2',
             'placed_at' => 'datetime',
             'admin_notified_at' => 'datetime',
+            'admin_removed_at' => 'datetime',
         ];
     }
 
