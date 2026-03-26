@@ -123,12 +123,12 @@ Route::post('/login/{role}', function (Request $request, string $role) use ($act
     return redirect()->intended(route($dashboardRoute));
 })->name('login.submit');
 
-Route::post('/logout', function (Request $request) {
+Route::match(['GET', 'POST'], '/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 
-    return redirect()->route('welcome');
+    return redirect()->route('login');
 })->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'role:cashier'])

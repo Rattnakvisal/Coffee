@@ -99,4 +99,5 @@ import "./bootstrap";
     if (document.querySelector("[data-inventory-outgoing-toggle]")) {
         import("./admin_inventory");
     }
+    
 })();
