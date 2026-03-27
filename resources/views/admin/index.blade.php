@@ -10,7 +10,7 @@
             ->map(fn(string $namePart): string => strtoupper(substr($namePart, 0, 1)))
             ->take(2)
             ->implode('');
-        $avatarUrl = $currentUser->avatar_path ? asset('storage/' . $currentUser->avatar_path) : null;
+        $avatarUrl = $currentUser->avatarUrl();
 
         $roleLabels = collect($charts['roleLabels'] ?? [])->values();
         $roleCounts = collect($charts['roleCounts'] ?? [])->values();
@@ -594,9 +594,7 @@
                                                 )
                                                 ->take(2)
                                                 ->implode('');
-                                            $memberAvatarUrl = $member->avatar_path
-                                                ? asset('storage/' . $member->avatar_path)
-                                                : null;
+                                            $memberAvatarUrl = $member->avatarUrl();
                                             $memberRoleLabel = str($member->role?->name ?? 'Team')->headline();
                                         @endphp
                                         <a href="{{ route('admin.users.index', ['search' => $memberDisplayName]) }}"

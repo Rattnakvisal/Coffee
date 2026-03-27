@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -90,5 +92,58 @@ class User extends Authenticatable
         $userRole = $this->role?->slug;
 
         return $userRole !== null && in_array($userRole, $roles, true);
+    }
+
+    public function normalizedAvatarPath(): ?string
+    {
+        $path = trim((string) ($this->avatar_path ?? ''));
+
+        if ($path === '') {
+            return null;
+        }
+
+        $path = str_replace('\\', '/', $path);
+        $path = ltrim($path, '/');
+
+        if (Str::startsWith($path, 'storage/')) {
+            $path = Str::after($path, 'storage/');
+        }
+
+        if (Str::startsWith($path, 'public/')) {
+            $path = Str::after($path, 'public/');
+        }
+
+        if (! Str::contains($path, '/')) {
+            $path = 'avatars/' . $path;
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            return $path;
+        }
+
+        $fallbackPath = 'avatars/' . basename($path);
+
+        if (Storage::disk('public')->exists($fallbackPath)) {
+            return $fallbackPath;
+        }
+
+        return null;
+    }
+
+    public function avatarUrl(): ?string
+    {
+        $path = trim((string) ($this->avatar_path ?? ''));
+
+        if ($path === '') {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://', '//', 'data:'])) {
+            return $path;
+        }
+
+        $normalizedPath = $this->normalizedAvatarPath();
+
+        return $normalizedPath ? asset('storage/' . $normalizedPath) : null;
     }
 }

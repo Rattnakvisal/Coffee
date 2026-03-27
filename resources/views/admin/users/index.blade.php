@@ -188,7 +188,7 @@
                                                 ->map(fn(string $namePart): string => strtoupper(substr($namePart, 0, 1)))
                                                 ->take(2)
                                                 ->implode('');
-                                            $memberAvatarUrl = $member->avatar_path ? asset('storage/' . $member->avatar_path) : null;
+                                            $memberAvatarUrl = $member->avatarUrl();
                                             $createdByName = trim(
                                                 (string) ($member->creator?->first_name ?? '') .
                                                     ' ' .

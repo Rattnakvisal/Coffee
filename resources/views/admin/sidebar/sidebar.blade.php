@@ -5,7 +5,7 @@
     $profileName = trim((string) ($authUser->first_name ?? '') . ' ' . (string) ($authUser->last_name ?? ''));
     $profileName = $profileName !== '' ? $profileName : (string) ($authUser->name ?? 'User');
 
-    $avatarUrl = !empty($authUser?->avatar_path) ? asset('storage/' . $authUser->avatar_path) : null;
+    $avatarUrl = $authUser?->avatarUrl();
 
     $initials = collect(explode(' ', $profileName))
         ->filter()

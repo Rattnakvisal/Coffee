@@ -15,7 +15,7 @@
         );
         $profileInitials =
             $profileInitials !== '' ? $profileInitials : strtoupper(substr((string) ($member->name ?? 'U'), 0, 2));
-        $avatarUrl = $member->avatar_path ? asset('storage/' . $member->avatar_path) : null;
+        $avatarUrl = $member->avatarUrl();
         $removeAvatarOld = old('remove_avatar', '0') === '1';
         $showAvatarImage = $avatarUrl && !$removeAvatarOld;
     @endphp
