@@ -27,8 +27,8 @@
         @forelse ($cartItems as $item)
             <div class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger"
                 style="--stagger: {{ $loop->index + 3 }};">
-                @if (!empty($item['image_path']))
-                    <img src="{{ asset('storage/' . $item['image_path']) }}" alt="{{ $item['name'] }}"
+                @if (!empty($item['image_url']))
+                    <img src="{{ $item['image_url'] }}" alt="{{ $item['name'] }}"
                         class="h-14 w-14 rounded-xl object-cover">
                 @else
                     <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fff4ec] text-[#d97f46]">

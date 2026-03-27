@@ -3,85 +3,73 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: laravel-app
+    container_name: coffee_app
     restart: unless-stopped
-    working_dir: /app
-    env_file:
-      - .env
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - vendor_data:/var/www/html/vendor
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=${MYSQL_DATABASE:-coffee}
-      - DB_USERNAME=${MYSQL_USER:-laravel}
-      - DB_PASSWORD=${MYSQL_PASSWORD:-secret}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CACHE_STORE=file
-      - SESSION_DRIVER=file
-      - QUEUE_CONNECTION=sync
-      - MAIL_MAILER=smtp
-      - MAIL_HOST=mailpit
-      - MAIL_PORT=1025
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:${APP_PORT:-8000}
+      DB_CONNECTION: mysql
+      DB_HOST: host.docker.internal
+      DB_PORT: 3308
+      DB_DATABASE: coffee
+      DB_USERNAME: root
+      DB_PASSWORD: Wq_76wZtR2aPRmq
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: coffee_web
+    restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:80"
     volumes:
-      - ./storage:/app/storage
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - mysql
-      - redis
-      - mailpit
-    networks:
-      - laravel
+      - app
 
-  mysql:
+  db:
     image: mysql:8.0
-    container_name: laravel-mysql
+    container_name: coffee_db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-coffee}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-secret}
-      MYSQL_USER: ${MYSQL_USER:-laravel}
+      MYSQL_DATABASE: coffee
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
+      MYSQL_ROOT_PASSWORD: root
     volumes:
-      - mysql-data:/var/lib/mysql
-    networks:
-      - laravel
+      - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
-      interval: 10s
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -P3306 -uroot -proot",
+        ]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
 
-  redis:
-    image: redis:7-alpine
-    container_name: laravel-redis
-    restart: unless-stopped
-    volumes:
-      - redis-data:/data
-    networks:
-      - laravel
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  mailpit:
-    image: axllent/mailpit:latest
-    container_name: laravel-mailpit
-    restart: unless-stopped
+  vite:
+    image: node:20-alpine
+    container_name: coffee_vite
+    working_dir: /var/www/html
     ports:
-      - "1025:1025"
-      - "8025:8025"
-    networks:
-      - laravel
-
-networks:
-  laravel:
-    driver: bridge
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - ./:/var/www/html
+      - node_modules_data:/var/www/html/node_modules
+    command: sh -lc "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    profiles:
+      - frontend
 
 volumes:
-  mysql-data:
-  redis-data:
+  db_data:
+  vendor_data:
+  node_modules_data:

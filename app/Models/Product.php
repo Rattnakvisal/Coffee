@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -85,6 +87,59 @@ class Product extends Model
     public function normalizedDiscountPercent(): float
     {
         return max(0.0, min(100.0, (float) ($this->discount_percent ?? 0)));
+    }
+
+    public function normalizedImagePath(): ?string
+    {
+        $path = trim((string) ($this->image_path ?? ''));
+
+        if ($path === '') {
+            return null;
+        }
+
+        $path = str_replace('\\', '/', $path);
+        $path = ltrim($path, '/');
+
+        if (Str::startsWith($path, 'storage/')) {
+            $path = Str::after($path, 'storage/');
+        }
+
+        if (Str::startsWith($path, 'public/')) {
+            $path = Str::after($path, 'public/');
+        }
+
+        if (! Str::contains($path, '/')) {
+            $path = 'products/' . $path;
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            return $path;
+        }
+
+        $fallbackPath = 'products/' . basename($path);
+
+        if (Storage::disk('public')->exists($fallbackPath)) {
+            return $fallbackPath;
+        }
+
+        return null;
+    }
+
+    public function imageUrl(): ?string
+    {
+        $path = trim((string) ($this->image_path ?? ''));
+
+        if ($path === '') {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://', '//', 'data:'])) {
+            return $path;
+        }
+
+        $normalizedPath = $this->normalizedImagePath();
+
+        return $normalizedPath ? asset('storage/' . $normalizedPath) : null;
     }
 
     public function applyDiscount(float $price): float

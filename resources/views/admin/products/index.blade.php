@@ -203,12 +203,13 @@
                                                 $createdByName !== ''
                                                     ? $createdByName
                                                     : (string) ($product->creator?->name ?? 'System');
+                                            $productImageUrl = $product->imageUrl();
                                         @endphp
                                         <tr class="border-b border-slate-100 anim-pop anim-stagger"
                                             style="--stagger: {{ $loop->index + 1 }};">
                                             <td class="py-3.5">
-                                                @if ($product->image_path)
-                                                    <img src="{{ asset('storage/' . $product->image_path) }}"
+                                                @if ($productImageUrl)
+                                                    <img src="{{ $productImageUrl }}"
                                                         alt="{{ $product->name }}"
                                                         class="h-14 w-14 rounded-xl object-cover ring-1 ring-black/5">
                                                 @else
@@ -316,7 +317,7 @@
                                                     data-medium-active="{{ $mediumActive ? '1' : '0' }}"
                                                     data-large-active="{{ $largeActive ? '1' : '0' }}"
                                                     data-active="{{ $product->is_active ? '1' : '0' }}"
-                                                    data-image-url="{{ $product->image_path ? asset('storage/' . $product->image_path) : '' }}">
+                                                    data-image-url="{{ $productImageUrl ?? '' }}">
                                                     Edit
                                                 </button>
                                                 <form method="POST"

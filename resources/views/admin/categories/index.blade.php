@@ -57,6 +57,8 @@
                                     placeholder="Category description...">{{ old('description') }}</textarea>
                             </div>
 
+                            <input type="hidden" name="is_active" value="0">
+
                             <label class="inline-flex items-center gap-2 text-sm text-[#5f4b40]">
                                 <input type="checkbox" name="is_active" value="1" @checked(old('is_active', '1') === '1')
                                     class="h-4 w-4 rounded border-[#d8c3b4] text-[#f4a06b]">
@@ -66,6 +68,42 @@
                             <button type="submit"
                                 class="inline-flex w-full items-center justify-center rounded-xl bg-[#2f241f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#201813]">
                                 Add Category
+                            </button>
+                        </form>
+                    </template>
+
+                    <template id="edit-category-template">
+                        <form id="swal-edit-category-form" method="POST" class="space-y-4 text-left">
+                            @csrf
+                            @method('PUT')
+
+                            <div>
+                                <label for="swal-edit-category-name"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Category Name</label>
+                                <input id="swal-edit-category-name" name="name" type="text" required
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                    placeholder="Coffee">
+                            </div>
+
+                            <div>
+                                <label for="swal-edit-category-description"
+                                    class="mb-1 block text-sm font-semibold text-[#5f4b40]">Description</label>
+                                <textarea id="swal-edit-category-description" name="description" rows="4"
+                                    class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none"
+                                    placeholder="Category description..."></textarea>
+                            </div>
+
+                            <input type="hidden" name="is_active" value="0">
+
+                            <label class="inline-flex items-center gap-2 text-sm text-[#5f4b40]">
+                                <input id="swal-edit-category-active" type="checkbox" name="is_active" value="1"
+                                    class="h-4 w-4 rounded border-[#d8c3b4] text-[#f4a06b]">
+                                Active
+                            </label>
+
+                            <button type="submit"
+                                class="inline-flex w-full items-center justify-center rounded-xl bg-[#2f241f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#201813]">
+                                Update Category
                             </button>
                         </form>
                     </template>
@@ -179,9 +217,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const alertData = @json(session('alert'));
-            const csrfToken = @json(csrf_token());
             const addCategoryTrigger = document.querySelector('.js-open-add-category');
             const addCategoryTemplate = document.getElementById('add-category-template');
+            const editCategoryTemplate = document.getElementById('edit-category-template');
 
             if (addCategoryTrigger && addCategoryTemplate) {
                 addCategoryTrigger.addEventListener('click', function() {
@@ -243,72 +281,38 @@
                     const currentDescription = button.dataset.description ?? '';
                     const currentActive = button.dataset.active === '1';
 
+                    if (!editCategoryTemplate) {
+                        return;
+                    }
+
                     Swal.fire({
                         title: 'Edit category',
-                        html: `
-                            <div class="space-y-4 text-left">
-                                <div>
-                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Name</label>
-                                    <input id="swal-category-name" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none" value="${currentName}">
-                                </div>
-                                <div>
-                                    <label class="mb-1 block text-sm font-semibold text-[#5f4b40]">Description</label>
-                                    <textarea id="swal-category-description" class="w-full rounded-xl border border-[#ecd9cc] bg-white px-4 py-3 text-sm outline-none">${currentDescription}</textarea>
-                                </div>
-                                <label class="inline-flex items-center gap-2 text-sm text-[#5f4b40]">
-                                    <input id="swal-category-active" type="checkbox" class="h-4 w-4" ${currentActive ? 'checked' : ''}>
-                                    Active
-                                </label>
-                            </div>
-                        `,
-                        showCancelButton: true,
-                        confirmButtonText: 'Update',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#2f241f',
-                        preConfirm: function() {
-                            const name = document.getElementById('swal-category-name').value.trim();
-                            const description = document.getElementById('swal-category-description').value.trim();
-                            const isActive = document.getElementById('swal-category-active').checked;
+                        html: editCategoryTemplate.innerHTML,
+                        showConfirmButton: false,
+                        showCloseButton: true,
+                        width: 680,
+                        didOpen: function() {
+                            const form = document.getElementById('swal-edit-category-form');
+                            const nameInput = document.getElementById('swal-edit-category-name');
+                            const descriptionInput = document.getElementById(
+                                'swal-edit-category-description');
+                            const activeInput = document.getElementById('swal-edit-category-active');
 
-                            if (!name) {
-                                Swal.showValidationMessage('Category name is required.');
-                                return false;
+                            if (!form || !nameInput || !descriptionInput || !activeInput) {
+                                return;
                             }
 
-                            return {
-                                name: name,
-                                description: description,
-                                is_active: isActive ? '1' : '0',
-                            };
+                            form.action = updateUrl;
+                            nameInput.value = currentName;
+                            descriptionInput.value = currentDescription;
+                            activeInput.checked = currentActive;
+
+                            form.addEventListener('submit', function(event) {
+                                if (!form.reportValidity()) {
+                                    event.preventDefault();
+                                }
+                            });
                         },
-                    }).then(function(result) {
-                        if (!result.isConfirmed || !result.value) {
-                            return;
-                        }
-
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = updateUrl;
-                        form.style.display = 'none';
-
-                        const fields = {
-                            _token: csrfToken,
-                            _method: 'PUT',
-                            name: result.value.name,
-                            description: result.value.description,
-                            is_active: result.value.is_active,
-                        };
-
-                        Object.keys(fields).forEach(function(key) {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = key;
-                            input.value = fields[key] ?? '';
-                            form.appendChild(input);
-                        });
-
-                        document.body.appendChild(form);
-                        form.submit();
                     });
                 });
             });

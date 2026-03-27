@@ -916,6 +916,7 @@ class CashierController extends Controller
                     'product_id' => $product->id,
                     'name' => (string) $product->name,
                     'image_path' => $product->image_path,
+                    'image_url' => $product->imageUrl(),
                     'size' => $size,
                     'sugar' => $sugar,
                     'qty' => $qty,

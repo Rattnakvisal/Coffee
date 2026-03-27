@@ -161,8 +161,11 @@
                         <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger"
                             style="--stagger: {{ $loop->index + 2 }};">
                             <div class="flex gap-4">
-                                @if ($item->image_path)
-                                    <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}"
+                                @php
+                                    $productImageUrl = $item->imageUrl();
+                                @endphp
+                                @if ($productImageUrl)
+                                    <img src="{{ $productImageUrl }}" alt="{{ $item->name }}"
                                         class="h-28 w-24 rounded-2xl object-cover">
                                 @else
                                     <div
