@@ -1,5 +1,6 @@
 @php
     $activeAdminMenu = $activeAdminMenu ?? 'dashboard';
+    $showFloatingAdminMenuButton = $showFloatingAdminMenuButton ?? true;
     $authUser = auth()->user();
 
     $profileName = trim((string) ($authUser->first_name ?? '') . ' ' . (string) ($authUser->last_name ?? ''));
@@ -89,14 +90,16 @@
     ];
 @endphp
 
-<button type="button" data-admin-sidebar-open aria-label="Open sidebar"
-    class="fixed left-4 top-4 z-40 inline-flex items-center gap-2 rounded-2xl border border-[#ead8cb] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#5d4438] shadow-lg shadow-[#2f241f]/10 backdrop-blur transition lg:hidden">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-        stroke-width="1.9">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5" />
-    </svg>
-    Menu
-</button>
+@if ($showFloatingAdminMenuButton)
+    <button type="button" data-admin-sidebar-open aria-label="Open sidebar"
+        class="fixed left-4 top-4 z-40 inline-flex items-center gap-2 rounded-2xl border border-[#ead8cb] bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#5d4438] shadow-lg shadow-[#2f241f]/10 backdrop-blur transition lg:hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            stroke-width="1.9">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5" />
+        </svg>
+        Menu
+    </button>
+@endif
 
 <div data-admin-sidebar-overlay
     class="fixed inset-0 z-40 hidden bg-[#1a120e]/60 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden">

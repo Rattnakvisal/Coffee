@@ -46,10 +46,15 @@
 
     <div class="anim-enter-up min-h-screen w-full overflow-hidden bg-[#f8f8f8] lg:overflow-visible">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
-            @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'reports'])
+            @include('admin.sidebar.sidebar', [
+                'activeAdminMenu' => 'reports',
+                'showFloatingAdminMenuButton' => false,
+            ])
 
             <main
-                class="anim-enter-right bg-[#f8f8f8] px-4 pb-8 pt-20 sm:px-6 sm:pt-20 lg:col-span-9 lg:px-8 lg:pt-8 xl:col-span-10">
+                class="anim-enter-right bg-[#f8f8f8] px-3 pb-8 pt-4 sm:px-5 sm:pt-5 lg:col-span-9 lg:px-8 lg:pt-8 xl:col-span-10">
+                @include('admin.partials.header')
+
                 <header class="p-5 sm:p-6">
                     <div class="flex flex-wrap items-start justify-between gap-4">
                         <div>

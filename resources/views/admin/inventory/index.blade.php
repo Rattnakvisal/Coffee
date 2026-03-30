@@ -70,9 +70,14 @@
 
     <div class="anim-enter-up min-h-screen w-full overflow-hidden bg-[#f8f8f8] lg:overflow-visible">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
-            @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'inventory'])
+            @include('admin.sidebar.sidebar', [
+                'activeAdminMenu' => 'inventory',
+                'showFloatingAdminMenuButton' => false,
+            ])
 
-            <main class="relative px-4 pb-8 pt-20 sm:px-6 lg:col-span-9 lg:px-8 lg:pt-8 xl:col-span-10">
+            <main class="relative px-3 pb-8 pt-4 sm:px-5 sm:pt-5 lg:col-span-9 lg:px-8 lg:pt-8 xl:col-span-10">
+                @include('admin.partials.header')
+
                 <div class="pointer-events-none absolute inset-x-0 top-0 h-52"></div>
                 <section class="relative overflow-hidden xl:p-7">
                     <div class="absolute -right-16 -top-16 h-44 w-44 "></div>

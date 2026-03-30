@@ -14,10 +14,15 @@
 
     <div class="anim-enter-up w-full min-h-screen overflow-hidden bg-white/85 lg:overflow-visible">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
-            @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'attendance'])
+            @include('admin.sidebar.sidebar', [
+                'activeAdminMenu' => 'attendance',
+                'showFloatingAdminMenuButton' => false,
+            ])
 
             <main
-                class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
+                class="anim-enter-right bg-[#f8f8f8] p-3 pt-4 sm:p-5 sm:pt-5 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
+                @include('admin.partials.header')
+
                 <header class="mb-6 flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-sm font-semibold uppercase tracking-[0.16em] text-[#b16231]">Attendance Report</p>

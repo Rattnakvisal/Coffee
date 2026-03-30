@@ -3,8 +3,13 @@
 @section('content')
     <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
-            @include('admin.sidebar.sidebar', ['activeAdminMenu' => 'users'])
-            <main class="anim-enter-right bg-[#f8f8f8] p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
+            @include('admin.sidebar.sidebar', [
+                'activeAdminMenu' => 'users',
+                'showFloatingAdminMenuButton' => false,
+            ])
+            <main class="anim-enter-right bg-[#f8f8f8] p-3 pt-4 sm:p-5 sm:pt-5 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
+                @include('admin.partials.header')
+
                 <div class="anim-enter-up anim-delay-100 mb-6 flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <p
