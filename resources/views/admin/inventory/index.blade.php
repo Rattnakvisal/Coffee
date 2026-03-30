@@ -18,8 +18,7 @@
             $defaultCambodiaDateTime = now($cambodiaTimezone)->format('Y-m-d\TH:i');
         }
 
-        $entryItems = collect($entries->items());
-        $overviewRows = $entryItems->take(8);
+        $overviewRows = collect($entries->items());
         $movementCount = $moneyInCount + $moneyOutCount;
         $movementAmount = $moneyInTotal + $moneyOutTotal;
         $incomeShare = $movementAmount > 0 ? ($moneyInTotal / $movementAmount) * 100 : 0;
@@ -351,7 +350,7 @@
                                     transactions.</p>
                             </div>
                             <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                                {{ number_format($entries->total()) }} rows
+                                {{ number_format($overviewRows->count()) }} rows
                             </span>
                         </div>
 
@@ -409,6 +408,20 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        @if ($entries->hasPages())
+                            <div
+                                class="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                <p class="text-sm text-slate-500">
+                                    Showing {{ number_format($entries->firstItem() ?? 0) }}
+                                    to {{ number_format($entries->lastItem() ?? 0) }}
+                                    of {{ number_format($entries->total()) }} transactions
+                                </p>
+                                <div>
+                                    {{ $entries->onEachSide(1)->links() }}
+                                </div>
+                            </div>
+                        @endif
                     </article>
 
                     <article

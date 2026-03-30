@@ -146,7 +146,7 @@ class InventoryController extends Controller
             ->sortByDesc('sort_timestamp')
             ->values();
 
-        $perPage = 15;
+        $perPage = 5;
         $currentPage = max((int) $request->query('page', 1), 1);
         $offset = ($currentPage - 1) * $perPage;
         $pageItems = $entries->slice($offset, $perPage)->values();
