@@ -64,7 +64,7 @@ class AttendanceController extends Controller
             ->orderByDesc('checked_in_at');
 
         $attendanceRows = $attendanceQuery
-            ->paginate(15)
+            ->paginate(5)
             ->withQueryString();
 
         $totalCashiers = (int) $cashierUsers->count();

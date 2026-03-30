@@ -12,7 +12,11 @@
         $pdfExportUrl = route('admin.reports.export.pdf', $exportQuery);
 
         $topItemMaxQty = (int) ($topItems->max('qty_sold') ?? 0);
-        $cashierMaxRevenue = (float) ($cashierBreakdown->max('revenue') ?? 0);
+        $topItemMaxRevenue = (float) ($topItems->max('revenue') ?? 0);
+        $topItemsRevenueTotal = (float) ($topItems->sum('revenue') ?? 0);
+        $topItemsQtyTotal = (int) ($topItems->sum('qty_sold') ?? 0);
+        $paymentRevenueTotal = (float) ($paymentBreakdown->sum('revenue') ?? 0);
+        $paymentOrdersTotal = (int) ($paymentBreakdown->sum('orders_count') ?? 0);
         $categoryMaxRevenue = (float) ($categoryBreakdown->max('revenue') ?? 0);
         $recentOrdersItemsTotal = (int) ($recentOrders->sum('items_count') ?? 0);
 
@@ -330,15 +334,75 @@
 
                     <div class="grid grid-cols-1 gap-6 xl:col-span-4">
                         <article
-                            class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
+                            class="flex flex-col rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
                             <div class="mb-4 flex items-center justify-between gap-2">
-                                <h3 class="text-xl font-black text-[#2f241f]">Payment Mix</h3>
+                                <div>
+                                    <h3 class="text-xl font-black text-[#2f241f]">Payment Mix</h3>
+                                    <p class="mt-1 text-sm text-slate-500">Revenue split across payment methods.</p>
+                                </div>
                                 <span
-                                    class="rounded-full bg-[#fff2e7] px-2.5 py-1 text-xs font-semibold text-[#be6f3c]">{{ number_format((int) $ordersCount) }}
-                                    orders</span>
+                                    class="rounded-full bg-[#fff2e7] px-2.5 py-1 text-xs font-semibold text-[#be6f3c]">{{ number_format($paymentBreakdown->count()) }}
+                                    methods</span>
                             </div>
-                            <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
+
+                            <div class="dashboard-chart-wrap dashboard-chart-wrap--compact" style="min-height: 220px;">
                                 <canvas id="adminReportsPaymentChart"></canvas>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-2 gap-3">
+                                <div class="rounded-2xl border border-[#f0e3da] bg-[#fffaf6] px-4 py-3">
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Revenue
+                                    </p>
+                                    <p class="mt-1 text-lg font-black text-[#2f241f]">
+                                        ${{ number_format($paymentRevenueTotal, 2) }}
+                                    </p>
+                                </div>
+                                <div class="rounded-2xl border border-[#f0e3da] bg-[#fffaf6] px-4 py-3">
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Orders
+                                    </p>
+                                    <p class="mt-1 text-lg font-black text-[#2f241f]">
+                                        {{ number_format($paymentOrdersTotal) }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 space-y-3 text-sm">
+                                @forelse ($paymentBreakdown->take(4) as $paymentRow)
+                                    @php
+                                        $paymentShare =
+                                            $paymentRevenueTotal > 0
+                                                ? ((float) ($paymentRow->revenue ?? 0) / $paymentRevenueTotal) * 100
+                                                : 0;
+                                    @endphp
+                                    <div class="rounded-2xl border border-[#f0e3da] bg-white px-4 py-3">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <p class="truncate font-semibold text-[#2f241f]">
+                                                    {{ str((string) ($paymentRow->payment_method ?? 'unknown'))->replace('_', ' ')->headline() }}
+                                                </p>
+                                                <p class="mt-1 text-xs text-slate-500">
+                                                    {{ number_format((int) ($paymentRow->orders_count ?? 0)) }} orders
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="font-semibold text-[#2f241f]">
+                                                    ${{ number_format((float) ($paymentRow->revenue ?? 0), 2) }}
+                                                </p>
+                                                <p class="mt-1 text-xs text-[#b16231]">
+                                                    {{ number_format($paymentShare, 1) }}%
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 h-2 rounded-full bg-[#f7ece4]">
+                                            <div class="h-2 rounded-full bg-[#f4a06b]"
+                                                style="width: {{ round($paymentShare, 2) }}%;"></div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="rounded-2xl border border-[#f0e3da] bg-white px-4 py-3 text-slate-500">
+                                        No payment data available.
+                                    </p>
+                                @endforelse
                             </div>
                         </article>
 
@@ -461,62 +525,20 @@
                         </article>
 
                         <article
-                            class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
-                            <h3 class="mb-4 text-xl font-black text-[#2f241f]">Top Selling Items</h3>
-                            <div class="dashboard-chart-wrap dashboard-chart-wrap--compact">
-                                <canvas id="adminReportsTopItemsChart"></canvas>
+                            class="flex flex-col rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
+                            <div class="mb-4 flex items-center justify-between gap-2">
+                                <div>
+                                    <h3 class="text-xl font-black text-[#2f241f]">Top Selling Items</h3>
+                                    <p class="mt-1 text-sm text-slate-500">Best performing products by units sold and
+                                        revenue.</p>
+                                </div>
+                                <span
+                                    class="rounded-full bg-[#fff2e7] px-2.5 py-1 text-xs font-semibold text-[#be6f3c]">{{ number_format($topItems->count()) }}
+                                    items</span>
                             </div>
-                            <div class="mt-4 space-y-3 text-sm">
-                                @forelse ($topItems->take(3) as $item)
-                                    @php
-                                        $progress =
-                                            $topItemMaxQty > 0 ? ((int) $item->qty_sold / $topItemMaxQty) * 100 : 0;
-                                    @endphp
-                                    <div>
-                                        <div class="mb-1 flex items-center justify-between gap-2">
-                                            <span
-                                                class="truncate pr-2 font-semibold text-slate-700">{{ $item->product_name }}</span>
-                                            <span class="text-slate-600">{{ number_format((int) $item->qty_sold) }}</span>
-                                        </div>
-                                        <div class="h-2 rounded-full bg-slate-100">
-                                            <div class="dashboard-progress-bar h-2 rounded-full bg-[#2f241f]"
-                                                style="--progress-width: {{ round($progress, 2) }}%;"></div>
-                                        </div>
-                                    </div>
-                                @empty
-                                    <p class="text-slate-500">No item sales in this range.</p>
-                                @endforelse
-                            </div>
-                        </article>
 
-                        <article
-                            class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
-                            <h3 class="mb-4 text-xl font-black text-[#2f241f]">Cashier Contribution</h3>
-                            <div class="space-y-3 text-sm">
-                                @forelse ($cashierBreakdown->take(5) as $cashierRow)
-                                    @php
-                                        $progress =
-                                            $cashierMaxRevenue > 0
-                                                ? ((float) $cashierRow->revenue / $cashierMaxRevenue) * 100
-                                                : 0;
-                                    @endphp
-                                    <div>
-                                        <div class="mb-1 flex items-center justify-between gap-2">
-                                            <span
-                                                class="truncate pr-2 font-semibold text-slate-700">{{ $cashierRow->cashier_name }}</span>
-                                            <span
-                                                class="text-slate-600">${{ number_format((float) $cashierRow->revenue, 0) }}</span>
-                                        </div>
-                                        <div class="h-2 rounded-full bg-slate-100">
-                                            <div class="dashboard-progress-bar h-2 rounded-full bg-[#f4a06b]"
-                                                style="--progress-width: {{ round($progress, 2) }}%;"></div>
-                                        </div>
-                                        <p class="mt-1 text-xs text-slate-500">
-                                            {{ number_format((int) $cashierRow->orders_count) }} orders</p>
-                                    </div>
-                                @empty
-                                    <p class="text-slate-500">No cashier contribution data.</p>
-                                @endforelse
+                            <div class="dashboard-chart-wrap dashboard-chart-wrap--compact" style="min-height: 220px;">
+                                <canvas id="adminReportsTopItemsChart"></canvas>
                             </div>
                         </article>
                     </div>

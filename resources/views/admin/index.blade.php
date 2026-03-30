@@ -153,8 +153,8 @@
                             <button type="button" data-admin-notification-button
                                 class="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-[#f4a06b] hover:text-[#b16231] hover:shadow-sm"
                                 aria-label="Open notifications" aria-expanded="false">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="1.9">
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M14.857 17.082a23.848 23.848 0 0 1-5.714 0A8.967 8.967 0 0 1 6 16.139V11a6 6 0 1 1 12 0v5.139a8.967 8.967 0 0 1-3.143.943ZM15 19.5a3 3 0 1 1-6 0" />
                                 </svg>
@@ -231,7 +231,8 @@
                                 <span
                                     class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#2f241f] text-xs font-bold text-white">
                                     @if ($avatarUrl)
-                                        <img src="{{ $avatarUrl }}" alt="Profile avatar" class="h-full w-full object-cover">
+                                        <img src="{{ $avatarUrl }}" alt="Profile avatar"
+                                            class="h-full w-full object-cover">
                                     @else
                                         {{ $initials !== '' ? $initials : 'A' }}
                                     @endif
@@ -299,7 +300,8 @@
                 @endif
 
                 @if ($alertData)
-                    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+                    <div
+                        class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
                         {{ $alertData['text'] ?? 'Saved successfully.' }}
                     </div>
                 @endif
@@ -480,21 +482,6 @@
                                 </div>
                             </div>
                         </section>
-
-                        <section
-                            class="anim-enter-up rounded-[30px] border border-white/60 bg-white/90 p-6 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
-                            <div class="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <h3 class="text-xl font-bold text-[#2f241f]">Inventory Details</h3>
-                                    <p class="mt-1 text-sm text-slate-500">Open full income and outgoing ledger page.</p>
-                                </div>
-                                <a href="{{ route('admin.inventory.index') }}"
-                                    class="inline-flex items-center rounded-xl bg-[#2f241f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#201813]">
-                                    Open Inventory Page
-                                </a>
-                            </div>
-                        </section>
-
                         <section
                             class="anim-enter-up rounded-[30px] border border-white/60 bg-white/90 p-6 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)]">
                             <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -524,8 +511,10 @@
                                                 <td class="px-4 py-3 font-semibold text-[#2f241f]">
                                                     {{ $attendance['cashier_name'] }}
                                                 </td>
-                                                <td class="px-4 py-3 text-slate-600">{{ $attendance['cashier_email'] }}</td>
-                                                <td class="px-4 py-3 text-slate-600">{{ $attendance['checked_in_at'] }}</td>
+                                                <td class="px-4 py-3 text-slate-600">{{ $attendance['cashier_email'] }}
+                                                </td>
+                                                <td class="px-4 py-3 text-slate-600">{{ $attendance['checked_in_at'] }}
+                                                </td>
                                                 <td class="px-4 py-3">
                                                     <span
                                                         class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $attendance['is_new'] ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">

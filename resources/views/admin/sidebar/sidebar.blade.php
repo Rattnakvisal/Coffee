@@ -71,18 +71,18 @@
             'label' => 'System',
             'items' => [
                 [
-                    'key' => 'settings',
-                    'label' => 'Settings',
-                    'route' => route('admin.settings.index'),
-                    'icon' =>
-                        '<path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h3m-7.348 1.652 2.121 2.121m7.454 7.454 2.121 2.121M6 10.5v3m12-3v3m-1.652-7.348-2.121 2.121m-7.454 7.454-2.121 2.121M12 8.25A3.75 3.75 0 1 1 12 15.75 3.75 3.75 0 0 1 12 8.25Z" />',
-                ],
-                [
                     'key' => 'attendance',
                     'label' => 'Attendance',
                     'route' => route('admin.attendance.index'),
                     'icon' =>
                         '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5m7.5-1.5v1.5M3.75 8.25h16.5M5.25 5.25h13.5A1.5 1.5 0 0 1 20.25 6.75v12a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-12a1.5 1.5 0 0 1 1.5-1.5Zm3.75 6h6m-6 3h3" />',
+                ],
+                [
+                    'key' => 'settings',
+                    'label' => 'Settings',
+                    'route' => route('admin.settings.index'),
+                    'icon' =>
+                        '<path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h3m-7.348 1.652 2.121 2.121m7.454 7.454 2.121 2.121M6 10.5v3m12-3v3m-1.652-7.348-2.121 2.121m-7.454 7.454-2.121 2.121M12 8.25A3.75 3.75 0 1 1 12 15.75 3.75 3.75 0 0 1 12 8.25Z" />',
                 ],
             ],
         ],

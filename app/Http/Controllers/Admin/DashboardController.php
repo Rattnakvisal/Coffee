@@ -133,7 +133,7 @@ class DashboardController extends Controller
         $attendanceRows = CashierAttendance::query()
             ->with('cashier:id,name,first_name,last_name,email')
             ->orderByDesc('checked_in_at')
-            ->take(10)
+            ->take(8)
             ->get()
             ->map(function (CashierAttendance $attendance) use ($newAttendanceIds): array {
                 $cashierName = $this->formatUserDisplayName($attendance->cashier);

@@ -134,36 +134,6 @@ class ReportsController extends Controller
             ->limit(10)
             ->get();
 
-        $cashierBreakdown = collect();
-        if ($cashierColumn !== null) {
-            $cashierRows = Order::query()
-                ->whereBetween($dateColumn, [$start, $end]);
-            $this->applyReportFilters($cashierRows, $filters, $cashierColumn);
-            $cashierRows = $cashierRows
-                ->selectRaw($cashierColumn . ' as cashier_ref, COUNT(*) as orders_count, SUM(total) as revenue')
-                ->groupBy($cashierColumn)
-                ->orderByDesc('revenue')
-                ->limit(8)
-                ->get();
-
-            $cashierNames = User::query()
-                ->whereIn('id', $cashierRows->pluck('cashier_ref')->filter()->map(fn($id): int => (int) $id)->all())
-                ->pluck('name', 'id');
-
-            $cashierBreakdown = $cashierRows->map(function ($row) use ($cashierNames) {
-                $cashierId = (int) ($row->cashier_ref ?? 0);
-
-                return (object) [
-                    'cashier_name' => $cashierId > 0
-                        ? (string) ($cashierNames[$cashierId] ?? 'Unknown Cashier')
-                        : 'Unknown Cashier',
-                    'orders_count' => (int) ($row->orders_count ?? 0),
-                    'revenue' => (float) ($row->revenue ?? 0),
-                ];
-            })->values();
-        }
-        $activeCashiers = (int) $cashierBreakdown->count();
-
         $charts = [
             'trend' => $this->buildAdminTrend($dateColumn, $start, $end, $hasCustomRange, $filters, $cashierColumn),
             'payments' => [
@@ -245,7 +215,6 @@ class ReportsController extends Controller
             'itemsSold' => $itemsSold,
             'averageOrder' => $averageOrder,
             'avgItemsPerOrder' => $avgItemsPerOrder,
-            'activeCashiers' => $activeCashiers,
             'ordersGrowth' => $this->growthLabel($ordersCount, $previousOrders, 'vs previous range'),
             'revenueGrowth' => $this->growthLabel($revenue, $previousRevenue, 'vs previous range'),
             'itemsGrowth' => $this->growthLabel($itemsSold, $previousItems, 'vs previous range'),
@@ -254,7 +223,6 @@ class ReportsController extends Controller
             'topItems' => $topItems,
             'categoryBreakdown' => $categoryBreakdown,
             'recentOrders' => $recentOrders,
-            'cashierBreakdown' => $cashierBreakdown,
             'reportDateColumn' => $dateColumn,
             'charts' => $charts,
         ]);
