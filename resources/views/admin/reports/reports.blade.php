@@ -51,23 +51,37 @@
                 'showFloatingAdminMenuButton' => false,
             ])
 
-            <main
-                class="anim-enter-right bg-[#f8f8f8] px-3 pb-8 pt-4 sm:px-5 sm:pt-5 lg:col-span-9 lg:px-8 lg:pt-8 xl:col-span-10">
+            <main class="anim-enter-right bg-[#f8f8f8] pb-8 sm:px-5 sm:pt-5 lg:col-span-9 lg:px-8 lg:pt-8 xl:col-span-10">
                 @include('admin.partials.header')
 
-                <header class="p-5 sm:p-6">
+                <header class="mb-6 sm:p-6">
                     <div class="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                            <p class="text-sm font-semibold uppercase tracking-[0.12em] text-[#8f5f3e]">Sales Report</p>
-                            <h1 class="mt-1 text-3xl font-black text-[#2f241f]">Performance Dashboard</h1>
-                            <p class="mt-2 text-sm text-slate-500">{{ $reportDateHeading }} - {{ $rangeLabel }}
+                            <p class="text-sm font-semibold uppercase tracking-[0.16em] text-[#b16231]">Sales Report</p>
+                            <h1 class="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                                Performance Dashboard
+                            </h1>
+                            <p class="mt-2 text-sm text-slate-600">{{ $reportDateHeading }} - {{ $rangeLabel }}
                                 ({{ $startDate }} to {{ $endDate }})</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <button type="button" data-report-filter-toggle
                                 aria-expanded="{{ $isFilterOpen ? 'true' : 'false' }}"
                                 class="inline-flex items-center gap-2 rounded-xl border border-[#eadfd7] bg-white px-3.5 py-2 text-sm font-semibold text-[#5f4b40] transition hover:bg-[#fff9f4]">
-                                {{ $isFilterOpen ? 'Hide Filter' : 'Show Filter' }}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="1.9">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3.75 6.75h16.5m-13.5 5.25h10.5m-7.5 5.25h4.5" />
+                                </svg>
+                                <span data-report-filter-toggle-label>
+                                    {{ $isFilterOpen ? 'Hide Filter' : 'Filter' }}
+                                </span>
+                                @if ($activeFilterCount > 0)
+                                    <span
+                                        class="inline-flex min-w-5 items-center justify-center rounded-full bg-[#fff4ec] px-1.5 py-0.5 text-[10px] font-bold text-[#b16231]">
+                                        {{ $activeFilterCount }}
+                                    </span>
+                                @endif
                             </button>
                             <a href="{{ $excelExportUrl }}"
                                 class="inline-flex items-center gap-2 rounded-xl border border-[#f1ddce] bg-[#fff4ec] px-3.5 py-2 text-sm font-semibold text-[#8f5f3e] transition hover:bg-[#fff1e8]">
@@ -84,100 +98,107 @@
                         </div>
                     </div>
 
-                    <form method="GET" action="{{ route('admin.reports') }}" data-report-filter-panel
-                        @class(['mt-5 space-y-4', 'hidden' => !$isFilterOpen])>
-                        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
-                            <label class="space-y-1">
-                                <span class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Preset</span>
-                                <select name="preset"
-                                    class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
-                                    @foreach ($presets as $presetValue => $presetLabel)
-                                        <option value="{{ $presetValue }}"
-                                            {{ $selectedPreset === $presetValue ? 'selected' : '' }}>
-                                            {{ $presetLabel }}
+                    <div data-report-filter-panel @class([
+                        'mt-5 rounded-[28px] border border-slate-200/80 bg-white/90 p-4 shadow-sm sm:p-5',
+                        'hidden' => !$isFilterOpen,
+                    ])>
+                        <form method="GET" action="{{ route('admin.reports') }}" class="space-y-4">
+                            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
+                                <label class="space-y-1">
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Preset</span>
+                                    <select name="preset"
+                                        class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+                                        @foreach ($presets as $presetValue => $presetLabel)
+                                            <option value="{{ $presetValue }}"
+                                                {{ $selectedPreset === $presetValue ? 'selected' : '' }}>
+                                                {{ $presetLabel }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </label>
+
+                                <label class="space-y-1">
+                                    <span class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Start
+                                        Date</span>
+                                    <input type="date" name="start_date" value="{{ $startDate }}"
+                                        class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+                                </label>
+
+                                <label class="space-y-1">
+                                    <span class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">End
+                                        Date</span>
+                                    <input type="date" name="end_date" value="{{ $endDate }}"
+                                        class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+                                </label>
+
+                                <label class="space-y-1">
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Payment</span>
+                                    <select name="payment"
+                                        class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+                                        <option value="all" {{ $selectedPayment === 'all' ? 'selected' : '' }}>All
+                                            Payment
                                         </option>
-                                    @endforeach
-                                </select>
-                            </label>
+                                        @foreach ($paymentOptions as $paymentOption)
+                                            <option value="{{ $paymentOption }}"
+                                                {{ $selectedPayment === $paymentOption ? 'selected' : '' }}>
+                                                {{ str($paymentOption)->replace('_', ' ')->headline() }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </label>
 
-                            <label class="space-y-1">
-                                <span class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Start
-                                    Date</span>
-                                <input type="date" name="start_date" value="{{ $startDate }}"
-                                    class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
-                            </label>
-
-                            <label class="space-y-1">
-                                <span class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">End
-                                    Date</span>
-                                <input type="date" name="end_date" value="{{ $endDate }}"
-                                    class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
-                            </label>
-
-                            <label class="space-y-1">
-                                <span
-                                    class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Payment</span>
-                                <select name="payment"
-                                    class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
-                                    <option value="all" {{ $selectedPayment === 'all' ? 'selected' : '' }}>All Payment
-                                    </option>
-                                    @foreach ($paymentOptions as $paymentOption)
-                                        <option value="{{ $paymentOption }}"
-                                            {{ $selectedPayment === $paymentOption ? 'selected' : '' }}>
-                                            {{ str($paymentOption)->replace('_', ' ')->headline() }}
+                                <label class="space-y-1">
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Status</span>
+                                    <select name="status"
+                                        class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+                                        <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>All Status
                                         </option>
-                                    @endforeach
-                                </select>
-                            </label>
+                                        @foreach ($statusOptions as $statusOption)
+                                            <option value="{{ $statusOption }}"
+                                                {{ $selectedStatus === $statusOption ? 'selected' : '' }}>
+                                                {{ str($statusOption)->replace('_', ' ')->headline() }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </label>
 
-                            <label class="space-y-1">
-                                <span class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Status</span>
-                                <select name="status"
-                                    class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
-                                    <option value="all" {{ $selectedStatus === 'all' ? 'selected' : '' }}>All Status
-                                    </option>
-                                    @foreach ($statusOptions as $statusOption)
-                                        <option value="{{ $statusOption }}"
-                                            {{ $selectedStatus === $statusOption ? 'selected' : '' }}>
-                                            {{ str($statusOption)->replace('_', ' ')->headline() }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </label>
-
-                            <label class="space-y-1">
-                                <span
-                                    class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Cashier</span>
-                                <select name="cashier_id"
-                                    class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
-                                    <option value="">All Cashiers</option>
-                                    @foreach ($cashierOptions as $cashier)
-                                        <option value="{{ $cashier->id }}"
-                                            {{ (int) $selectedCashier === (int) $cashier->id ? 'selected' : '' }}>
-                                            {{ $cashier->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </label>
-                        </div>
-
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <button type="submit"
-                                    class="inline-flex items-center gap-2 rounded-xl bg-[#2f241f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3c2f29]">
-                                    Apply Filters
-                                </button>
-                                <a href="{{ route('admin.reports') }}"
-                                    class="inline-flex items-center gap-2 rounded-xl border border-[#ebded5] bg-white px-4 py-2.5 text-sm font-semibold text-[#5f4b40] transition hover:bg-[#fff6f0]">
-                                    Reset
-                                </a>
+                                <label class="space-y-1">
+                                    <span
+                                        class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Cashier</span>
+                                    <select name="cashier_id"
+                                        class="w-full rounded-2xl border border-[#ebded5] bg-white px-3 py-2.5 text-sm text-[#2f241f] outline-none transition focus:border-[#f4a06b] focus:ring-2 focus:ring-[#f4a06b]/20">
+                                        <option value="">All Cashiers</option>
+                                        @foreach ($cashierOptions as $cashier)
+                                            <option value="{{ $cashier->id }}"
+                                                {{ (int) $selectedCashier === (int) $cashier->id ? 'selected' : '' }}>
+                                                {{ $cashier->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </label>
                             </div>
-                            <div
-                                class="inline-flex items-center rounded-full border border-[#f1ddce] bg-[#fff7f1] px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#b16231]">
-                                Active Filters: {{ $activeFilterCount }}
+
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="submit"
+                                        class="inline-flex items-center gap-2 rounded-xl bg-[#2f241f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3c2f29]">
+                                        Apply Filters
+                                    </button>
+                                    <a href="{{ route('admin.reports') }}"
+                                        class="inline-flex items-center gap-2 rounded-xl border border-[#ebded5] bg-white px-4 py-2.5 text-sm font-semibold text-[#5f4b40] transition hover:bg-[#fff6f0]">
+                                        Reset
+                                    </a>
+                                </div>
+                                <div
+                                    class="inline-flex items-center rounded-full border border-[#f1ddce] bg-[#fff7f1] px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#b16231]">
+                                    Active Filters: {{ $activeFilterCount }}
+                                </div>
                             </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </header>
 
                 <section class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">

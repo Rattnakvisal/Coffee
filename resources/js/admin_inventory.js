@@ -1,11 +1,18 @@
 (function () {
     const toggleButton = document.querySelector("[data-inventory-outgoing-toggle]");
+    const filterToggleButton = document.querySelector(
+        "[data-inventory-filter-toggle]",
+    );
+    const filterPanel = document.querySelector("[data-inventory-filter-panel]");
+    const filterToggleLabel = document.querySelector(
+        "[data-inventory-filter-toggle-label]",
+    );
     const modalTemplate = document.getElementById("inventory-outgoing-template");
     const formPanel = document.querySelector("[data-inventory-outgoing-panel]");
     const formAlert = document.querySelector("[data-inventory-form-alert]");
     const tableSection = document.querySelector("[data-inventory-table-section]");
 
-    if (!toggleButton) {
+    if (!toggleButton && !filterToggleButton) {
         return;
     }
 
@@ -94,31 +101,66 @@
         return true;
     };
 
-    toggleButton.addEventListener("click", function () {
-        const hasModal = openOutgoingModal();
-        if (hasModal) {
-            highlightTable();
-            return;
+    const syncFilterToggleState = function (isVisible) {
+        if (filterPanel) {
+            filterPanel.classList.toggle("hidden", !isVisible);
         }
 
-        if (!formPanel) {
-            return;
-        }
-
-        const isVisible = !formPanel.classList.contains("hidden");
-        const nextVisible = !isVisible;
-        formPanel.classList.toggle("hidden", !nextVisible);
-        toggleButton.setAttribute("aria-expanded", nextVisible ? "true" : "false");
-
-        if (nextVisible) {
-            showFormAlert(
-                "Outgoing form opened. Fill details and save to show it in the table.",
+        if (filterToggleButton) {
+            filterToggleButton.setAttribute(
+                "aria-expanded",
+                isVisible ? "true" : "false",
             );
-            formPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            highlightTable();
-            return;
         }
 
-        showFormAlert("Outgoing form closed.");
-    });
+        if (filterToggleLabel) {
+            filterToggleLabel.textContent = isVisible ? "Hide Filter" : "Filter";
+        }
+    };
+
+    if (filterToggleButton && filterPanel) {
+        syncFilterToggleState(!filterPanel.classList.contains("hidden"));
+
+        filterToggleButton.addEventListener("click", function () {
+            const nextVisible = filterPanel.classList.contains("hidden");
+            syncFilterToggleState(nextVisible);
+
+            if (nextVisible) {
+                filterPanel.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                });
+            }
+        });
+    }
+
+    if (toggleButton) {
+        toggleButton.addEventListener("click", function () {
+            const hasModal = openOutgoingModal();
+            if (hasModal) {
+                highlightTable();
+                return;
+            }
+
+            if (!formPanel) {
+                return;
+            }
+
+            const isVisible = !formPanel.classList.contains("hidden");
+            const nextVisible = !isVisible;
+            formPanel.classList.toggle("hidden", !nextVisible);
+            toggleButton.setAttribute("aria-expanded", nextVisible ? "true" : "false");
+
+            if (nextVisible) {
+                showFormAlert(
+                    "Outgoing form opened. Fill details and save to show it in the table.",
+                );
+                formPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                highlightTable();
+                return;
+            }
+
+            showFormAlert("Outgoing form closed.");
+        });
+    }
 })();

@@ -618,6 +618,9 @@
         "[data-report-filter-toggle]",
     );
     const filterPanel = document.querySelector("[data-report-filter-panel]");
+    const filterToggleLabel = document.querySelector(
+        "[data-report-filter-toggle-label]",
+    );
     if (filterToggleButton && filterPanel) {
         const setFilterVisibility = function (isVisible) {
             filterPanel.classList.toggle("hidden", !isVisible);
@@ -625,9 +628,11 @@
                 "aria-expanded",
                 isVisible ? "true" : "false",
             );
-            filterToggleButton.textContent = isVisible
-                ? "Hide Filter"
-                : "Show Filter";
+            if (filterToggleLabel) {
+                filterToggleLabel.textContent = isVisible
+                    ? "Hide Filter"
+                    : "Filter";
+            }
         };
 
         let isFilterVisible =
@@ -637,6 +642,13 @@
         filterToggleButton.addEventListener("click", function () {
             isFilterVisible = !isFilterVisible;
             setFilterVisibility(isFilterVisible);
+
+            if (isFilterVisible) {
+                filterPanel.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                });
+            }
         });
     }
 

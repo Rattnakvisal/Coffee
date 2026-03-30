@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="anim-enter-up w-full min-h-screen overflow-hidden lg:overflow-visible bg-white/85">
+    <div class="anim-enter-up w-full min-h-screen overflow-hidden bg-white/85 lg:overflow-visible">
         <div class="grid min-h-screen grid-cols-1 lg:grid-cols-12">
             @include('admin.sidebar.sidebar', [
                 'activeAdminMenu' => 'categories',
@@ -162,7 +162,8 @@
                                             style="--stagger: {{ $loop->index + 1 }};">
                                             <td class="py-3.5">
                                                 <p class="font-semibold text-[#2f241f]">{{ $category->name }}</p>
-                                                <p class="mt-0.5 text-xs text-slate-500">{{ $category->description ?: 'No description' }}</p>
+                                                <p class="mt-0.5 text-xs text-slate-500">
+                                                    {{ $category->description ?: 'No description' }}</p>
                                             </td>
                                             <td class="py-3.5 text-slate-600">{{ $category->products_count }}</td>
                                             <td class="py-3.5">
@@ -179,7 +180,8 @@
                                                 @endif
                                             </td>
                                             <td class="py-3.5 text-slate-600">{{ $createdByName }}</td>
-                                            <td class="py-3.5 text-slate-500">{{ optional($category->created_at)->format('M d, Y') }}</td>
+                                            <td class="py-3.5 text-slate-500">
+                                                {{ optional($category->created_at)->format('M d, Y') }}</td>
                                             <td class="py-3.5 text-right">
                                                 <button type="button"
                                                     class="js-edit-category-trigger rounded-lg border border-[#edd5c4] bg-white px-3 py-1.5 text-xs font-semibold text-[#7a5c4e] transition hover:bg-[#fff6f0]"
@@ -189,7 +191,8 @@
                                                     data-active="{{ $category->is_active ? '1' : '0' }}">
                                                     Edit
                                                 </button>
-                                                <form method="POST" action="{{ route('admin.categories.destroy', $category) }}"
+                                                <form method="POST"
+                                                    action="{{ route('admin.categories.destroy', $category) }}"
                                                     class="js-delete-category-form inline-block">
                                                     @csrf
                                                     @method('DELETE')
@@ -202,7 +205,8 @@
                                         </tr>
                                     @empty
                                         <tr class="anim-enter-up">
-                                            <td colspan="6" class="py-8 text-center text-slate-500">No categories found.</td>
+                                            <td colspan="6" class="py-8 text-center text-slate-500">No categories
+                                                found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -297,13 +301,17 @@
                         showCloseButton: true,
                         width: 680,
                         didOpen: function() {
-                            const form = document.getElementById('swal-edit-category-form');
-                            const nameInput = document.getElementById('swal-edit-category-name');
+                            const form = document.getElementById(
+                                'swal-edit-category-form');
+                            const nameInput = document.getElementById(
+                                'swal-edit-category-name');
                             const descriptionInput = document.getElementById(
                                 'swal-edit-category-description');
-                            const activeInput = document.getElementById('swal-edit-category-active');
+                            const activeInput = document.getElementById(
+                                'swal-edit-category-active');
 
-                            if (!form || !nameInput || !descriptionInput || !activeInput) {
+                            if (!form || !nameInput || !descriptionInput || !
+                                activeInput) {
                                 return;
                             }
 

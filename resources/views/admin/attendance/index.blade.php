@@ -19,15 +19,15 @@
                 'showFloatingAdminMenuButton' => false,
             ])
 
-            <main
-                class="anim-enter-right bg-[#f8f8f8] p-3 pt-4 sm:p-5 sm:pt-5 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
+            <main class="anim-enter-right bg-[#f8f8f8] p-3 pt-4 sm:p-5 sm:pt-5 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
                 @include('admin.partials.header')
 
-                <header class="mb-6 flex flex-wrap items-start justify-between gap-4">
+                <header class="mb-6 pl-5 flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-sm font-semibold uppercase tracking-[0.16em] text-[#b16231]">Attendance Report</p>
-                        <h1 class="mt-2 text-4xl font-black tracking-tight text-[#2f241f]">Cashier Attendance Dashboard</h1>
-                        <p class="mt-2 text-3 text-slate-600">
+                        <h1 class="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">Cashier Attendance
+                            Dashboard</h1>
+                        <p class="mt-2 text-sm text-slate-600">
                             {{ now()->format('l, F jS Y') }} • Today Status and Attendance History
                         </p>
                     </div>
