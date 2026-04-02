@@ -57,6 +57,8 @@
                 return str_contains($haystack, strtolower($cashierQuery));
             })
             ->values();
+        $attendanceFeedback = session('status') ?: ($errors->has('attendance') ? $errors->first('attendance') : '');
+        $attendanceFeedbackIsError = !session('status') && $errors->has('attendance');
     @endphp
 
     <div class="anim-enter-up w-full min-h-screen overflow-hidden bg-white/85 lg:overflow-visible">
@@ -64,7 +66,8 @@
             <div data-cashier-overlay class="fixed inset-0 z-40 hidden bg-[#1f1713]/50 backdrop-blur-[1px] lg:hidden"></div>
             @include('cashier.sidebar.sidebar', ['activeCashierMenu' => 'attendance'])
 
-            <main class="anim-enter-up anim-delay-100 p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-6 lg:p-6 lg:pt-6 xl:col-span-7">
+            <main data-attendance-page
+                class="anim-enter-up anim-delay-100 p-4 pt-20 sm:p-6 sm:pt-20 lg:col-span-6 lg:p-6 lg:pt-6 xl:col-span-7">
                 <div class="mb-4 flex items-center justify-between gap-2 lg:hidden">
                     <button type="button" data-cashier-open-menu
                         class="inline-flex items-center gap-2 rounded-xl border border-[#e9d8cc] bg-white px-3 py-2 text-sm font-semibold text-[#6d4e3f] shadow-sm">
@@ -76,21 +79,22 @@
                     </button>
                 </div>
 
-                @if (session('status'))
-                    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                        {{ session('status') }}
-                    </div>
-                @endif
-
-                @if ($errors->has('attendance'))
-                    <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                        {{ $errors->first('attendance') }}
-                    </div>
-                @endif
+                <div data-attendance-feedback
+                    @class([
+                        'mb-4 rounded-xl border px-4 py-3 text-sm',
+                        'hidden' => $attendanceFeedback === '',
+                        'border-emerald-200 bg-emerald-50 text-emerald-700' =>
+                            $attendanceFeedback !== '' && !$attendanceFeedbackIsError,
+                        'border-rose-200 bg-rose-50 text-rose-700' =>
+                            $attendanceFeedback !== '' && $attendanceFeedbackIsError,
+                    ])>
+                    {{ $attendanceFeedback }}
+                </div>
 
                 <section
                     class="relative overflow-hidden rounded-[34px] border border-[#ead8cb] bg-[linear-gradient(140deg,#fff9f4_0%,#ffffff_52%,#fff5ed_100%)] p-5 shadow-[0_24px_60px_rgba(47,36,31,0.08)] sm:p-7">
-                    <div class="pointer-events-none absolute -left-16 -top-16 h-40 w-40 rounded-full bg-[#ffe1ca]/80 blur-3xl">
+                    <div
+                        class="pointer-events-none absolute -left-16 -top-16 h-40 w-40 rounded-full bg-[#ffe1ca]/80 blur-3xl">
                     </div>
                     <div class="pointer-events-none absolute right-0 top-0 h-44 w-44 rounded-full bg-[#fbeed8]/80 blur-3xl">
                     </div>
@@ -105,19 +109,22 @@
                             <h2 class="mt-4 text-3xl font-black tracking-tight text-[#2f241f] sm:text-[2.5rem]">Attendance
                                 Check</h2>
                             <p class="mt-3 max-w-xl text-sm leading-6 text-[#7a5c4e]">
-                                Track today&apos;s check-ins, review pending staff, and move quickly through attendance tasks
-                                with a cleaner dashboard layout.
+                                Check attendance for the whole cashier roster. As soon as any cashier is checked in,
+                                POS is ready to take orders.
                             </p>
 
                             <div class="mt-5 flex flex-wrap items-center gap-3">
                                 <div class="rounded-2xl border border-[#edd8ca] bg-white/85 px-4 py-3 shadow-sm">
-                                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d715f]">Today</p>
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8d715f]">Today
+                                    </p>
                                     <p class="mt-1 text-base font-black text-[#2f241f]">{{ now()->format('D, d M Y') }}</p>
                                 </div>
                                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50/85 px-4 py-3 shadow-sm">
-                                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Progress
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                                        Progress
                                     </p>
-                                    <p class="mt-1 text-base font-black text-emerald-700">{{ $attendanceRate }}% checked in</p>
+                                    <p data-attendance-rate-label class="mt-1 text-base font-black text-emerald-700">{{ $attendanceRate }}% checked in
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -176,7 +183,8 @@
                             </div>
                             <p class="mt-4 text-sm font-semibold text-[#6f5a4f]">Staff available for today&apos;s check-in
                             </p>
-                            <div class="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#8b6a59]">
+                            <div
+                                class="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#8b6a59]">
                                 <span class="h-2 w-2 rounded-full bg-[#f4a06b]"></span>
                                 Active attendance roster
                             </div>
@@ -188,7 +196,7 @@
                                 <div>
                                     <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Checked
                                         Today</p>
-                                    <p class="mt-3 text-3xl font-black text-emerald-700">
+                                    <p data-checked-today-count class="mt-3 text-3xl font-black text-emerald-700">
                                         {{ number_format($checkedTodayCount) }}</p>
                                 </div>
                                 <span
@@ -202,7 +210,8 @@
                             <p class="mt-4 text-sm font-semibold text-emerald-700/80">Confirmed attendance already
                                 recorded</p>
                             <div class="mt-4 h-2 rounded-full bg-emerald-100">
-                                <div class="h-2 rounded-full bg-emerald-500" style="width: {{ min($attendanceRate, 100) }}%"></div>
+                                <div data-attendance-rate-bar class="h-2 rounded-full bg-emerald-500"
+                                    style="width: {{ min($attendanceRate, 100) }}%"></div>
                             </div>
                         </article>
 
@@ -211,7 +220,8 @@
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-amber-700">Pending</p>
-                                    <p class="mt-3 text-3xl font-black text-amber-700">{{ number_format($pendingTodayCount) }}
+                                    <p data-pending-today-count class="mt-3 text-3xl font-black text-amber-700">
+                                        {{ number_format($pendingTodayCount) }}
                                     </p>
                                 </div>
                                 <span
@@ -224,7 +234,8 @@
                                 </span>
                             </div>
                             <p class="mt-4 text-sm font-semibold text-amber-700/80">Cashiers still waiting to check in</p>
-                            <div class="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700/80">
+                            <div
+                                class="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-amber-700/80">
                                 <span class="h-2 w-2 rounded-full bg-amber-500"></span>
                                 Attention needed
                             </div>
@@ -234,7 +245,8 @@
 
                 <section class="mt-6 rounded-3xl border border-[#eadfd7] bg-white p-4 shadow-sm sm:p-5">
                     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <h3 class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.1em] text-[#7b5e50]">
+                        <h3
+                            class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.1em] text-[#7b5e50]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#b16231]" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -286,7 +298,8 @@
 
                 <section class="mt-6 rounded-3xl border border-[#eadfd7] bg-white p-4 shadow-sm sm:p-5">
                     <div class="mb-4 flex items-center justify-between gap-3">
-                        <h3 class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.1em] text-[#7b5e50]">
+                        <h3
+                            class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.1em] text-[#7b5e50]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#b16231]" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -307,10 +320,12 @@
                                 $avatarInitial = strtoupper(substr($cashierName, 0, 1));
                             @endphp
                             <article
+                                data-attendance-card
+                                data-cashier-id="{{ (int) ($cashier?->id ?? 0) }}"
                                 class="rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md {{ $isChecked ? 'border-emerald-200 bg-emerald-50/35' : 'border-[#ecdccf] bg-[#fffaf6]' }}">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="flex min-w-0 items-center gap-3">
-                                        <span
+                                        <span data-attendance-avatar-badge
                                             class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full {{ $isChecked ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }} text-sm font-black">
                                             {{ $avatarInitial !== '' ? $avatarInitial : 'C' }}
                                         </span>
@@ -320,33 +335,40 @@
                                                 {{ (string) ($row['email'] ?? '-') }}</p>
                                         </div>
                                     </div>
-                                    <span
+                                    <span data-attendance-status-badge
                                         class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] {{ $isChecked ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
                                         {{ $isChecked ? 'Checked' : 'Pending' }}
                                     </span>
                                 </div>
 
+                                <p class="mt-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                    Cashier attendance record
+                                </p>
+
                                 <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
                                     <div class="rounded-xl border border-[#efe1d6] bg-white/90 p-2.5">
                                         <p class="font-semibold uppercase tracking-[0.08em] text-slate-500">Check-In Time
                                         </p>
-                                        <p class="mt-1 text-sm font-bold text-[#2f241f]">
+                                        <p data-attendance-time class="mt-1 text-sm font-bold text-[#2f241f]">
                                             {{ $todayAttendance?->checked_in_at?->format('H:i:s') ?? '--:--:--' }}
                                         </p>
                                     </div>
                                     <div class="rounded-xl border border-[#efe1d6] bg-white/90 p-2.5">
                                         <p class="font-semibold uppercase tracking-[0.08em] text-slate-500">Date</p>
-                                        <p class="mt-1 text-sm font-bold text-[#2f241f]">{{ now()->format('d/m/Y') }}</p>
+                                        <p data-attendance-date class="mt-1 text-sm font-bold text-[#2f241f]">
+                                            {{ $todayAttendance?->attended_on?->format('d/m/Y') ?? now()->format('d/m/Y') }}</p>
                                     </div>
                                 </div>
 
-                                <form method="POST" action="{{ route('cashier.attendance.check') }}" class="mt-4">
+                                <form method="POST" action="{{ route('cashier.attendance.check') }}" class="js-attendance-check-form mt-4">
                                     @csrf
                                     <input type="hidden" name="redirect" value="attendance">
                                     <input type="hidden" name="cashier_id" value="{{ (int) ($cashier?->id ?? 0) }}">
-                                    <button type="submit" @disabled($isChecked || !$cashier)
-                                        class="inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition {{ $isChecked ? 'bg-[#9aa08f]' : 'bg-[#f4a06b] hover:brightness-105' }}">
-                                        {{ $isChecked ? 'Attendance Checked' : 'Check Attendance' }}
+                                    <button type="submit" data-attendance-submit @disabled($isChecked || !$cashier)
+                                        class="inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition {{ $isChecked ? 'bg-emerald-600' : 'bg-[#f4a06b] hover:brightness-105' }}">
+                                        <span data-attendance-submit-label>
+                                            {{ $isChecked ? 'Attendance Checked' : 'Check Attendance' }}
+                                        </span>
                                     </button>
                                 </form>
                             </article>
@@ -361,7 +383,8 @@
 
                 <section class="mt-6 rounded-3xl border border-[#eadfd7] bg-white p-4 shadow-sm sm:p-5">
                     <div class="mb-4 flex items-center justify-between gap-3">
-                        <h3 class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.1em] text-[#7b5e50]">
+                        <h3
+                            class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.1em] text-[#7b5e50]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#b16231]" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -374,7 +397,7 @@
                         </p>
                     </div>
 
-                    <div class="space-y-2">
+                    <div data-attendance-history-list class="space-y-2">
                         @forelse ($filteredAttendanceHistory as $attendanceRow)
                             @php
                                 $isToday =
@@ -407,7 +430,7 @@
                                 </span>
                             </article>
                         @empty
-                            <div
+                            <div data-attendance-empty-log
                                 class="rounded-2xl border border-dashed border-[#e5d4c8] bg-[#fffaf5] px-4 py-10 text-center text-sm text-[#8b6a59]">
                                 No attendance record found yet.
                             </div>
@@ -419,4 +442,5 @@
             @include('cashier.sidebar.cart', ['activeCashierMenu' => 'cart'])
         </div>
     </div>
+
 @endsection

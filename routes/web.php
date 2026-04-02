@@ -1,6 +1,9 @@
 <?php
 
-use App\Http\Controllers\CashierController;
+use App\Http\Controllers\Cashier\AttendanceController as CashierAttendanceController;
+use App\Http\Controllers\Cashier\HistoryController as CashierHistoryController;
+use App\Http\Controllers\Cashier\OrderController as CashierOrderController;
+use App\Http\Controllers\Cashier\WorkspaceController as CashierWorkspaceController;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -11,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
 
 $activeRoles = function (): Collection {
     if (! Schema::hasTable('roles')) {
-        return new Collection();
+        return new Collection;
     }
 
     return Role::query()->active()->orderBy('name')->get();
@@ -109,7 +112,7 @@ Route::post('/login/{role}', function (Request $request, string $role) use ($act
 
         return back()
             ->withErrors([
-                'email' => 'This account is not allowed to sign in as ' . $actualRoleName . '.',
+                'email' => 'This account is not allowed to sign in as '.$actualRoleName.'.',
             ])
             ->onlyInput('email');
     }
@@ -135,15 +138,15 @@ Route::middleware(['auth', 'role:cashier'])
     ->prefix('cashier')
     ->name('cashier.')
     ->group(function (): void {
-        Route::get('/', [CashierController::class, 'index'])->name('index');
-        Route::get('/attendance', [CashierController::class, 'attendance'])->name('attendance');
-        Route::get('/history', [CashierController::class, 'history'])->name('history');
-        Route::post('/attendance/check', [CashierController::class, 'checkAttendance'])->name('attendance.check');
-        Route::post('/dashboard', [CashierController::class, 'goToDashboard'])->name('dashboard.go');
-        Route::post('/cart/add', [CashierController::class, 'addToCart'])->name('cart.add');
-        Route::post('/cart/{itemKey}/increment', [CashierController::class, 'incrementCartItem'])->name('cart.increment');
-        Route::post('/cart/{itemKey}/decrement', [CashierController::class, 'decrementCartItem'])->name('cart.decrement');
-        Route::post('/order/place', [CashierController::class, 'placeOrder'])->name('order.place');
+        Route::get('/', [CashierWorkspaceController::class, 'index'])->name('index');
+        Route::get('/attendance', [CashierAttendanceController::class, 'attendance'])->name('attendance');
+        Route::get('/history', [CashierHistoryController::class, 'history'])->name('history');
+        Route::post('/attendance/check', [CashierAttendanceController::class, 'checkAttendance'])->name('attendance.check');
+        Route::post('/dashboard', [CashierWorkspaceController::class, 'goToDashboard'])->name('dashboard.go');
+        Route::post('/cart/add', [CashierOrderController::class, 'addToCart'])->name('cart.add');
+        Route::post('/cart/{itemKey}/increment', [CashierOrderController::class, 'incrementCartItem'])->name('cart.increment');
+        Route::post('/cart/{itemKey}/decrement', [CashierOrderController::class, 'decrementCartItem'])->name('cart.decrement');
+        Route::post('/order/place', [CashierOrderController::class, 'placeOrder'])->name('order.place');
     });
 
-require __DIR__ . '/admin.php';
+require __DIR__.'/admin.php';

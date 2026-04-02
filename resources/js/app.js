@@ -99,5 +99,7 @@ import "./bootstrap";
     if (document.querySelector("[data-inventory-outgoing-toggle]")) {
         import("./admin_inventory");
     }
-    
+    if (document.querySelector("[data-attendance-page]")) {
+        import("./attendance");
+    }
 })();
