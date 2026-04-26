@@ -21,6 +21,45 @@
     const historyList = attendancePage.querySelector(
         "[data-attendance-history-list]",
     );
+    const filterOpenButton = attendancePage.querySelector(
+        "[data-attendance-filter-open]",
+    );
+    const filterCloseButtons = attendancePage.querySelectorAll(
+        "[data-attendance-filter-close]",
+    );
+    const filterPanel = attendancePage.querySelector(
+        "[data-attendance-filter-panel]",
+    );
+
+    const closeFilterPanel = () => {
+        if (!filterPanel) {
+            return;
+        }
+
+        filterPanel.classList.add("hidden");
+    };
+
+    const openFilterPanel = () => {
+        if (!filterPanel) {
+            return;
+        }
+
+        filterPanel.classList.remove("hidden");
+    };
+
+    if (filterOpenButton) {
+        filterOpenButton.addEventListener("click", openFilterPanel);
+    }
+
+    filterCloseButtons.forEach((button) => {
+        button.addEventListener("click", closeFilterPanel);
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeFilterPanel();
+        }
+    });
 
     const setFeedback = (message, isError = false) => {
         if (!feedback) {
@@ -103,8 +142,17 @@
             "[data-attendance-submit-label]",
         );
 
-        card.classList.remove("border-[#ecdccf]", "bg-[#fffaf6]");
-        card.classList.add("border-emerald-200", "bg-emerald-50/35");
+        card.classList.remove(
+            "border-amber-100",
+            "bg-amber-50/40",
+            "bg-gradient-to-br",
+            "from-amber-50",
+            "to-white",
+        );
+        card.classList.add(
+            "border-emerald-100",
+            "bg-emerald-50/50",
+        );
 
         if (avatarBadge) {
             avatarBadge.classList.remove("bg-amber-100", "text-amber-700");
@@ -128,8 +176,8 @@
         if (submitButton) {
             submitButton.disabled = true;
             submitButton.classList.remove(
-                "bg-[#f4a06b]",
-                "hover:brightness-105",
+                "bg-[#2f241f]",
+                "hover:bg-[#3c2f29]",
             );
             submitButton.classList.add("bg-emerald-600");
         }
@@ -159,7 +207,7 @@
         entry.innerHTML = `
                     <div class="min-w-0">
                         <p class="truncate font-semibold text-[#2f241f]">${attendance.cashier_name || "Cashier"}</p>
-                        <p class="text-xs text-slate-500">${attendance.attended_on || "-"} • ${attendance.checked_in_at || "--:--:--"}</p>
+                        <p class="text-xs text-slate-500">${attendance.attended_on || "-"} - ${attendance.checked_in_at || "--:--:--"}</p>
                     </div>
                     <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] bg-emerald-100 text-emerald-700">Today</span>
                 `;
@@ -224,6 +272,10 @@
 
                 if (payload.was_recently_created) {
                     prependHistoryEntry(payload.attendance || null);
+                }
+
+                if (payload.redirect_url) {
+                    window.location.href = payload.redirect_url;
                 }
             } catch (error) {
                 setFeedback(

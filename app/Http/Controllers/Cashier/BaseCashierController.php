@@ -40,9 +40,6 @@ class BaseCashierController extends Controller
             ->limit(250)
             ->pluck('name')
             ->map(fn (mixed $name): string => trim((string) $name))
-            ->merge(
-                $categories->pluck('name')->map(fn (mixed $name): string => trim((string) $name))
-            )
             ->filter(fn (string $value): bool => $value !== '')
             ->unique(fn (string $value): string => mb_strtolower($value))
             ->sort(SORT_NATURAL | SORT_FLAG_CASE)
@@ -259,19 +256,7 @@ class BaseCashierController extends Controller
 
     protected function ensureAttendanceChecked(Request $request): RedirectResponse|JsonResponse|null
     {
-        $cashierId = (int) ($request->user()?->id ?? 0);
-
-        if ($cashierId <= 0) {
-            return $this->errorResponse(
-                $request,
-                'Unable to verify cashier attendance. Please sign in again.',
-                'attendance',
-                'cashier.attendance'
-            );
-        }
-
         $hasAttendance = CashierAttendance::query()
-            ->where('cashier_id', $cashierId)
             ->whereDate('attended_on', now()->toDateString())
             ->exists();
 

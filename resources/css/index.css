@@ -406,6 +406,30 @@
     background: linear-gradient(180deg, #ffb07f 0%, #e38a53 100%);
 }
 
+.coffee-table-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(122, 92, 78, 0.45) rgba(255, 246, 240, 0.9);
+}
+
+.coffee-table-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.coffee-table-scroll::-webkit-scrollbar-track {
+    background: #fff6f0;
+    border-radius: 9999px;
+}
+
+.coffee-table-scroll::-webkit-scrollbar-thumb {
+    background: #b99a89;
+    border: 2px solid #fff6f0;
+    border-radius: 9999px;
+}
+
+.coffee-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #8f6d5b;
+}
+
 @media (max-width: 768px) {
     .dashboard-chart-wrap {
         height: 250px;

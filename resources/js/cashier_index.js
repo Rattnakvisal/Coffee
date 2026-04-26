@@ -28,6 +28,22 @@
     const searchEmpty = searchForm
         ? searchForm.querySelector("[data-cashier-search-empty]")
         : null;
+    const productCards = document.querySelectorAll(
+        "[data-cashier-product-card]",
+    );
+    const searchNoResults = document.querySelector(
+        "[data-cashier-search-no-results]",
+    );
+    let applyProductSearchFilter = function () {};
+    const historyFilterOpenButton = document.querySelector(
+        "[data-history-filter-open]",
+    );
+    const historyFilterCloseButtons = document.querySelectorAll(
+        "[data-history-filter-close]",
+    );
+    const historyFilterPanel = document.querySelector(
+        "[data-history-filter-panel]",
+    );
 
     const loadingOverlay = document.getElementById("coffee-add-loading");
     const loadingText = loadingOverlay
@@ -50,6 +66,30 @@
         loadingOverlay.classList.add("hidden");
         loadingOverlay.classList.remove("flex");
     };
+
+    const closeHistoryFilter = function () {
+        if (!historyFilterPanel) return;
+        historyFilterPanel.classList.add("hidden");
+    };
+
+    const openHistoryFilter = function () {
+        if (!historyFilterPanel) return;
+        historyFilterPanel.classList.remove("hidden");
+    };
+
+    if (historyFilterOpenButton) {
+        historyFilterOpenButton.addEventListener("click", openHistoryFilter);
+    }
+
+    historyFilterCloseButtons.forEach((button) => {
+        button.addEventListener("click", closeHistoryFilter);
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeHistoryFilter();
+        }
+    });
 
     const setPlaceOrderFeedback = function (form, message, isError) {
         if (!form) return;
@@ -246,6 +286,7 @@
         const selectSuggestion = function (value) {
             searchInput.value = value;
             closeSearchDropdown();
+            applyProductSearchFilter();
             searchInput.focus();
         };
 
@@ -255,12 +296,13 @@
                 .toLowerCase();
             const maxItems = 8;
 
+            if (query === "") {
+                closeSearchDropdown();
+                return;
+            }
+
             filteredSuggestions = suggestionPool
                 .filter(function (suggestion) {
-                    if (query === "") {
-                        return true;
-                    }
-
                     return suggestion.toLowerCase().includes(query);
                 })
                 .slice(0, maxItems);
@@ -269,11 +311,6 @@
             activeSuggestionIndex = -1;
 
             if (!filteredSuggestions.length) {
-                if (query === "") {
-                    closeSearchDropdown();
-                    return;
-                }
-
                 searchEmpty.classList.remove("hidden");
                 openSearchDropdown();
                 return;
@@ -369,6 +406,36 @@
 
             closeSearchDropdown();
         });
+    }
+
+    if (searchInput && productCards.length) {
+        const filterProductCards = function () {
+            const query = String(searchInput.value || "")
+                .trim()
+                .toLowerCase();
+            let visibleCount = 0;
+
+            productCards.forEach(function (card) {
+                const searchText = String(card.dataset.searchText || "");
+                const isVisible = query === "" || searchText.includes(query);
+
+                card.classList.toggle("hidden", !isVisible);
+                if (isVisible) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (searchNoResults) {
+                searchNoResults.classList.toggle(
+                    "hidden",
+                    query === "" || visibleCount > 0,
+                );
+            }
+        };
+
+        applyProductSearchFilter = filterProductCards;
+        searchInput.addEventListener("input", filterProductCards);
+        filterProductCards();
     }
 
     productCartForms.forEach(function (form) {

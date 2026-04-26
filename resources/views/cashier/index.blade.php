@@ -118,7 +118,7 @@
                     </a>
                 </div>
 
-                <div @class([
+                <div data-cashier-product-grid @class([
                     'mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2',
                     'pointer-events-none opacity-60 select-none' => !$canWork,
                 ])>
@@ -158,7 +158,9 @@
                             $defaultBasePrice = $hasActiveSizes ? $item->sizeBasePrice($defaultSizeKey) : 0;
                             $defaultPrice = $hasActiveSizes ? $item->sizePrice($defaultSizeKey) : 0;
                         @endphp
-                        <div class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger"
+                        <div data-cashier-product-card
+                            data-search-text="{{ str($item->name . ' ' . ($item->category?->name ?? '') . ' ' . ($item->description ?? ''))->lower()->squish() }}"
+                            class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5 anim-pop anim-stagger"
                             style="--stagger: {{ $loop->index + 2 }};">
                             <div class="flex gap-4">
                                 @php
@@ -303,6 +305,11 @@
                             No products found. Add products from Admin -> Products.
                         </div>
                     @endforelse
+
+                    <div data-cashier-search-no-results
+                        class="col-span-full hidden rounded-2xl border border-dashed border-[#d8c5b8] bg-[#fffaf5] p-6 text-center text-[#7a5c4e]">
+                        No menu items match your search.
+                    </div>
                 </div>
             </main>
             @include('cashier.sidebar.cart', ['activeCashierMenu' => 'cart'])

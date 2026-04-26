@@ -22,13 +22,13 @@
             <main class="anim-enter-right bg-[#f8f8f8] p-3 pt-4 sm:p-5 sm:pt-5 lg:col-span-9 lg:p-8 lg:pt-8 xl:col-span-10">
                 @include('admin.partials.header')
 
-                <header class="mb-6 pl-5 flex flex-wrap items-start justify-between gap-4">
+                <header class="mb-6 flex flex-wrap items-start justify-between gap-4 pl-5">
                     <div>
-                        <p class="text-sm font-semibold uppercase tracking-[0.16em] text-[#b16231]">Attendance Report</p>
-                        <h1 class="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">Cashier Attendance
-                            Dashboard</h1>
+                        <p class="text-sm font-semibold uppercase tracking-[0.16em] text-[#b16231]">Cashier Attendance</p>
+                        <h1 class="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">Attendance Dashboard
+                        </h1>
                         <p class="mt-2 text-sm text-slate-600">
-                            {{ now()->format('l, F jS Y') }} • Today Status and Attendance History
+                            {{ now()->format('l, F jS Y') }} - Today status and attendance history
                         </p>
                     </div>
 
@@ -85,10 +85,10 @@
                     </article>
 
                     <article
-                        class="anim-pop group h-full sm:min-h-50 rounded-[26px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                        class="anim-pop group h-full rounded-[26px] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl sm:min-h-50">
                         <div class="flex items-start justify-between gap-3">
                             <div
-                                class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                                class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor" stroke-width="1.8">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
@@ -98,17 +98,17 @@
                                 {{ number_format($checkedPercent, 1) }}% checked
                             </span>
                         </div>
-                        <p class="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">Checked Today</p>
+                        <p class="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Checked Today</p>
                         <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900">
                             {{ number_format($checkedTodayCount) }}</h3>
                         <p class="mt-1 text-sm text-slate-500">Cashiers checked for today</p>
                     </article>
 
                     <article
-                        class="anim-pop group h-full sm:min-h-50 rounded-[26px] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                        class="anim-pop group h-full rounded-[26px] border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl sm:min-h-50">
                         <div class="flex items-start justify-between gap-3">
                             <div
-                                class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                                class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor" stroke-width="1.8">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -119,7 +119,7 @@
                                 {{ number_format($pendingPercent, 1) }}% pending
                             </span>
                         </div>
-                        <p class="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">Pending</p>
+                        <p class="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-700">Pending</p>
                         <h3 class="mt-3 text-3xl font-black tracking-tight text-slate-900">
                             {{ number_format($pendingTodayCount) }}</h3>
                         <p class="mt-1 text-sm text-slate-500">Needs attendance check-in</p>
@@ -127,8 +127,7 @@
                 </section>
 
                 <section class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
-                    <section
-                        class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)] xl:col-span-5">
+                    <section class="rounded-[30px] border border-white/60 bg-white p-5 shadow-sm xl:col-span-5">
                         <div class="mb-4 flex items-center justify-between gap-3">
                             <div>
                                 <h2 class="inline-flex items-center gap-2 text-xl font-black text-[#2f241f]">
@@ -201,8 +200,7 @@
                         </div>
                     </section>
 
-                    <section
-                        class="rounded-[30px] border border-white/60 bg-white/90 p-5 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.22)] xl:col-span-7">
+                    <section class="rounded-[30px] border border-white/60 bg-white p-5 shadow-sm xl:col-span-7">
                         <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
                             <div>
                                 <h2 class="inline-flex items-center gap-2 text-xl font-black text-[#2f241f]">

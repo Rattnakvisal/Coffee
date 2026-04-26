@@ -39,7 +39,8 @@
                 ];
     @endphp
 
-    <main class="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[#f4f1eb] px-4 py-4 sm:px-6 lg:px-10"
+    <main
+        class="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[#f4f1eb] px-4 py-4 sm:px-6 lg:px-10"
         style="font-family: 'Avenir Next', 'Trebuchet MS', 'Segoe UI', sans-serif;">
         <div class="pointer-events-none absolute -left-28 top-8 h-72 w-72 rounded-full bg-[#f59e0b]/25 blur-3xl anim-float">
         </div>
@@ -68,16 +69,6 @@
                     <p id="role-profile-subtitle" class="mt-3 max-w-sm text-sm text-white/85">
                         {{ $selectedProfile['subtitle'] }}
                     </p>
-                    <p id="role-profile-description"
-                        class="{{ filled($selectedProfile['description']) ? '' : 'hidden' }} mt-5 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white/90">
-                        {{ $selectedProfile['description'] }}
-                    </p>
-
-                    <div class="mt-8 rounded-2xl border border-white/20 bg-white/10 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-white/80">Selected Role</p>
-                        <p id="role-profile-title" class="mt-1 text-2xl font-black">{{ $selectedProfile['label'] }}</p>
-                    </div>
-
                     <a href="{{ route('welcome') }}"
                         class="mt-6 inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
                         Back to Cashier
@@ -192,8 +183,8 @@
                             <span id="login-submit-spinner"
                                 class="hidden h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white"
                                 aria-hidden="true"></span>
-                            <svg id="login-submit-arrow" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg id="login-submit-arrow" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                             </svg>

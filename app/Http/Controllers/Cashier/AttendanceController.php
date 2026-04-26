@@ -114,6 +114,7 @@ class AttendanceController extends BaseCashierController
 
         if ($this->wantsJson($request)) {
             return $this->successJsonResponse($message, [
+                'redirect_url' => route('cashier.index'),
                 'was_recently_created' => $attendance->wasRecentlyCreated,
                 'attendance' => [
                     'cashier_id' => (int) $cashier->id,

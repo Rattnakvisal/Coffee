@@ -55,7 +55,6 @@ class WorkspaceController extends BaseCashierController
         $cartState = $this->buildCartState($request);
 
         $todayAttendance = CashierAttendance::query()
-            ->where('cashier_id', (int) ($request->user()?->id ?? 0))
             ->whereDate('attended_on', now()->toDateString())
             ->orderBy('checked_in_at')
             ->first();
