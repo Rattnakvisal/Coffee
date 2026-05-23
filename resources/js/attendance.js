@@ -18,48 +18,6 @@
     const attendanceRateBar = attendancePage.querySelector(
         "[data-attendance-rate-bar]",
     );
-    const historyList = attendancePage.querySelector(
-        "[data-attendance-history-list]",
-    );
-    const filterOpenButton = attendancePage.querySelector(
-        "[data-attendance-filter-open]",
-    );
-    const filterCloseButtons = attendancePage.querySelectorAll(
-        "[data-attendance-filter-close]",
-    );
-    const filterPanel = attendancePage.querySelector(
-        "[data-attendance-filter-panel]",
-    );
-
-    const closeFilterPanel = () => {
-        if (!filterPanel) {
-            return;
-        }
-
-        filterPanel.classList.add("hidden");
-    };
-
-    const openFilterPanel = () => {
-        if (!filterPanel) {
-            return;
-        }
-
-        filterPanel.classList.remove("hidden");
-    };
-
-    if (filterOpenButton) {
-        filterOpenButton.addEventListener("click", openFilterPanel);
-    }
-
-    filterCloseButtons.forEach((button) => {
-        button.addEventListener("click", closeFilterPanel);
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            closeFilterPanel();
-        }
-    });
 
     const setFeedback = (message, isError = false) => {
         if (!feedback) {
@@ -183,36 +141,8 @@
         }
 
         if (submitLabel) {
-            submitLabel.textContent = "Attendance Checked, POS Ready";
+            submitLabel.textContent = "Attendance Checked";
         }
-    };
-
-    const prependHistoryEntry = (attendance) => {
-        if (!historyList || !attendance || !attendance.is_today) {
-            return;
-        }
-
-        const emptyState = historyList.querySelector(
-            "[data-attendance-empty-log]",
-        );
-
-        if (emptyState) {
-            emptyState.remove();
-        }
-
-        const entry = document.createElement("article");
-        entry.className =
-            "flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#efe2d8] bg-[#fffdfb] px-4 py-3 transition hover:bg-[#fff7f1]";
-
-        entry.innerHTML = `
-                    <div class="min-w-0">
-                        <p class="truncate font-semibold text-[#2f241f]">${attendance.cashier_name || "Cashier"}</p>
-                        <p class="text-xs text-slate-500">${attendance.attended_on || "-"} - ${attendance.checked_in_at || "--:--:--"}</p>
-                    </div>
-                    <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] bg-emerald-100 text-emerald-700">Today</span>
-                `;
-
-        historyList.prepend(entry);
     };
 
     document.addEventListener(
@@ -269,10 +199,6 @@
                 setFeedback(payload.message || "", false);
                 updateStats(payload.stats || null);
                 updateCard(payload.attendance || null);
-
-                if (payload.was_recently_created) {
-                    prependHistoryEntry(payload.attendance || null);
-                }
 
                 if (payload.redirect_url) {
                     window.location.href = payload.redirect_url;

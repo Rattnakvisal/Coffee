@@ -69,10 +69,6 @@
                     <p id="role-profile-subtitle" class="mt-3 max-w-sm text-sm text-white/85">
                         {{ $selectedProfile['subtitle'] }}
                     </p>
-                    <a href="{{ route('welcome') }}"
-                        class="mt-6 inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
-                        Back to Cashier
-                    </a>
                 </div>
             </aside>
 

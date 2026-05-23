@@ -5,7 +5,6 @@ use App\Http\Controllers\Cashier\HistoryController as CashierHistoryController;
 use App\Http\Controllers\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Cashier\WorkspaceController as CashierWorkspaceController;
 use App\Models\Role;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,31 +19,7 @@ $activeRoles = function (): Collection {
     return Role::query()->active()->orderBy('name')->get();
 };
 
-Route::get('/', function (Request $request) use ($activeRoles) {
-    $currentUser = $request->user();
-
-    if ($currentUser !== null) {
-        return redirect()->route($currentUser->hasRole('admin') ? 'admin.index' : 'cashier.index');
-    }
-
-    $cashierRole = $activeRoles()->firstWhere('slug', 'cashier');
-
-    if ($cashierRole !== null) {
-        $cashierUser = User::query()
-            ->where('role_id', $cashierRole->id)
-            ->orderBy('id')
-            ->first();
-
-        if ($cashierUser !== null) {
-            Auth::login($cashierUser);
-            $request->session()->regenerate();
-
-            return redirect()->route('cashier.index');
-        }
-    }
-
-    return redirect()->route('login.form', ['role' => 'admin']);
-})->name('welcome');
+Route::get('/', [CashierWorkspaceController::class, 'index'])->name('welcome');
 
 Route::get('/login', function () use ($activeRoles) {
     $roles = $activeRoles()->whereIn('slug', ['admin'])->values();
@@ -91,20 +66,7 @@ Route::post('/login/{role}', function (Request $request, string $role) use ($act
     $user = $request->user()->load('role');
 
     if (! $user->hasRole($selectedRole->slug)) {
-        $actualRole = (string) ($user->role?->slug ?? '');
         $actualRoleName = strtolower((string) ($user->role?->name ?? 'this role'));
-
-        if ($actualRole === 'cashier') {
-            return redirect()
-                ->route('cashier.index')
-                ->with('status', 'Cashier account signed in. Use admin login to open the dashboard.');
-        }
-
-        if ($actualRole === 'admin') {
-            return redirect()
-                ->route('admin.index')
-                ->with('status', 'Admin account signed in.');
-        }
 
         Auth::logout();
         $request->session()->invalidate();
@@ -119,7 +81,6 @@ Route::post('/login/{role}', function (Request $request, string $role) use ($act
 
     $dashboardRoute = match ($selectedRole->slug) {
         'admin' => 'admin.index',
-        'cashier' => 'cashier.index',
         default => 'welcome',
     };
 
@@ -134,8 +95,7 @@ Route::match(['GET', 'POST'], '/logout', function (Request $request) {
     return redirect()->route('login');
 })->middleware('auth')->name('logout');
 
-Route::middleware(['auth', 'role:cashier'])
-    ->prefix('cashier')
+Route::prefix('cashier')
     ->name('cashier.')
     ->group(function (): void {
         Route::get('/', [CashierWorkspaceController::class, 'index'])->name('index');

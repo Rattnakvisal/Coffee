@@ -17,9 +17,8 @@ return new class extends Migration
         }
 
         $adminRoleId = DB::table('roles')->where('slug', 'admin')->value('id');
-        $cashierRoleId = DB::table('roles')->where('slug', 'cashier')->value('id');
 
-        if (! $adminRoleId || ! $cashierRoleId) {
+        if (! $adminRoleId) {
             return;
         }
 
@@ -41,20 +40,6 @@ return new class extends Migration
                     'created_at' => $now,
                     'updated_at' => $now,
                 ],
-                [
-                    'name' => 'System Cashier',
-                    'first_name' => 'System',
-                    'last_name' => 'Cashier',
-                    'email' => 'cashier@coffee.test',
-                    'phone' => '098765432',
-                    'gender' => 'other',
-                    'role_id' => $cashierRoleId,
-                    'created_by' => null,
-                    'password' => Hash::make('cashier12345'),
-                    'email_verified_at' => $now,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ],
             ],
             ['email'],
             [
@@ -69,17 +54,6 @@ return new class extends Migration
                 'updated_at',
             ],
         );
-
-        $adminId = DB::table('users')->where('email', 'admin@coffee.test')->value('id');
-
-        if ($adminId) {
-            DB::table('users')
-                ->where('email', 'cashier@coffee.test')
-                ->update([
-                    'created_by' => $adminId,
-                    'updated_at' => $now,
-                ]);
-        }
     }
 
     /**

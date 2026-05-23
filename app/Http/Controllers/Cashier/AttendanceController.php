@@ -36,13 +36,6 @@ class AttendanceController extends BaseCashierController
             })
             ->values();
 
-        $attendanceHistory = CashierAttendance::query()
-            ->with('cashier:id,name,first_name,last_name,email')
-            ->orderByDesc('attended_on')
-            ->orderByDesc('checked_in_at')
-            ->limit(5)
-            ->get();
-
         $totalCashiers = (int) $cashierRows->count();
         $checkedTodayCount = (int) $cashierRows
             ->filter(fn (array $row): bool => $row['todayAttendance'] !== null)
@@ -53,7 +46,6 @@ class AttendanceController extends BaseCashierController
 
         return view('cashier.attendance', [
             'cashierRows' => $cashierRows,
-            'attendanceHistory' => $attendanceHistory,
             'totalCashiers' => $totalCashiers,
             'checkedTodayCount' => $checkedTodayCount,
             'pendingTodayCount' => $pendingTodayCount,

@@ -329,9 +329,10 @@ class BaseCashierController extends Controller
 
     protected function applyCashierScope(Builder $query, Request $request): void
     {
-        $userId = (int) ($request->user()?->id ?? 0);
+        $user = $request->user();
+        $userId = (int) ($user?->id ?? 0);
 
-        if ($userId <= 0) {
+        if ($userId <= 0 || ! $user?->hasRole('cashier')) {
             return;
         }
 
@@ -444,10 +445,14 @@ class BaseCashierController extends Controller
             'total' => $cartState['total'],
         ];
 
+        $cashierId = $request->user()?->hasRole('cashier')
+            ? $request->user()?->id
+            : null;
+
         if (Schema::hasColumn('orders', 'cashier_id')) {
-            $payload['cashier_id'] = $request->user()?->id;
+            $payload['cashier_id'] = $cashierId;
         } elseif (Schema::hasColumn('orders', 'cashier_user_id')) {
-            $payload['cashier_user_id'] = $request->user()?->id;
+            $payload['cashier_user_id'] = $cashierId;
         }
 
         if (Schema::hasColumn('orders', 'payment_method')) {
@@ -535,12 +540,16 @@ class BaseCashierController extends Controller
             return;
         }
 
+        $cashierId = $request->user()?->hasRole('cashier')
+            ? $request->user()?->id
+            : null;
+
         InventoryTransaction::query()->create([
             'type' => InventoryTransaction::TYPE_MONEY_IN,
             'amount' => $amount,
             'note' => 'Order '.$orderNumber.' paid via '.strtoupper($paymentMethod),
             'happened_at' => now(),
-            'created_by' => $request->user()?->id,
+            'created_by' => $cashierId,
         ]);
     }
 

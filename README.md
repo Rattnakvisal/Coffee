@@ -43,9 +43,6 @@ Created by migration `2026_03_20_040000_ensure_default_users_exist.php`.
 - Admin
   - Email: `admin@coffee.test`
   - Password: `admin12345`
-- Cashier
-  - Email: `cashier@coffee.test`
-  - Password: `cashier12345`
 
 ## Useful Docker Commands
 
