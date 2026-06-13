@@ -44,6 +44,18 @@
     const historyFilterPanel = document.querySelector(
         "[data-history-filter-panel]",
     );
+    const historyFilterBackdrop = document.querySelector(
+        "[data-history-filter-backdrop]",
+    );
+    let historyFilterCloseTimer = null;
+
+    if (historyFilterPanel && historyFilterPanel.parentElement !== document.body) {
+        if (historyFilterBackdrop) {
+            document.body.appendChild(historyFilterBackdrop);
+        }
+
+        document.body.appendChild(historyFilterPanel);
+    }
 
     const loadingOverlay = document.getElementById("coffee-add-loading");
     const loadingText = loadingOverlay
@@ -69,12 +81,36 @@
 
     const closeHistoryFilter = function () {
         if (!historyFilterPanel) return;
-        historyFilterPanel.classList.add("hidden");
+
+        if (historyFilterCloseTimer) {
+            window.clearTimeout(historyFilterCloseTimer);
+        }
+
+        historyFilterPanel.classList.add("translate-x-full");
+        historyFilterOpenButton?.setAttribute("aria-expanded", "false");
+
+        historyFilterCloseTimer = window.setTimeout(function () {
+            historyFilterPanel.classList.add("hidden");
+            historyFilterBackdrop?.classList.add("hidden");
+        }, 300);
     };
 
     const openHistoryFilter = function () {
         if (!historyFilterPanel) return;
+
+        if (historyFilterCloseTimer) {
+            window.clearTimeout(historyFilterCloseTimer);
+            historyFilterCloseTimer = null;
+        }
+
+        historyFilterBackdrop?.classList.remove("hidden");
         historyFilterPanel.classList.remove("hidden");
+        historyFilterOpenButton?.setAttribute("aria-expanded", "true");
+
+        window.requestAnimationFrame(function () {
+            historyFilterPanel.classList.remove("translate-x-full");
+            historyFilterPanel.querySelector("input, select, button")?.focus();
+        });
     };
 
     if (historyFilterOpenButton) {
@@ -84,6 +120,10 @@
     historyFilterCloseButtons.forEach((button) => {
         button.addEventListener("click", closeHistoryFilter);
     });
+
+    if (historyFilterBackdrop) {
+        historyFilterBackdrop.addEventListener("click", closeHistoryFilter);
+    }
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {

@@ -69,7 +69,8 @@
                             @endif
                         </div>
 
-                        <button type="button" data-history-filter-open
+                        <button type="button" data-history-filter-open aria-controls="history-filter-panel"
+                            aria-expanded="false"
                             class="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#e7d7cb] bg-[#fffaf6] px-4 py-2.5 text-sm font-bold text-[#5c4438] shadow-[0_8px_18px_rgba(47,36,31,0.05)] transition hover:-translate-y-0.5 hover:border-[#dfc4b2] hover:bg-white hover:shadow-[0_12px_24px_rgba(47,36,31,0.08)] focus:outline-none focus:ring-2 focus:ring-[#f4a06b]/25">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#b16231]" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
@@ -80,12 +81,18 @@
                         </button>
                     </div>
 
-                    <div data-history-filter-panel
-                        class="mb-5 hidden overflow-hidden rounded-[26px] border border-[#ead8cb] bg-[linear-gradient(135deg,#fffaf6_0%,#ffffff_56%,#fff4ec_100%)] p-4 shadow-[0_14px_32px_rgba(47,36,31,0.06)] sm:p-5">
-                        <div class="mb-5 flex items-start justify-between gap-4">
+                    <div data-history-filter-backdrop
+                        class="fixed inset-0 z-[60] hidden bg-[#1f1713]/45 backdrop-blur-[2px]"></div>
+
+                    <div id="history-filter-panel" data-history-filter-panel
+                        class="fixed inset-y-0 right-0 z-[70] hidden w-full max-w-[430px] translate-x-full overflow-y-auto border-l border-[#ead8cb] bg-[linear-gradient(135deg,#fffaf6_0%,#ffffff_58%,#fff4ec_100%)] p-5 shadow-[-24px_0_48px_rgba(47,36,31,0.18)] transition-transform duration-300 ease-out sm:p-6"
+                        role="dialog" aria-modal="true" aria-labelledby="history-filter-title">
+                        <div class="mb-6 flex items-start justify-between gap-4">
                             <div>
                                 <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#b16231]">Reports</p>
-                                <h4 class="mt-1 text-xl font-black tracking-tight text-[#2f241f]">Filter Orders</h4>
+                                <h4 id="history-filter-title" class="mt-1 text-xl font-black tracking-tight text-[#2f241f]">
+                                    Filter Orders
+                                </h4>
                             </div>
                             <button type="button" data-history-filter-close
                                 class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#ead8cb] bg-white text-[#5c4438] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#fff6f0] focus:outline-none focus:ring-2 focus:ring-[#f4a06b]/25"
@@ -97,8 +104,8 @@
                             </button>
                         </div>
                         <form method="GET" action="{{ route('cashier.history') }}"
-                            class="grid grid-cols-1 items-end gap-3 md:grid-cols-12">
-                            <div class="md:col-span-4">
+                            class="space-y-4">
+                            <div>
                                 <label for="history_search"
                                     class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-[#5f7598]">
                                     Search Order
@@ -107,7 +114,7 @@
                                     placeholder="Order, payment, status"
                                     class="h-[52px] w-full rounded-2xl border border-[#ead8cb] bg-white px-4 text-sm font-medium text-[#2f241f] shadow-sm outline-none transition placeholder:text-slate-400 hover:border-[#dfc4b2] focus:border-[#f4a06b] focus:ring-4 focus:ring-[#f4a06b]/15">
                             </div>
-                            <div class="md:col-span-2">
+                            <div>
                                 <label for="history_period"
                                     class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-[#5f7598]">
                                     Period
@@ -119,7 +126,7 @@
                                     <option value="month" {{ $period === 'month' ? 'selected' : '' }}>This Month</option>
                                 </select>
                             </div>
-                            <div class="md:col-span-2">
+                            <div>
                                 <label for="history_payment"
                                     class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-[#5f7598]">
                                     Payment
@@ -136,7 +143,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="md:col-span-2">
+                            <div>
                                 <label for="history_status"
                                     class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-[#5f7598]">
                                     Status
@@ -153,7 +160,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 md:col-span-2">
+                            <div class="grid grid-cols-2 gap-3 pt-2">
                                 <a href="{{ route('cashier.history') }}"
                                     class="inline-flex h-[52px] items-center justify-center rounded-2xl border border-[#e7d7cb] bg-white px-4 text-sm font-bold text-[#7a5c4e] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#fff6f0] focus:outline-none focus:ring-2 focus:ring-[#f4a06b]/25">
                                     Reset
