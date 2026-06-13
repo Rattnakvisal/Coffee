@@ -108,6 +108,14 @@
     animation-delay: 600ms;
 }
 
+.admin-menu-navigation-instant .anim-enter-up,
+.admin-menu-navigation-instant .anim-enter-left,
+.admin-menu-navigation-instant .anim-enter-right,
+.admin-menu-navigation-instant .anim-pop,
+.admin-menu-navigation-instant .anim-float {
+    animation: none !important;
+}
+
 .coffee-size-chip {
     border-radius: 9999px;
     border: 1px solid #e6d8ce;

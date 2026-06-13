@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,9 +31,7 @@ class UserController extends Controller
                 'role',
                 'creator:id,name,first_name,last_name',
             ])
-            ->whereHas('role', function ($query): void {
-                $query->whereIn('slug', $this->managedRoleSlugs);
-            })
+            ->whereHas('role', fn (Builder $query): Builder => $this->scopeManagedRoles($query))
             ->when(
                 $search !== '',
                 function ($query) use ($search): void {
@@ -66,10 +66,10 @@ class UserController extends Controller
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'role_id' => [
                 'required',
-                Rule::exists('roles', 'id')->where(function ($query): void {
+                Rule::exists('roles', 'id')->where(function (QueryBuilder $query): void {
                     $query
                         ->where('is_active', true)
-                        ->whereIn('slug', $this->managedRoleSlugs);
+                        ->whereIn('slug', $this->managedRoleSlugs, 'and', false);
                 }),
             ],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
@@ -114,9 +114,7 @@ class UserController extends Controller
         }
 
         $data = User::query()
-            ->whereHas('role', function ($query): void {
-                $query->whereIn('slug', $this->managedRoleSlugs);
-            })
+            ->whereHas('role', fn (Builder $query): Builder => $this->scopeManagedRoles($query))
             ->where(function ($query) use ($search): void {
                 $query
                     ->where('name', 'like', "%{$search}%")
@@ -143,16 +141,6 @@ class UserController extends Controller
         ]);
     }
 
-    public function edit(User $user): View
-    {
-        $this->abortIfUserRoleNotManaged($user);
-
-        return view('admin.users.edit', [
-            'member' => $user,
-            'roles' => $this->activeManagedRoles(),
-        ]);
-    }
-
     public function update(Request $request, User $user): RedirectResponse
     {
         $this->abortIfUserRoleNotManaged($user);
@@ -165,10 +153,10 @@ class UserController extends Controller
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'role_id' => [
                 'required',
-                Rule::exists('roles', 'id')->where(function ($query): void {
+                Rule::exists('roles', 'id')->where(function (QueryBuilder $query): void {
                     $query
                         ->where('is_active', true)
-                        ->whereIn('slug', $this->managedRoleSlugs);
+                        ->whereIn('slug', $this->managedRoleSlugs, 'and', false);
                 }),
             ],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
@@ -229,9 +217,7 @@ class UserController extends Controller
 
         if ($user->role?->slug === 'admin') {
             $adminCount = User::query()
-                ->whereHas('role', function ($query): void {
-                    $query->where('slug', 'admin');
-                })
+                ->whereHas('role', fn (Builder $query): Builder => $query->where('slug', 'admin'))
                 ->count();
 
             if ($adminCount <= 1) {
@@ -249,7 +235,7 @@ class UserController extends Controller
             Storage::disk('public')->delete($user->avatar_path);
         }
 
-        $user->delete();
+        User::destroy($user->getKey());
 
         return redirect()
             ->route('admin.users.index')
@@ -262,11 +248,23 @@ class UserController extends Controller
 
     private function activeManagedRoles(): Collection
     {
-        return Role::query()
-            ->active()
-            ->whereIn('slug', $this->managedRoleSlugs)
-            ->orderBy('name')
+        /** @var Builder<Role> $query */
+        $query = Role::query();
+
+        return $query
+            ->where('is_active', true)
+            ->whereIn('slug', $this->managedRoleSlugs, 'and', false)
+            ->orderBy('name', 'asc')
             ->get();
+    }
+
+    /**
+     * @param  Builder<Role>  $query
+     * @return Builder<Role>
+     */
+    private function scopeManagedRoles(Builder $query): Builder
+    {
+        return $query->whereIn('slug', $this->managedRoleSlugs, 'and', false);
     }
 
     private function abortIfUserRoleNotManaged(User $user): void

@@ -621,33 +621,81 @@
     const filterToggleLabel = document.querySelector(
         "[data-report-filter-toggle-label]",
     );
+    const filterBackdrop = document.querySelector(
+        "[data-report-filter-backdrop]",
+    );
+    const filterCloseButtons = document.querySelectorAll(
+        "[data-report-filter-close]",
+    );
+    let filterCloseTimer = null;
+
+    if (filterPanel && filterPanel.parentElement !== document.body) {
+        if (filterBackdrop) {
+            document.body.appendChild(filterBackdrop);
+        }
+
+        document.body.appendChild(filterPanel);
+    }
+
     if (filterToggleButton && filterPanel) {
         const setFilterVisibility = function (isVisible) {
-            filterPanel.classList.toggle("hidden", !isVisible);
             filterToggleButton.setAttribute(
                 "aria-expanded",
                 isVisible ? "true" : "false",
             );
+
             if (filterToggleLabel) {
-                filterToggleLabel.textContent = isVisible
-                    ? "Hide Filter"
-                    : "Filter";
+                filterToggleLabel.textContent = "Filter";
             }
+
+            if (isVisible) {
+                if (filterCloseTimer) {
+                    window.clearTimeout(filterCloseTimer);
+                    filterCloseTimer = null;
+                }
+
+                filterBackdrop?.classList.remove("hidden");
+                filterPanel.classList.remove("hidden");
+
+                window.requestAnimationFrame(function () {
+                    filterPanel.classList.remove("translate-x-full");
+                    filterPanel.querySelector("select, input, button")?.focus();
+                });
+                return;
+            }
+
+            if (filterCloseTimer) {
+                window.clearTimeout(filterCloseTimer);
+            }
+
+            filterPanel.classList.add("translate-x-full");
+            filterCloseTimer = window.setTimeout(function () {
+                filterPanel.classList.add("hidden");
+                filterBackdrop?.classList.add("hidden");
+            }, 300);
         };
 
-        let isFilterVisible =
-            filterToggleButton.getAttribute("aria-expanded") === "true";
-        setFilterVisibility(isFilterVisible);
+        setFilterVisibility(false);
 
         filterToggleButton.addEventListener("click", function () {
-            isFilterVisible = !isFilterVisible;
-            setFilterVisibility(isFilterVisible);
+            setFilterVisibility(filterPanel.classList.contains("hidden"));
+        });
 
-            if (isFilterVisible) {
-                filterPanel.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                });
+        filterCloseButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                setFilterVisibility(false);
+            });
+        });
+
+        if (filterBackdrop) {
+            filterBackdrop.addEventListener("click", function () {
+                setFilterVisibility(false);
+            });
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                setFilterVisibility(false);
             }
         });
     }

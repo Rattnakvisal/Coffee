@@ -102,8 +102,8 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" data-inventory-filter-toggle
-                                aria-expanded="{{ $isFilterPanelOpen ? 'true' : 'false' }}"
+                            <button type="button" data-inventory-filter-toggle aria-controls="admin-inventory-filter-panel"
+                                aria-expanded="false"
                                 class="inline-flex items-center gap-2 rounded-xl border border-[#eadfd7] bg-white px-3.5 py-2 text-sm font-semibold text-[#5f4b40] transition hover:bg-[#fff9f4]">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor" stroke-width="1.9">
@@ -111,7 +111,7 @@
                                         d="M3.75 6.75h16.5m-13.5 5.25h10.5m-7.5 5.25h4.5" />
                                 </svg>
                                 <span data-inventory-filter-toggle-label>
-                                    {{ $isFilterPanelOpen ? 'Hide Filter' : 'Filter' }}
+                                    Filter
                                 </span>
                                 @if ($activeFilterCount > 0)
                                     <span
@@ -189,12 +189,30 @@
                         </div>
                     @endif
 
-                    <div data-inventory-filter-panel @class([
-                        'relative mt-6 rounded-[28px] border border-slate-200/80 bg-white/90 p-4 shadow-sm sm:p-5',
-                        'hidden' => !$isFilterPanelOpen,
-                    ])>
+                    <div data-inventory-filter-backdrop
+                        class="fixed inset-0 z-[60] hidden bg-[#1f1713]/45 backdrop-blur-[2px]"></div>
+
+                    <div id="admin-inventory-filter-panel" data-inventory-filter-panel
+                        class="fixed inset-y-0 right-0 z-[70] hidden w-full max-w-[430px] translate-x-full overflow-y-auto border-l border-[#ead8cb] bg-[linear-gradient(135deg,#fffaf6_0%,#ffffff_58%,#fff4ec_100%)] p-5 shadow-[-24px_0_48px_rgba(47,36,31,0.18)] transition-transform duration-300 ease-out sm:p-6"
+                        role="dialog" aria-modal="true" aria-labelledby="admin-inventory-filter-title">
+                        <div class="mb-6 flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#b16231]">Inventory</p>
+                                <h4 id="admin-inventory-filter-title" class="mt-1 text-xl font-black tracking-tight text-[#2f241f]">
+                                    Filter Inventory
+                                </h4>
+                            </div>
+                            <button type="button" data-inventory-filter-close
+                                class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#ead8cb] bg-white text-[#5c4438] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#fff6f0] focus:outline-none focus:ring-2 focus:ring-[#f4a06b]/25"
+                                aria-label="Close filter">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="1.9">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
                         <form method="GET" action="{{ route('admin.inventory.index') }}"
-                            class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+                            class="space-y-4">
                             <label class="space-y-1.5">
                                 <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Period</span>
                                 <select name="preset"
@@ -232,22 +250,22 @@
                                 </select>
                             </label>
 
-                            <label class="space-y-1.5 xl:col-span-2">
+                            <label class="space-y-1.5">
                                 <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Search</span>
-                                <div class="flex flex-col gap-2 sm:flex-row">
-                                    <input type="text" name="search" value="{{ $search }}"
-                                        placeholder="Order number, cashier, note..."
-                                        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100">
-                                    <button type="submit"
-                                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2f241f] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#3c2f29]">
-                                        Apply
-                                    </button>
-                                    <a href="{{ route('admin.inventory.index') }}"
-                                        class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                                        Reset
-                                    </a>
-                                </div>
+                                <input type="text" name="search" value="{{ $search }}"
+                                    placeholder="Order number, cashier, note..."
+                                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100">
                             </label>
+                            <div class="grid grid-cols-2 gap-3 pt-2">
+                                <a href="{{ route('admin.inventory.index') }}"
+                                    class="inline-flex h-[52px] items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50">
+                                    Reset
+                                </a>
+                                <button type="submit"
+                                    class="inline-flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#2f241f] px-4 text-sm font-bold text-white shadow-[0_12px_22px_rgba(47,36,31,0.22)] transition hover:-translate-y-0.5 hover:bg-[#3c2f29]">
+                                    Apply
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </section>

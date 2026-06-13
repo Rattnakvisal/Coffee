@@ -34,7 +34,6 @@ Route::middleware(['auth', 'role:admin'])
                 Route::get('/', 'index')->name('index');
                 Route::get('/suggestions', 'suggestions')->name('suggestions');
                 Route::post('/', 'store')->name('store');
-                Route::get('/{user}/edit', 'edit')->name('edit');
                 Route::put('/{user}', 'update')->name('update');
                 Route::delete('/{user}', 'destroy')->name('destroy');
             });

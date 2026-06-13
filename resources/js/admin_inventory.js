@@ -7,13 +7,28 @@
     const filterToggleLabel = document.querySelector(
         "[data-inventory-filter-toggle-label]",
     );
+    const filterBackdrop = document.querySelector(
+        "[data-inventory-filter-backdrop]",
+    );
+    const filterCloseButtons = document.querySelectorAll(
+        "[data-inventory-filter-close]",
+    );
     const modalTemplate = document.getElementById("inventory-outgoing-template");
     const formPanel = document.querySelector("[data-inventory-outgoing-panel]");
     const formAlert = document.querySelector("[data-inventory-form-alert]");
     const tableSection = document.querySelector("[data-inventory-table-section]");
+    let filterCloseTimer = null;
 
     if (!toggleButton && !filterToggleButton) {
         return;
+    }
+
+    if (filterPanel && filterPanel.parentElement !== document.body) {
+        if (filterBackdrop) {
+            document.body.appendChild(filterBackdrop);
+        }
+
+        document.body.appendChild(filterPanel);
     }
 
     let alertTimer = null;
@@ -102,10 +117,6 @@
     };
 
     const syncFilterToggleState = function (isVisible) {
-        if (filterPanel) {
-            filterPanel.classList.toggle("hidden", !isVisible);
-        }
-
         if (filterToggleButton) {
             filterToggleButton.setAttribute(
                 "aria-expanded",
@@ -114,23 +125,57 @@
         }
 
         if (filterToggleLabel) {
-            filterToggleLabel.textContent = isVisible ? "Hide Filter" : "Filter";
+            filterToggleLabel.textContent = "Filter";
         }
+
+        if (!filterPanel) {
+            return;
+        }
+
+        if (isVisible) {
+            if (filterCloseTimer) {
+                window.clearTimeout(filterCloseTimer);
+                filterCloseTimer = null;
+            }
+
+            filterBackdrop?.classList.remove("hidden");
+            filterPanel.classList.remove("hidden");
+
+            window.requestAnimationFrame(function () {
+                filterPanel.classList.remove("translate-x-full");
+                filterPanel.querySelector("select, input, button")?.focus();
+            });
+            return;
+        }
+
+        if (filterCloseTimer) {
+            window.clearTimeout(filterCloseTimer);
+        }
+
+        filterPanel.classList.add("translate-x-full");
+        filterCloseTimer = window.setTimeout(function () {
+            filterPanel.classList.add("hidden");
+            filterBackdrop?.classList.add("hidden");
+        }, 300);
     };
 
     if (filterToggleButton && filterPanel) {
-        syncFilterToggleState(!filterPanel.classList.contains("hidden"));
+        syncFilterToggleState(false);
 
         filterToggleButton.addEventListener("click", function () {
-            const nextVisible = filterPanel.classList.contains("hidden");
-            syncFilterToggleState(nextVisible);
+            syncFilterToggleState(filterPanel.classList.contains("hidden"));
+        });
+    }
 
-            if (nextVisible) {
-                filterPanel.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                });
-            }
+    filterCloseButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            syncFilterToggleState(false);
+        });
+    });
+
+    if (filterBackdrop) {
+        filterBackdrop.addEventListener("click", function () {
+            syncFilterToggleState(false);
         });
     }
 
@@ -163,4 +208,10 @@
             showFormAlert("Outgoing form closed.");
         });
     }
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            syncFilterToggleState(false);
+        }
+    });
 })();

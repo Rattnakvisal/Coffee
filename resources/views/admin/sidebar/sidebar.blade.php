@@ -150,7 +150,7 @@
                                 $isActive = $activeAdminMenu === $item['key'];
                             @endphp
 
-                            <a href="{{ $item['route'] }}" data-admin-sidebar-close @class([
+                            <a href="{{ $item['route'] }}" data-admin-menu-link data-admin-sidebar-close @class([
                                 'group relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200',
                                 'text-white' => $isActive,
                                 'text-white/75 hover:text-white' => !$isActive,

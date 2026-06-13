@@ -7,6 +7,7 @@
     const closeButtons = document.querySelectorAll(
         "[data-admin-sidebar-close]",
     );
+    const menuLinks = document.querySelectorAll("[data-admin-menu-link]");
     const desktopMedia = window.matchMedia("(min-width: 1024px)");
 
     if (!sidebar || !overlay) return;
@@ -69,6 +70,30 @@
 
     closeButtons.forEach((button) => {
         button.addEventListener("click", closeSidebar);
+    });
+
+    menuLinks.forEach((link) => {
+        link.addEventListener("click", function (event) {
+            if (
+                event.defaultPrevented ||
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+            ) {
+                return;
+            }
+
+            try {
+                sessionStorage.setItem(
+                    "coffee:disable-admin-menu-animation",
+                    "1",
+                );
+            } catch (error) {
+                // Storage can be unavailable in private or restricted contexts.
+            }
+        });
     });
 
     overlay.addEventListener("click", closeSidebar);
