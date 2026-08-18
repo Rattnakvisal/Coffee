@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll("[data-role-toggle]"),
     );
     const form = document.getElementById("login-form");
+    const authMode = form ? form.getAttribute("data-auth-mode") : "login";
     const actionTemplate = form
         ? form.getAttribute("data-action-template")
         : "";
@@ -23,6 +24,50 @@ document.addEventListener("DOMContentLoaded", function () {
         "role-profile-description",
     );
     let isSubmitting = false;
+
+    const authCard = document.querySelector("[data-auth-card]");
+    const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (authCard && !prefersReducedMotion) {
+        const arrivingMode = sessionStorage.getItem("coffee:auth-flip-mode");
+
+        if (arrivingMode === authMode) {
+            authCard.classList.add("is-flipping-in-" + arrivingMode);
+            sessionStorage.removeItem("coffee:auth-flip-mode");
+        }
+    }
+
+    document.querySelectorAll("[data-auth-switch]").forEach(function (link) {
+        link.addEventListener("click", function (event) {
+            if (
+                event.defaultPrevented ||
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey ||
+                !authCard ||
+                prefersReducedMotion
+            ) {
+                return;
+            }
+
+            const targetMode = link.getAttribute("data-auth-switch");
+            const currentMode = authCard.getAttribute("data-auth-mode");
+
+            if (!targetMode || targetMode === currentMode) return;
+
+            event.preventDefault();
+            authCard.classList.add("is-switching-to-" + targetMode);
+            sessionStorage.setItem("coffee:auth-flip-mode", targetMode);
+
+            window.setTimeout(function () {
+                window.location.assign(link.href);
+            }, 450);
+        });
+    });
 
     const setRoleState = function (roleSlug) {
         const profile = roleProfiles[roleSlug];
@@ -145,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             if (submitLabel) {
-                submitLabel.textContent = "Signing in...";
+                submitLabel.textContent = authMode === "register" ? "Creating account..." : "Signing in...";
             }
 
             if (submitArrow) {
